@@ -14,7 +14,7 @@ using Progress.Lang.AppError.
 
 block-level on error undo, throw.
 
-class errors.ErrorHandler inherits AppError: 
+class errors.ErrorHandler inherits AppError serializable: 
 
     define variable lastmsg as integer no-undo.
 

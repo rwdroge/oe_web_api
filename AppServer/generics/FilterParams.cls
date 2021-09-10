@@ -68,8 +68,8 @@ class generics.FilterParams:
             idx = index(cParam, "=").
             if idx > 0 then 
             do:
-                cName = substring(cParam, 1, idx - 1).
-                cValue = OpenEdge.Net.URI:Decode(substring(cParam, idx + 1)).
+                cName = substring(cParam, 1, idx - 1, "character").
+                cValue = OpenEdge.Net.URI:Decode(substring(cParam, idx + 1,,"character")).
                 case cName:
                     when "sort_by" then 
                         this-object:SortBy = entry(2,cParam,"=").
