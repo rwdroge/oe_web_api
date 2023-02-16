@@ -12,6 +12,7 @@ using Progress.Lang.*.
 using Progress.Json.ObjectModel.*.
 using data.DataAccess.*.
 using OpenEdge.BusinessLogic.*.
+using OpenEdge.Logging.*.
 
 
 block-level on error undo, throw.
@@ -31,6 +32,9 @@ class entities.customers inherits BusinessEntity implements interfaces.CRUD:
     define public property ttName as character no-undo initial "ttcustomer" get. set. 
     define public property piName as character no-undo initial "custnum" get. set.
     define public property dbName as character no-undo initial "customer" get. set.
+    define variable logger as ILogWriter no-undo.
+    
+    
     
     
     /*------------------------------------------------------------------------------
@@ -38,10 +42,17 @@ class entities.customers inherits BusinessEntity implements interfaces.CRUD:
             Notes:                                                                        
     ------------------------------------------------------------------------------*/
     constructor public customers():
+        
+        
         super (dataset dsCustomer:HANDLE).
+        
+        
+        
     end constructor.
     
     method public void Read(input filter as generics.FilterParams, output dataset-handle hDataSet):
+        logger = LoggerBuilder:GetLogger("customers").
+        logger:Info("Getting all Customers").
         this-object:GetCustomers(filter, output dataset dsCustomer by-reference).
         hDataSet = dataset dsCustomer:handle.    
     end method.
@@ -62,7 +73,7 @@ class entities.customers inherits BusinessEntity implements interfaces.CRUD:
         define variable hChanges as handle.
         dao = new data.DataAccess().
         dao:attachSource("ttcustomer", "CustNum", "Customer", "CustNum", filter:id1, filter, input-output dataset dsCustomer by-reference).
-        dataset dscustomer:write-json('file', '/usr/wrk/emeapas/work/dscustomer_before.json', true, ?, ?,?,true ).      
+        //dataset dscustomer:write-json('file', '/usr/wrk/emeapas/work/dscustomer_before.json', true, ?, ?,?,true ).      
         create dataset hChanges.
         hChanges:create-like(dataset dscustomer:handle).
         hChanges:read-json('JsonObject', jsonObject).
@@ -71,7 +82,7 @@ class entities.customers inherits BusinessEntity implements interfaces.CRUD:
         //hChanges:write-json('file', '/usr/wrk/emeapas/work/dscustomer_before.json', true, ?, ?,?,true ).
         hChanges:merge-changes(dataset dscustomer:handle).
         //dataset dscustomer:get-buffer-handle (1):table-handle:tracking-changes = false.
-        hChanges:write-json('file', '/usr/wrk/emeapas/work/dscustomer_after.json', true, ?, ?,?,true ).
+        //hChanges:write-json('file', '/usr/wrk/emeapas/work/dscustomer_after.json', true, ?, ?,?,true ).
         //this-object:Updatecustomers(filter, input-output dataset dsCustomer by-reference).
         dao:CommitChanges(piName, input-output dataset dsCustomer by-reference).
         hDataSet = dataset dsCustomer:handle.

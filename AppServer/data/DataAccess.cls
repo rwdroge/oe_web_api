@@ -16,6 +16,8 @@ block-level on error undo, throw.
 
 class data.DataAccess: 
 
+define variable lok as logical no-undo.
+
    
     /*------------------------------------------------------------------------------
      Purpose:
@@ -24,7 +26,7 @@ class data.DataAccess:
         
     constructor public DataAccess (  ):
         super ().
-        
+
     end constructor.
     
     method public void attachSource (   input pcBuffers as character, 
@@ -165,7 +167,7 @@ class data.DataAccess:
                         phDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = string(hBuffer:rowid).
                         iSeq = iSeq + 1.
                         phDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
-                        phDataSet:write-json('file', '/usr/wrk/emeapas/work/dataset.json', true, ?, ?,?,true ).
+                        //phDataSet:write-json('file', '/usr/wrk/emeapas/work/dataset.json', true, ?, ?,?,true ).
                     end.
                 end. 
             end.
@@ -176,7 +178,7 @@ class data.DataAccess:
 
     method public void AddIdField (input DATASET-handle phDataSet):
             define variable iSeq as integer no-undo.
-            message string(phDataSet:get-buffer-handle(1):rowid).
+            //message string(phDataSet:get-buffer-handle(1):rowid).
             phDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = string(phDataSet:get-buffer-handle(1):rowid).
             iSeq              = iSeq + 1.
             phDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).

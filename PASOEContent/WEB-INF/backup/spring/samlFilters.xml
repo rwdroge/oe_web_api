@@ -8,8 +8,8 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:util="http://www.springframework.org/schema/util"
     xmlns:context="http://www.springframework.org/schema/context"
-    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
-    http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd"> 
     
@@ -33,7 +33,7 @@
         <b:property name="continueChainBeforeSuccessfulAuthentication" value="true"/>
         <b:property name="authenticationSuccessHandler" ref="successRedirectHandler"/>
         <b:property name="authenticationFailureHandler" ref="failureRedirectHandler"/>
-        <b:property name="checkForACSEndpointUrl" value="${samlToken.webSSOProcessingFilter.checkForACSEndpointUrl}"/>
+        <b:property name="checkForACSEndpointUrl" value="${samlToken.webSSOProcessingFilter.checkForACSEndpointUrl:false}"/>
         <b:property name="responseSkew" value="${samlToken.webSSOProcessingFilter.responseSkew}"/>
     </b:bean>
 

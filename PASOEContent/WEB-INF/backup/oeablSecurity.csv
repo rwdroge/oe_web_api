@@ -1,48 +1,59 @@
-## Intercept URLs imported from C:\Workspaces\WeSolveIT\WeSolveIT\PASOEContent\WEB-INF\web.xml
-## Imported at 2018-02-07T11:56:34.740+01:00
-##
-## PASOE Configuration file C:\Workspaces\WeSolveIT\WeSolveIT\PASOEContent\WEB-INF\oeablSecurity-anonymous.xml
+# "url-pattern","<method>","<spring-access-expression>"
+############## Intercept-url definitions for the APSV transport URIs ###############
+"/apsv/**","HEAD","hasAnyRole('ROLE_PSCUser')"
+"/apsv/**","GET","hasAnyRole('ROLE_PSCUser')"
+"/apsv/**","POST","hasAnyRole('ROLE_PSCUser')"
+"/apsv/**","OPTIONS","hasAnyRole('ROLE_PSCUser')"
+############## APSV Container Login model Configuration ###############
+#"/apsv/**","OPTIONS","hasAnyRole('ROLE_PSCUser','ROLE_ANONYMOUS')"
 
-## Properties from http space /apsv/**
-## Transport: apsv
-## "url-pattern","method","spring-access-expression"
+############## Intercept-url definitions for the SOAP transport URIs ###############
+"/soap/wsdl/**","GET","hasAnyRole('ROLE_PSCUser')"
+"/soap/**","POST","hasAnyRole('ROLE_PSCUser')"
 
-       
+############## Intercept-url definitions for the REST transport URIs ###############
+"/rest/**","*","hasAnyRole('ROLE_PSCUser')"
 
-## Properties from http space /soap/**
-## Transport: soap
-## "url-pattern","method","spring-access-expression"
+############## Intercept-url definitions for the WEB transport  URIs ###############
+"/web/**","*","hasAnyRole('ROLE_PSCUser')"
 
-       
+############## Intercept-url definitions for the default URI space #################
+"/static/home.html","GET","hasAnyRole('ROLE_PSCUser')"
 
-## Properties from http space /rest/**
-## Transport: rest
-## "url-pattern","method","spring-access-expression"
-"/rest/**","*","hasAnyRole('ROLE_ANONYMOUS')"
+"/static/ServerStatus.html","GET","hasAnyRole('ROLE_PSCUser','ROLE_PSCAdmin','ROLE_PSCDebug')"
 
-       
+"/server/**","GET","hasAnyRole('ROLE_PSCAdmin','ROLE_PSCDebug')"
 
-## Properties from http space /**
-## Transport: all
-## "url-pattern","method","spring-access-expression"
 "/*","GET","permitAll()"
-"/webspeed/cgi-bin/**","GET","permitAll()"
-"/jsp/**","*","hasAnyRole('ROLE_ANONYMOUS')"
-"/web/**","*","hasAnyRole('ROLE_ANONYMOUS')"
-"/index.htm*","GET","permitAll()"
-"/server/**","GET","permitAll()"
+
+"/static/*","GET","permitAll()" 
+
 "/static/error/*","GET","permitAll()"
-"/static/auth/*","*","permitAll()"
-"/static/images/*","*","permitAll()"
-"/static/**","*","hasAnyRole('ROLE_ANONYMOUS')"
-"/**/*.htm*","GET","hasAnyRole('ROLE_ANONYMOUS')"
-"/**/*.gif","GET","hasAnyRole('ROLE_ANONYMOUS')"
-"/**/*.jpg","GET","hasAnyRole('ROLE_ANONYMOUS')"
-"/**/*.css","GET","hasAnyRole('ROLE_ANONYMOUS')"
-"/**/*.js","GET","hasAnyRole('ROLE_ANONYMOUS')"
-"/**/*.json","GET","hasAnyRole('ROLE_ANONYMOUS')"
-"/**/*.asp","GET","hasAnyRole('ROLE_ANONYMOUS')"
-"/**/*.inc","GET","hasAnyRole('ROLE_ANONYMOUS')"
+
+"/static/images/*","GET","permitAll()" 
+
+"/static/auth/*","GET","permitAll()" 
+
+"/static/**","GET","hasAnyRole('ROLE_PSCUser')"
+
+"/**/*.htm*","GET","hasAnyRole('ROLE_PSCUser')"
+
+"/**/*.gif","GET","hasAnyRole('ROLE_PSCUser')"
+
+"/**/*.jpg","GET","hasAnyRole('ROLE_PSCUser')"
+
+"/**/*.css","GET","hasAnyRole('ROLE_PSCUser')"
+
+"/**/*.js","GET","hasAnyRole('ROLE_PSCUser')"
+
+"/**/*.json","GET","hasAnyRole('ROLE_PSCUser')"
+
+"/**/*.asp","GET","hasAnyRole('ROLE_PSCUser')"
+
+"/**/*.inc","GET","hasAnyRole('ROLE_PSCUser')"
+
+# Best practice - deny anything not explicitly granted
 "/**","*","denyAll()"
 
-       
+
+

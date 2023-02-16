@@ -92,11 +92,20 @@
       <listener-class>ch.qos.logback.classic.selector.servlet.ContextDetachingSCL</listener-class>
     </listener>
 
+   <!-- Replacess Default WebApplicationContext implementation class for ContextLoader
+         defined in ContextLoader.properties (spring-web-*.jar) -->
+    <context-param>
+        <param-name>contextClass</param-name>
+        <param-value>
+            com.progress.appserv.services.security.OEXmlWebApplicationContext
+        </param-value>
+    </context-param>
+
     <!-- The Spring Security listener needs to be loaded immediately after
          the logging listener.  It will initialize the entire security
          policy configured in the contextConfigLocation parameter above -->
     <listener>
-        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+        <listener-class>com.progress.appserv.services.security.OESpringContextLoaderListener</listener-class>
     </listener>
 
     <!-- Track HTTP Session events. -->
@@ -158,8 +167,12 @@
       <servlet-name>mvc-dispatch</servlet-name>
       <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
       <init-param>
+        <param-name>contextClass</param-name>
+        <param-value>com.progress.appserv.services.security.OEXmlWebApplicationContext</param-value>     
+      </init-param>
+      <init-param>
         <param-name>contextConfigLocation</param-name>
-        <param-value>/WEB-INF/spring/mvc-dispatch-context.xml</param-value>
+        <param-value>pasoe:mvc-dispatch-context.xml</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
     </servlet>

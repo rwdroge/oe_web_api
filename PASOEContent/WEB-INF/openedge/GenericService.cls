@@ -17,6 +17,8 @@ using OpenEdge.Web.*.
 using interfaces.CRUD.*.
 using interfaces.RO.*.
 using generics.GenericEntity.*.
+using OpenEdge.Logging.ILogWriter.
+using OpenEdge.Logging.LoggerBuilder.
 
 block-level on error undo, throw.
 
@@ -43,9 +45,11 @@ class GenericService inherits WebHandler:
         define variable entity      as generics.GenericEntity     no-undo.
         define variable dynClass    as interfaces.CRUD   no-undo.
         define variable dynClass2   as interfaces.RO     no-undo.
+        define variable logger as ILogWriter no-undo.
         
         define variable hDataSet    as handle            no-undo.
-        define variable hTempTable  as handle            no-undo.
+        define variable hTempTable as handle no-undo.
+
         define variable hCP         as handle            no-undo.
        
         define variable jsonObject  as JsonObject        no-undo.       
@@ -60,11 +64,19 @@ class GenericService inherits WebHandler:
         apiType     = poRequest:GetPathParameter("apitype").
         queryString = poRequest:GetContextValue("QUERY_STRING").
         
+        //hiermee kun je door de resultaten heenlopen
+        define variable hQuery      as handle    no-undo.
+        define variable hBuffer     as handle    no-undo.
+        define variable iNumFields  as integer   no-undo.
+        define variable iLoop       as integer   no-undo.
+
         if apiType = "data" then
         do:
             filter = new generics.FilterParams(entityName, entityName2, querystring, id1, id2).
+            
             entityName = "entities." + entityName.
             entity = new generics.GenericEntity(entityName).
+            
             dynClass = dynamic-new string(entityName) () no-error.
             
             if entityName2 > "" then
@@ -158,7 +170,9 @@ class GenericService inherits WebHandler:
             delete object filter        no-error.  
             delete object response      no-error.
             delete object writer        no-error.
+            
         end.
+        
     end method.
     
     method override protected integer HandlePost(input poRequest as OpenEdge.Web.IWebRequest):

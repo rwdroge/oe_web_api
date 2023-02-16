@@ -6,8 +6,8 @@
 <b:beans xmlns="http://www.springframework.org/schema/security"
     xmlns:b="http://www.springframework.org/schema/beans"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
-                        http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd">
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
     
     <!-- This Spring Security configuration file fragment holds all of the
          AuthenticationManager bean definitions for all login models.  The 
@@ -78,7 +78,7 @@
     <!-- The LDAP server connection context: who to log into LDAP as to perform a search for a
          simple user account name, starting at the base DN -->
     <b:bean id="ldapContextSource"
-        class="org.springframework.security.ldap.DefaultSpringSecurityContextSource">
+        class="com.progress.appserv.services.security.OELdapContextSource">
 
         <!-- Provider Url an LDAP URL of the form ldap://localhost:389/base_dn -->
         <b:constructor-arg value="${ldap.contxtSrc.url}"> </b:constructor-arg>
@@ -114,16 +114,16 @@
         id="ldapSearchBean">
 
         <!-- user search base for finding user account DN for authentication -->
-        <b:constructor-arg value="${ldap.search.base}" />
+        <b:constructor-arg value="${ldap.usersearch.base}" />
 
         <!-- LDAP search query to match the authenticated user-ID input with a
              LDAP user account object's attribute value -->
-        <b:constructor-arg value="${ldap.serach.attribute}" />
+        <b:constructor-arg value="${ldap.usersearch.filter}" />
         
         <b:constructor-arg ref="ldapContextSource" />
 
         <!-- Search the search base's object and all sub trees -->
-        <b:property name="searchSubtree" value="${ldap.search.subtree}" />
+        <b:property name="searchSubtree" value="${ldap.usersearch.searchSubtree}" />
     </b:bean>
 
     <!-- How to "bind" to an LDAP server, where "bind" is equivalent to logging in 
