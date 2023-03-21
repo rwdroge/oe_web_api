@@ -17,12 +17,10 @@ using OpenEdge.Web.*.
 using interfaces.CRUD.*.
 using interfaces.RO.*.
 using generics.GenericEntity.*.
-using OpenEdge.Logging.ILogWriter.
-using OpenEdge.Logging.LoggerBuilder.
-
 block-level on error undo, throw.
 
 class GenericService inherits WebHandler: 
+
 
     method override protected integer HandleGet(input poRequest as OpenEdge.Web.IWebRequest):
         define variable response    as WebResponse       no-undo.
@@ -45,10 +43,9 @@ class GenericService inherits WebHandler:
         define variable entity      as generics.GenericEntity     no-undo.
         define variable dynClass    as interfaces.CRUD   no-undo.
         define variable dynClass2   as interfaces.RO     no-undo.
-        define variable logger as ILogWriter no-undo.
         
         define variable hDataSet    as handle            no-undo.
-        define variable hTempTable as handle no-undo.
+        define variable hTempTable as handle             no-undo.
 
         define variable hCP         as handle            no-undo.
        
@@ -64,12 +61,6 @@ class GenericService inherits WebHandler:
         apiType     = poRequest:GetPathParameter("apitype").
         queryString = poRequest:GetContextValue("QUERY_STRING").
         
-        //hiermee kun je door de resultaten heenlopen
-        define variable hQuery      as handle    no-undo.
-        define variable hBuffer     as handle    no-undo.
-        define variable iNumFields  as integer   no-undo.
-        define variable iLoop       as integer   no-undo.
-
         if apiType = "data" then
         do:
             filter = new generics.FilterParams(entityName, entityName2, querystring, id1, id2).
@@ -144,7 +135,7 @@ class GenericService inherits WebHandler:
                 dynClass:Read(filter, output dataset-handle hDataSet).
                 hTempTable = hDataSet:get-buffer-handle(1):table-handle.
                 jsonObject = new JsonObject().
-                jsonObject:read(hTempTable).
+                jsonObject:read(hTempTable, true).
                 body = jsonObject:GetJsonText().
             end.
         end.
@@ -225,7 +216,7 @@ class GenericService inherits WebHandler:
         end.
         else do:
             dynClass:Create(body, output dataset-handle hDataSet).
-            hDataSet:write-json('longchar', responseBody ).
+            hDataSet:write-json('longchar', responseBody, true, ?, true, true ).
         end.
         
         response:ContentType = "application/json".
