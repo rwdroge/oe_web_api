@@ -51,8 +51,6 @@ class entities.customers inherits BusinessEntity implements interfaces.CRUD:
     end constructor.
     
     method public void Read(input filter as generics.FilterParams, output dataset-handle hDataSet):
-        logger = LoggerBuilder:GetLogger("customers").
-        logger:Info("Getting all Customers").
         this-object:GetCustomers(filter, output dataset dsCustomer by-reference).
         hDataSet = dataset dsCustomer:handle.    
     end method.

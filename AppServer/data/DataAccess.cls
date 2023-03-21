@@ -143,7 +143,6 @@ define variable lok as logical no-undo.
                                         
                             iCount = iCount + 1.
                         end.
-                        //phDataSet:write-json('file', '/usr/wrk/emeapas/work/phDataSet.json').
                     end.
                     else 
                     do:
@@ -167,7 +166,6 @@ define variable lok as logical no-undo.
                         phDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = string(hBuffer:rowid).
                         iSeq = iSeq + 1.
                         phDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
-                        //phDataSet:write-json('file', '/usr/wrk/emeapas/work/dataset.json', true, ?, ?,?,true ).
                     end.
                 end. 
             end.
@@ -178,7 +176,6 @@ define variable lok as logical no-undo.
 
     method public void AddIdField (input DATASET-handle phDataSet):
             define variable iSeq as integer no-undo.
-            //message string(phDataSet:get-buffer-handle(1):rowid).
             phDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = string(phDataSet:get-buffer-handle(1):rowid).
             iSeq              = iSeq + 1.
             phDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
