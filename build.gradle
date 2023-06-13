@@ -40,8 +40,8 @@ task packageCode(type: CreateProcedureLibrary){
 
 task packageSRC(type: CreateProcedureLibrary){
 
-    destFile = "${buildDir}/dist/${project.name}-SRC-${CLASSIFIER.toUpperCase()}-${VERSION}.pl"
-    baseDir = "src/main/abl"
+    destFile = "${buildDir}/dist/${project.name}-SRC.pl"
+    baseDir = "AppServer"
 
 }
 
