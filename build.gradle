@@ -5,13 +5,25 @@
  * Learn how to create Gradle builds at https://guides.gradle.org/creating-new-gradle-builds
  */
 
-
+import com.progress.gradle.abl.tasks.*
  
 plugins {
-  id "progress.openedge.abl-base" version "2.2.0"
+  id "progress.openedge.abl-base" version "2.2"
 }
 
 apply plugin: 'progress.openedge.abl-base'
+
+abl {   
+    avmOptions {}
+    compileOptions{}
+    rcodeDir = file("${buildDir}/rcode"
+    wrkDir = "/home/jenkins"
+     
+    dbConnection {
+        dbName = 'sports2000'
+        connectionParameters='-S 8000'
+    }
+}
 
 task myDbConTask(type: DBConnection){
     id='id1'
@@ -29,7 +41,6 @@ task compileCode(type: ABLCompile) {
 
     dbConnection    {
         dbName = 'sports2020'
-        parameterFile='pathToParameterFile'
         connectionParameters='-S 8000'
         port = '8000'
         host = 'localhost'
