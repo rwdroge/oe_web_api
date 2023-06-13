@@ -27,36 +27,4 @@ task compileCode(type: ABLCompile) {
 
 }
 
-task packageCode(type: PL){
-
-    dependsOn compileCode
-
-    destFile = "${buildDir}/dist/${project.name}.pl"
-    baseDir = "${buildDir}/rcode"
-    includes= "**/*.r"
-    excludes= "**/.pct"
-
-}
-
-task packageSRC(type: PL){
-
-    destFile = "${buildDir}/dist/${project.name}-SRC.pl"
-    baseDir = "AppServer"
-
-}
-
-task ablTest(type: ABLUnit) {
-
-    dependsOn packageCode
-
-    source("src/test/abl")
-    include("**/*.cls")
-    destinationDir = "${buildDir}/tests"
-    writeLog = true
-    baseDir = "${buildDir}"
-
-    propath = files("src/test/abl" , "${buildDir}/dist/${project.name}.pl")
-
-}
-
 defaultTasks  'compileAblTask'
