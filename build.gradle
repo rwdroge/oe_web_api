@@ -12,7 +12,7 @@ plugins {
   id "base"
 }
 
-apply plugin: 'oe.espresso.latte'
+apply plugin: 'progress.openedge.abl'
 
 abl { dlcHome = new File (System.getenv('DLC'))}
 
