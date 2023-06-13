@@ -5,10 +5,10 @@
  * Learn how to create Gradle builds at https://guides.gradle.org/creating-new-gradle-builds
  */
 
-import com.progress.gradle.abl.tasks.*
  
 plugins {
-  id "progress.openedge.abl-base" version "2.2"
+  id "progress.openedge.abl-base" version "2.2",
+  id "base"
 }
 
 apply plugin: 'progress.openedge.abl-base'
@@ -18,36 +18,28 @@ abl {
     compileOptions{}
     rcodeDir = file("${buildDir}/rcode"
     wrkDir = "/home/jenkins"
-     
-    dbConnection {
-        dbName = 'sports2000'
-        connectionParameters='-S 8000'
-    }
 }
 
-task myDbConTask(type: DBConnection){
-    id='id1'
-    dbName='sports2020'
-    aliases = ['alias1', 'alias2', 'aalias3']
+task createSports2020(type: CreateDB){
+	dbName = 'sports2020'
+	sourceDb = "${dlcHome}/sports2020"
+	outputDir = "${buildDir}/db/sports2020"
 }
-task compileCode(type: ABLCompile) {
 
-    source('AppServer')
+task compileCode(type: ABLCompile){
+	source('AppServer')
     propath = files('AppServer')
     include('**/*.cls')
     include('**/*.p')
     include('**/*.w')
-
-    dbConnection    {
-        dbName = 'sports2020'
-        connectionParameters='-S 8000'
-        port = '8000'
-        host = 'localhost'
-        username = 'admin'
-        password = 'admin2'
-        aliases = ['a1', 'a2']
+    avmOptions{
+		tty.enabled = false
+	}
+	
+	dbConnection{
+		dbName="${buildDir}/db/sports2020/sports2020"
+		connectionParameters = "-1"
     }
-    dbConnectionReferenceId("id0")
-    dbConnectionReferenceId("id1", "id2")
 }
-compileCode.dependsOn myDbConTask
+compileCode.dependsOn 'createSports2020'
+
