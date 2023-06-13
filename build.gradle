@@ -17,7 +17,7 @@ abl { dlcHome = new File (System.getenv('DLC'))}
 
 task compileCode(type: ABLCompile) {
 
-    destinationDir = file("${buildDir}/rcode")
+    rcodedir = file("${buildDir}/rcode")
     source('AppServer')
     propath = files('AppServer')
     include('**/*.cls')
