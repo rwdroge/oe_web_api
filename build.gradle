@@ -14,7 +14,6 @@ plugins {
 apply plugin: 'progress.openedge.abl-base'
 
 abl {   
-    propath("${dlcHome}/tty/")
     avmOptions {}
     compileOptions{}
     rcodeDir = file("${buildDir}/rcode"
