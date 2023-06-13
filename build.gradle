@@ -13,13 +13,6 @@ plugins {
 
 apply plugin: 'progress.openedge.abl-base'
 
-abl {   
-    avmOptions {}
-    compileOptions{}
-    rcodeDir = file("${buildDir}/rcode"
-    wrkDir = "/home/jenkins"
-}
-
 task createSports2020(type: CreateDB){
 	dbName = 'sports2020'
 	sourceDb = "${dlcHome}/sports2020"
