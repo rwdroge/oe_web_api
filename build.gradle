@@ -5,10 +5,10 @@
  * Learn how to create Gradle builds at https://guides.gradle.org/creating-new-gradle-builds
  */
 
-import oe.espresso.latte.* 
+import progress.openedge.abl.* 
  
 plugins {
-  id "oe.espresso.latte" version "0.2.6"
+  id("progress.openedge.abl") version "2.2.1"
   id "base"
 }
 
@@ -16,7 +16,7 @@ apply plugin: 'oe.espresso.latte'
 
 abl { dlcHome = new File (System.getenv('DLC'))}
 
-task compileCode(type: CompileAblTask) {
+task compileCode(type: ABLCompile) {
 
     destinationDir = file("${buildDir}/rcode")
     source('AppServer')
@@ -27,7 +27,7 @@ task compileCode(type: CompileAblTask) {
 
 }
 
-task packageCode(type: CreateProcedureLibrary){
+task packageCode(type: PL){
 
     dependsOn compileCode
 
@@ -38,14 +38,14 @@ task packageCode(type: CreateProcedureLibrary){
 
 }
 
-task packageSRC(type: CreateProcedureLibrary){
+task packageSRC(type: PL){
 
     destFile = "${buildDir}/dist/${project.name}-SRC.pl"
     baseDir = "AppServer"
 
 }
 
-task ablTest(type: AblUnit) {
+task ablTest(type: ABLUnit) {
 
     dependsOn packageCode
 
