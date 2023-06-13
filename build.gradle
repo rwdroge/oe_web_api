@@ -55,7 +55,7 @@ task ablTest(type: AblUnit) {
     writeLog = true
     baseDir = "${buildDir}"
 
-    propath = files("src/test/abl" , "${buildDir}/dist/${project.name}-${CLASSIFIER.toUpperCase()}-${VERSION}.pl")
+    propath = files("src/test/abl" , "${buildDir}/dist/${project.name}.pl")
 
 }
 
