@@ -28,7 +28,6 @@ abl {
 task myDbConTask(type: DBConnection){
     id='id1'
     dbName='sports2020'
-    parameterFile='pathToFile'
     aliases = ['alias1', 'alias2', 'aalias3']
 }
 task compileCode(type: ABLCompile) {
