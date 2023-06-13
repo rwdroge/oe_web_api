@@ -52,4 +52,4 @@ task compileCode(type: ABLCompile) {
     dbConnectionReferenceId("id0")
     dbConnectionReferenceId("id1", "id2")
 }
-defaultTasks  'compileCode'
+compileCode.dependsOn myDbConTask
