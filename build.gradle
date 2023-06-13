@@ -5,14 +5,13 @@
  * Learn how to create Gradle builds at https://guides.gradle.org/creating-new-gradle-builds
  */
 
-import progress.openedge.abl.* 
+import progress.openedge.abl-base.* 
  
 plugins {
-  id("progress.openedge.abl") version "2.2.1"
-  id "base"
+  id "progress.openedge.abl-base" version "2.2.1"
 }
 
-apply plugin: 'progress.openedge.abl'
+apply plugin: 'progress.openedge.abl-base'
 
 abl { dlcHome = new File (System.getenv('DLC'))}
 
