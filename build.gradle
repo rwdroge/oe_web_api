@@ -13,18 +13,6 @@ plugins {
 
 apply plugin: 'progress.openedge.abl-base'
 
-abl {   
-    avmOptions {}
-    compileOptions{}
-    rcodeDir = file("${buildDir}/rcode"
-    wrkDir = "/home/jenkins"
-     
-    dbConnection {
-        dbName = 'sports2000'
-        connectionParameters='-S 8000'
-    }
-}
-
 task myDbConTask(type: DBConnection){
     id='id1'
     dbName='sports2020'
