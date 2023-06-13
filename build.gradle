@@ -8,7 +8,7 @@
 
  
 plugins {
-  id "progress.openedge.abl-base" version "2.1.1"
+  id "progress.openedge.abl-base" version "2.2.0"
 }
 
 apply plugin: 'progress.openedge.abl-base'
