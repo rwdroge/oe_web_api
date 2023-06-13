@@ -31,7 +31,7 @@ task packageCode(type: CreateProcedureLibrary){
 
     dependsOn compileCode
 
-    destFile = "${buildDir}/dist/${project.name}-${CLASSIFIER.toUpperCase()}-${VERSION}.pl"
+    destFile = "${buildDir}/dist/${project.name}-${VERSION}.pl"
     baseDir = "${buildDir}/rcode"
     includes= "**/*.r"
     excludes= "**/.pct"
