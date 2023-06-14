@@ -11,7 +11,7 @@ plugins {
   id "base"
 }
 
-apply plugin: 'progress.openedge.abl-base'
+
 
 task createSports2020(type: CreateDB){
 	dbName = 'sports2020'
