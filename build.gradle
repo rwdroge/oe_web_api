@@ -24,7 +24,7 @@ task compileCode(type: ABLCompile){
     include('**/*.p')
     include('**/*.w')
     avmOptions{
-		tty.enabled = false
+		tty.enabled = true
 	}
 	
 	dbConnection{
