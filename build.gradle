@@ -12,7 +12,7 @@ plugins {
 }
 
 abl {
-		propath("${dlcHome}/src/,${dlcHome}/tty/,${dlcHome}/tty/netlib/OpenEdge.Net.pl,${dlcHome}/tty/netlib/OpenEdge.BusinessLogic.pl")
+		propath("${dlcHome}/src,${dlcHome}/tty,${dlcHome}/tty/netlib/OpenEdge.Net.pl,${dlcHome}/tty/netlib/OpenEdge.BusinessLogic.pl")
 }
 
 task createSports2020(type: CreateDB){
@@ -22,8 +22,10 @@ task createSports2020(type: CreateDB){
 }
 
 task compileCode(type: ABLCompile){
+	println "This is my ProPath: $(propath)"
+	
 	source('AppServer')
-    propath = files('AppServer')
+    propath = ('AppServer, ${dlcHome}/src,${dlcHome}/tty,${dlcHome}/tty/netlib/OpenEdge.Net.pl,${dlcHome}/tty/netlib/OpenEdge.BusinessLogic.pl')
     include('**/*.cls')
     include('**/*.p')
     include('**/*.w')
