@@ -11,6 +11,10 @@ plugins {
   id('base')
 }
 
+abl {
+		propath("${dlcHome}/tty/")
+}
+
 task createSports2020(type: CreateDB){
 	dbName = 'sports2020'
 	sourceDb = "${dlcHome}/sports2020"
