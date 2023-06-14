@@ -1,5 +1,8 @@
 <project name="ABLapp" default="compile" basedir=".">
     <property file="build.properties" />
+    <taskdef resource="PCT.properties"   classpath="${env.DLC}/pct/PCT.jar" loaderRef="pct" />
+    <typedef resource="types.properties" classpath="${env.DLC}/pct/PCT.jar" loaderRef="pct"/>
+
     <pathconvert property="ROOT" dirsep="/">
         <path location="${basedir}" />
     </pathconvert>
