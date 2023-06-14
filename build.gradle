@@ -7,10 +7,9 @@
 
  
 plugins {
-  id "progress.openedge.abl-base" version "2.2",
-  id "base"
+  id 'progress.openedge.abl-base' version '2.2',
+  id 'base'
 }
-
 
 
 task createSports2020(type: CreateDB){
