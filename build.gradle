@@ -12,7 +12,7 @@ plugins {
 }
 
 abl {
-		propath("${dlcHome}/src/,${dlcHome}/tty/,${dlcHome}/tty/netlib/OpenEdge.Net.pl")
+		propath("${dlcHome}/src/,${dlcHome}/tty/,${dlcHome}/tty/netlib/OpenEdge.Net.pl,${dlcHome}/tty/netlib/OpenEdge.BusinessLogic.pl")
 }
 
 task createSports2020(type: CreateDB){
