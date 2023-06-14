@@ -24,7 +24,7 @@ task createSports2020(type: CreateDB){
 task compileCode(type: ABLCompile){
 	
 	source('AppServer')
-    propath = ('AppServer, ${dlcHome}/src,${dlcHome}/tty,${dlcHome}/tty/netlib/OpenEdge.Net.pl,${dlcHome}/tty/OpenEdge.BusinessLogic.pl')
+    propath = files('AppServer, ${dlcHome}/src,${dlcHome}/tty,${dlcHome}/tty/netlib/OpenEdge.Net.pl,${dlcHome}/tty/OpenEdge.BusinessLogic.pl')
     include('**/*.cls')
     include('**/*.p')
     include('**/*.w')
