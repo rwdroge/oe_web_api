@@ -17,7 +17,7 @@ using OpenEdge.Logging.*.
 
 block-level on error undo, throw.
 
-class entities.customers inherits BusinessEntity implements interfaces.CRUD:
+class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implements interfaces.CRUD:
     /*------------------------------------------------------------------------------
             Purpose:                                                                      
             Notes:                                                                        
