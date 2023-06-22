@@ -13,7 +13,6 @@ plugins {
 }
 
 abl {
-		dlcHome = new File (System.getenv('DLC'))
 		propath("AppServer,${dlcHome}/src,${dlcHome}/tty,${dlcHome}/tty/netlib/OpenEdge.Net.pl,${dlcHome}/src/OpenEdge.BusinessLogic.pl")
 }
 
