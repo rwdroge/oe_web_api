@@ -7,9 +7,8 @@
 
  
 plugins {
-  id('progress.openedge.abl-base') version '2.2.1'
-  id('base')
-
+	id('progress.openedge.abl-base') version '2.2.1'
+	id('base')
 }
 
 abl {
@@ -17,23 +16,20 @@ abl {
 }
 
 task createSports2020(type: CreateDB){
-
 	dbName = 'sports2020'
 	sourceDb = "${dlcHome}/sports2020"
 	outputDir = "${buildDir}/db/sports2020"
 }
 
 task compileCode(type: ABLCompile){
-
 	source('AppServer')
-    propath("AppServer")
-    include('**/*.cls')
-    include('**/*.p')
-    include('**/*.w')
-    avmOptions{
+	propath("AppServer")
+	include('**/*.cls')
+	include('**/*.p')
+	include('**/*.w')
+	avmOptions{
 		tty.enabled = true
 	}
-	
 	dbConnection {
 		dbName="${buildDir}/db/sports2020/sports2020"
 		connectionParameters = "-1"
