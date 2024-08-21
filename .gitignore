@@ -1,3 +1,9 @@
-/assemblies.xml
-/.dbconnection
+/bin
+*.cfg
+.builder
+.scripts
+.sonarlint
+.gradle
+.settings
+
 

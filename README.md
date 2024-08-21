@@ -3,7 +3,7 @@
 An implementation of a generic WebHandler that implements a more 'normal' REST
 api than the JSDO implementation.
 
-This example is based on the Sports2000 db (of course :)).
+This example is based on the Sports2020 db (of course :)).
 It supports paging ("limit" and "offset"), sorting ("sort_by") and basic 
 filtering by using whatever field available for a certain object/business entity.
 

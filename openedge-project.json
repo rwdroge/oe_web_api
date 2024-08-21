@@ -1,0 +1,18 @@
+{
+    "name": "DevContPoc",
+    "version": "1.0",
+    "oeversion": "12.8",
+    "graphicalMode": false,
+    "charset": "utf-8",
+    "extraParameters": "",
+    "buildPath": [
+        { "type": "source", "path": "./src" },
+        { "type": "propath", "path": "." },
+        { "type": "propath", "path": "${DLC}/tty/OpenEdge.Core.pl" },
+        { "type": "propath", "path": "${DLC}/tty/netlib/OpenEdge.Net.pl" },
+        { "type": "propath", "path": "./src/OpenEdge.BusinessLogic.pl" }
+    ],
+    "dbConnections": [ { "name": "sports2020", "connect": "-db sports2020 -S 10000 -H sports2020-db", "schemaFile": "src/schema/sports2020.df", "aliases": [] } ],
+    "buildDirectory": "./bin",
+    "numThreads": 8
+}

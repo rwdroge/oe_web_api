@@ -1,2 +1,0 @@
-<?xml version="1.0" ?>
-<testsuites errors="0" failures="0" name="ABLUnit" tests="1"><testsuite name="C:\Workspaces\GenericService\GenericService\PASOEContent\WEB-INF\openedge\OrderValidationTest.cls" tests="1" time="2,545"><testcase name="testCheckMandatoryFields" status="Success" time="2,543"/></testsuite></testsuites>
