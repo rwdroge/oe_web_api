@@ -5,5 +5,8 @@
 .sonarlint
 .gradle
 .settings
+.gitignore
+.gitattributes
+
 
 
