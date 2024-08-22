@@ -44,37 +44,48 @@ Prerequisites for a full working dev environment:
 - Docker compose installed
 - Visual Studio Code installed
 
+Getting started:
+
+- Clone this repository
+- In the main directory of the cloned project enter:
+
+```
+> code .
+```
+
+That's all there is to it, VSC will do the rest. Make sure to select to Reopen In Container once that message pops up.
+
 <h2>Usage</h2>
 
 <H3>GET</h3>
 
 <b>MetaData</b>
 
-    http(s)://<servername>:<portnumber>/<webappname>/api/meta/<entityname>
+    http(s)://<servername>:8810/web/api/meta/<entityname>
 
 <b>Data</b>
 
     Get all customers: 
-    http(s)://<servername>:<portnumber>/<webappname>/api/data/customers
+    http(s)://<servername>:8810/web/api/data/customers
 
     Get one customer:
-    http(s)://<servername>:<portnumber>/<webappname>/api/data/customers/1
+    http(s)://<servername>:8810/web/api/data/customers/1
     
     Get filtered customer(s):
-    http(s)://<servername>:<portnumber>/<webappname>/api/data/customers?SalesRep=BBB&city=Oslo
+    http(s)://<servername>:8810/web/api/data/customers?SalesRep=BBB&city=Oslo
     
     Use paging:
-    http(s)://<servername>:<portnumber>/<webappname>/api/data/customers?limit=10&offset=5
+    http(s)://<servername>:8810/web/api/data/customers?limit=10&offset=5
 
     Use sorting:
-    http(s)://<servername>:<portnumber>/<webappname>/api/data/customers?sort_by=Country
+    http(s)://<servername>:8810/web/api/data/customers?sort_by=Country
     
 <H3>PUT</h3>
 
 <b>Data</b>
 
     Update one customer:
-    http(s)://<servername>:<portnumber>/<webappname>/api/data/customers/1
+    http(s)://<servername>:8810/web/api/data/customers/1
     
 
 <H3>POST</h3>
@@ -82,4 +93,4 @@ Prerequisites for a full working dev environment:
 <b>Data</b>
 
     Create one customer:
-    http(s)://<servername>:<portnumber>/<webappname>/api/data/customers
+    http(s)://<servername>:8810/web/api/data/customers
