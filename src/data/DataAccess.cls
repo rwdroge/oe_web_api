@@ -146,7 +146,7 @@ define variable iSeq            as integer   no-undo.
                     do:
                         if cid > "" then hDataSource:restart-rowid(1)
                             = to-rowid ((cid)).
-                        phDataSet:get-buffer-handle(1):set-callback ("after-row-fill", "AddIdField").
+                        phDataSet:get-buffer-handle(iEntry):set-callback ("after-row-fill", "AddIdField").
                         phDataSet:fill().
                     end.
                 end. /* DO IF iEntry = 1 */
