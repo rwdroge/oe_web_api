@@ -81,7 +81,7 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
         dao:attachSource("ttitem", "itemnum", "item", "itemnum", filter:id1, filter, input-output dataset dsItem by-reference).
         this-object:Deleteitem(input-output dataset dsItem by-reference).
         hDataSet = dataset dsItem:handle.
-        dao:dettachSource(dataset dsItem by-reference).
+        dao:detachSource(dataset dsItem by-reference).
     
     end method.
         
@@ -93,7 +93,7 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
         
         daO = new data.DataAccess().
         daO:attachSource(this-object:ttName, this-object:piName, this-object:dbName, this-object:piName, filter:id1, filter, input-output dataset dsItem by-reference).
-        daO:dettachSource(dataset dsItem by-reference).    
+        daO:detachSource(dataset dsItem by-reference).    
             
     end method.
     

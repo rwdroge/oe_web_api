@@ -17,7 +17,7 @@ block-level on error undo, throw.
 class data.DataAccess: 
 
 define variable lok as logical no-undo.
-
+define variable iSeq            as integer   no-undo.
    
     /*------------------------------------------------------------------------------
      Purpose:
@@ -42,7 +42,7 @@ define variable lok as logical no-undo.
         define variable hQuery          as handle    no-undo.
         define variable qh              as handle    no-undo.
         define variable numRecs         as integer   no-undo.   
-        define variable iSeq            as integer   no-undo.
+        
         define variable iEntry          as integer   no-undo.
         define variable iCount          as integer   no-undo.
         define variable iMaxRows        as integer   initial ? no-undo.
@@ -132,13 +132,11 @@ define variable lok as logical no-undo.
                         repeat while not hQuery:query-off-end and (iMaxRows = ? or iCount < iMaxRows):
                             hQuery:get-next () no-error.
                             if hBuffer:available then do:
-                            
                                 phDataSet:get-buffer-handle(1):buffer-create.
                                 phDataSet:get-buffer-handle(1):buffer-copy (hBuffer).
                                 phDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = string(hBuffer:rowid).
                                 iSeq = iSeq + 1.
                                 phDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
-                            
                             end.
                                         
                             iCount = iCount + 1.
@@ -148,7 +146,7 @@ define variable lok as logical no-undo.
                     do:
                         if cid > "" then hDataSource:restart-rowid(1)
                             = to-rowid ((cid)).
-                        phDataSet:get-buffer-handle(iEntry):set-callback ("after-row-fill", "AddIdField").
+                        phDataSet:get-buffer-handle(1):set-callback ("after-row-fill", "AddIdField").
                         phDataSet:fill().
                     end.
                 end. /* DO IF iEntry = 1 */
@@ -175,11 +173,9 @@ define variable lok as logical no-undo.
     end method.
 
     method public void AddIdField (input DATASET-handle phDataSet):
-            define variable iSeq as integer no-undo.
             phDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = string(phDataSet:get-buffer-handle(1):rowid).
             iSeq              = iSeq + 1.
             phDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
-            
     end method.
     
     method public void fetchAll (input-output dataset-handle phDataSet):

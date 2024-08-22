@@ -1,9 +1,9 @@
  
  /*------------------------------------------------------------------------
-    File        : customers
-    Syntax      : 
+ Syntax      : 
     Author(s)   : rdroge
     Created     : Thu Dec 13 12:49:18 CET 2018
+    File        : customers
     Notes       : 
   ----------------------------------------------------------------------*/
 
@@ -34,9 +34,6 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
     define public property dbName as character no-undo initial "customer" get. set.
     define variable logger as ILogWriter no-undo.
     
-    
-    
-    
     /*------------------------------------------------------------------------------
             Purpose:                                                                      
             Notes:                                                                        
@@ -45,8 +42,6 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
         
         
         super (dataset dsCustomer:HANDLE).
-        
-        
         
     end constructor.
     
@@ -68,22 +63,9 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
     end method.
     
     method public void Update(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
-        define variable hChanges as handle.
-        dao = new data.DataAccess().
-        dao:attachSource("ttcustomer", "CustNum", "Customer", "CustNum", filter:id1, filter, input-output dataset dsCustomer by-reference).
-        //dataset dscustomer:write-json('file', '/usr/wrk/emeapas/work/dscustomer_before.json', true, ?, ?,?,true ).      
-        create dataset hChanges.
-        hChanges:create-like(dataset dscustomer:handle).
-        hChanges:read-json('JsonObject', jsonObject).
-        
-        hChanges:get-changes(dataset dscustomer:handle).
-        //hChanges:write-json('file', '/usr/wrk/emeapas/work/dscustomer_before.json', true, ?, ?,?,true ).
-        hChanges:merge-changes(dataset dscustomer:handle).
-        //dataset dscustomer:get-buffer-handle (1):table-handle:tracking-changes = false.
-        //hChanges:write-json('file', '/usr/wrk/emeapas/work/dscustomer_after.json', true, ?, ?,?,true ).
-        //this-object:Updatecustomers(filter, input-output dataset dsCustomer by-reference).
-        dao:CommitChanges(piName, input-output dataset dsCustomer by-reference).
+        this-object:Updatecustomers(filter, input-output dataset dsCustomer by-reference).
         hDataSet = dataset dsCustomer:handle.
+        
     
     end method.
     
@@ -93,7 +75,7 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
         dao:attachSource("ttcustomer", "custnum", "customer", "custnum", filter:id1, filter, input-output dataset dsCustomer by-reference).
         this-object:Deletecustomer(input-output dataset dsCustomer by-reference).
         hDataSet = dataset dsCustomer:handle.
-        dao:dettachSource(dataset dsCustomer by-reference).
+        dao:detachSource(dataset dsCustomer by-reference).
     
     end method.
         
@@ -105,7 +87,7 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
         
         daO = new data.DataAccess().
         daO:attachSource(this-object:ttName, this-object:piName, this-object:dbName, this-object:piName, filter:id1, filter, input-output dataset dsCustomer by-reference).
-        daO:dettachSource(dataset dsCustomer by-reference).    
+        daO:detachSource(dataset dsCustomer by-reference).    
             
     end method.
     
@@ -120,6 +102,7 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
         dao = new data.DataAccess().
         dao:attachSource("ttcustomer", "CustNum", "Customer", "CustNum", filter:id1, filter, input-output dataset dsCustomer by-reference).
         dao:CommitChanges(piName, input-output dataset dsCustomer by-reference).
+        dao:detachSource(dataset dsCustomer by-reference).
               
     end method.
     
