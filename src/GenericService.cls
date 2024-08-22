@@ -135,7 +135,7 @@ class GenericService inherits WebHandler:
                 dynClass:Read(filter, output dataset-handle hDataSet).
                 hTempTable = hDataSet:get-buffer-handle(1):table-handle.
                 jsonObject = new JsonObject().
-                jsonObject:read(hTempTable, true).
+                jsonObject:read(hTempTable).
                 body = jsonObject:GetJsonText().
             end.
         end.

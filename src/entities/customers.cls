@@ -47,7 +47,8 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
     
     method public void Read(input filter as generics.FilterParams, output dataset-handle hDataSet):
         this-object:GetCustomers(filter, output dataset dsCustomer by-reference).
-        hDataSet = dataset dsCustomer:handle.    
+        hDataSet = dataset dsCustomer:handle. 
+         
     end method.
     
     method public void Create(input jsonObject as JsonObject, output dataset-handle hDataSet):

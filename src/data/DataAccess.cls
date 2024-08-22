@@ -148,6 +148,7 @@ define variable iSeq            as integer   no-undo.
                             = to-rowid ((cid)).
                         phDataSet:get-buffer-handle(iEntry):set-callback ("after-row-fill", "AddIdField").
                         phDataSet:fill().
+                        
                     end.
                 end. /* DO IF iEntry = 1 */
                 else do:
@@ -159,12 +160,13 @@ define variable iSeq            as integer   no-undo.
                     hQuery:query-open.
                     hQuery:get-next () no-error.
                     if hBuffer:available then do:
-                        phDataSet:get-buffer-handle(1):buffer-create.
+                        phDataSet:get-buffer-handle(1):buffer-create().
                         phDataSet:get-buffer-handle(1):buffer-copy (hBuffer).
                         phDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = string(hBuffer:rowid).
                         iSeq = iSeq + 1.
                         phDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
                     end.
+                    
                 end. 
             end.
         end. /* DO iEntry = 1 TO NUM-ENTRIES */
@@ -176,6 +178,8 @@ define variable iSeq            as integer   no-undo.
             phDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = string(phDataSet:get-buffer-handle(1):rowid).
             iSeq              = iSeq + 1.
             phDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
+            phDataSet:write-json('file', '/tmp/phDataSet.json').
+
     end method.
     
     method public void fetchAll (input-output dataset-handle phDataSet):
