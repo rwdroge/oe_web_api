@@ -18,7 +18,7 @@ api than the JSDO implementation.
 > code .
 ```
 
-That's all there is to it, VSC will do the rest. Make sure to select to Reopen In Container once that message pops up.
+That's all there is to it, VSC will do the rest. It will spin up containers for a compiler, PASOE instance and OE DB. Make sure to select to <b>Reopen In Container</b> once that message pops up in Visual Studio Code.
 
 This example is based on the Sports2020 db (of course :)).
 It supports paging ("limit" and "offset"), sorting ("sort_by") and basic 
