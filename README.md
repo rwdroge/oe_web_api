@@ -3,6 +3,23 @@
 An implementation of a generic WebHandler that implements a more 'normal' REST
 api than the JSDO implementation.
 
+<h2>Prerequisites for a full working dev environment:</h2>
+
+- Docker installed
+- Docker compose installed
+- Visual Studio Code installed
+
+<h2>Getting started:</h2>
+
+- Clone this repository
+- In the main directory of the cloned project enter:
+
+```
+> code .
+```
+
+That's all there is to it, VSC will do the rest. Make sure to select to Reopen In Container once that message pops up.
+
 This example is based on the Sports2020 db (of course :)).
 It supports paging ("limit" and "offset"), sorting ("sort_by") and basic 
 filtering by using whatever field available for a certain object/business entity.
@@ -35,25 +52,6 @@ If you just want to get data, you should use /api/<b>data</b>/
 
 <b>Data Access</b>
 - DataAccess.cls      (generic methods: count/paging/field check)
-
-<b>Note:</b>
-
-Prerequisites for a full working dev environment:
-
-- Docker installed
-- Docker compose installed
-- Visual Studio Code installed
-
-Getting started:
-
-- Clone this repository
-- In the main directory of the cloned project enter:
-
-```
-> code .
-```
-
-That's all there is to it, VSC will do the rest. Make sure to select to Reopen In Container once that message pops up.
 
 <h2>Usage</h2>
 
