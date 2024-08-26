@@ -7,11 +7,13 @@ api than the JSDO implementation.
 
 - Docker installed
 - Docker compose installed
-- Visual Studio Code installed
+- Visual Studio Code (VSC) installed
+- Dev Containers VSC extension installed
 
 <h2>Getting started:</h2>
 
 - Clone this repository
+- Put an OpenEdge license file (progress.cfg) in the 'license' folder that contains at least 4GL Dev System, PASOE Dev and OE RDBMS product codes). This will be used by the OpenEdge installations running inside the containers.
 - In the main directory of the cloned project enter:
 
 ```
