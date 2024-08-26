@@ -87,7 +87,7 @@ If you just want to get data, you should use /api/<b>data</b>/
 <b>Data</b>
 
     Update one customer:
-    http(s)://<servername>:8810/web/api/data/customers/1
+    http(s)://<servername>:8810/web/api/data/customers/<custnum>
     
 
 <H3>POST</h3>
@@ -96,3 +96,10 @@ If you just want to get data, you should use /api/<b>data</b>/
 
     Create one customer:
     http(s)://<servername>:8810/web/api/data/customers
+
+<H3>DELETE</h3>
+
+<b>Data</b>
+
+    Delete one customer:
+    http(s)://<servername>:8810/web/api/data/customers/<custnum>
