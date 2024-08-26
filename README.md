@@ -18,7 +18,11 @@ api than the JSDO implementation.
 > code .
 ```
 
-That's all there is to it, VSC will do the rest. It will spin up containers for a compiler, PASOE instance and OE DB. Make sure to select to <b>Reopen In Container</b> once that message pops up in Visual Studio Code.
+Make sure to select to <b>Reopen In Container</b> once that message pops up in Visual Studio Code.
+That's all there is to it, VSC will do the rest. It will spin up containers for a compiler, PASOE instance and OE DB. 
+Right now these are container images that are downloaded from an online DockerHub repository while starting the environment for the first time (can take some time).
+But of course, these could be replaced by your own home build Docker images.
+
 
 This example is based on the Sports2020 db (of course :)).
 It supports paging ("limit" and "offset"), sorting ("sort_by") and basic 
