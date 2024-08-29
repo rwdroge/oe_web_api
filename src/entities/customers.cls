@@ -7,7 +7,6 @@
     Notes       : 
   ----------------------------------------------------------------------*/
 
-
 using Progress.Lang.*.
 using Progress.Json.ObjectModel.*.
 using data.DataAccess.*.

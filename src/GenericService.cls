@@ -23,52 +23,35 @@ class GenericService inherits WebHandler:
 
 
     method override protected integer HandleGet(input poRequest as OpenEdge.Web.IWebRequest):
-        define variable response    as WebResponse       no-undo.
-        define variable writer      as WebResponseWriter no-undo.
+        var logical 
+            lOk = true.
+        var longchar 
+            body,
+            lcModel.
+        var char 
+            entityName  = poRequest:GetPathParameter("entityname"),
+            entityName2 = poRequest:GetPathParameter("entityname2"),
+            id1         = poRequest:GetPathParameter("id1"),
+            id2         = poRequest:GetPathParameter("id2"),
+            apiType     = poRequest:GetPathParameter("apitype"),
+            queryString = poRequest:GetContextValue("QUERY_STRING"),
+            oFieldlist, 
+            oValuelist.
         
-        define variable body        as longchar          no-undo.
-        define variable lcModel     as longchar          no-undo.   
+        var handle hDataSet, hTempTable, hQueryParams, hQuery.  
+        var WebResponse response = new WebResponse(). 
+        var WebResponseWriter writer = new WebResponseWriter(response).
+        var generics.FilterParams filter.
         
-        define variable entityName  as character         no-undo.
-        define variable entityName2 as character         no-undo.
-        define variable id1         as character         no-undo.
-        define variable id2         as character         no-undo.
-        define variable queryString as character         no-undo.        
-        define variable oFieldlist  as character         no-undo.
-        define variable apiType     as character         no-undo.   
-        
-        define variable lOk         as logical           no-undo initial true.   
-        
-        define variable filter      as generics.FilterParams      no-undo.
-        define variable entity      as generics.GenericEntity     no-undo.
-        define variable dynClass    as interfaces.CRUD   no-undo.
-        define variable dynClass2   as interfaces.RO     no-undo.
-        
-        define variable hDataSet    as handle            no-undo.
-        define variable hTempTable as handle             no-undo.
-
-        define variable hCP         as handle            no-undo.
-       
-        define variable jsonObject  as JsonObject        no-undo.       
-        define variable jsonArray   as JsonArray         no-undo.
-        
-        response    = new WebResponse().        
-        writer      = new WebResponseWriter(response).
-        entityName  = poRequest:GetPathParameter("entityname").
-        entityName2 = poRequest:GetPathParameter("entityname2").
-        id1         = poRequest:GetPathParameter("id1").
-        id2         = poRequest:GetPathParameter("id2").
-        apiType     = poRequest:GetPathParameter("apitype").
-        queryString = poRequest:GetContextValue("QUERY_STRING").
+        var interfaces.CRUD dynClass.
+        var interfaces.RO dynClass2.
+        var JsonObject jsonObject.
+        var JsonArray jsonArray.
         
         if apiType = "data" then
         do:
-            filter = new generics.FilterParams(entityName, entityName2, querystring, id1, id2).
-            
-            entityName = "entities." + entityName.
-            entity = new generics.GenericEntity(entityName).
-            
-            dynClass = dynamic-new string(entityName) () no-error.
+            filter = new generics.FilterParams(entityName, entityName2, querystring, id1, id2, output table-handle hQueryParams).
+            dynClass = dynamic-new string("entities." + entityName) () no-error.
             
             if entityName2 > "" then
                 dynClass2 = dynamic-new string(entityName + entityName2) () no-error.                
@@ -76,7 +59,7 @@ class GenericService inherits WebHandler:
             if dynClass = ? or ( entityName2 > "" and dynClass2 = ?) then 
             do:
                 lOk = false.
-                response:StatusCode = 400.
+                response:StatusCode = 422.
                 jsonObject = new JsonObject().
                 jsonObject:Add("Error", "Following entities or combination of these entities do not exist for this api").
                 jsonObject:Add("Entity", right-trim(left-trim(entityName + "," + entityName2, ","), ",")).
@@ -89,7 +72,7 @@ class GenericService inherits WebHandler:
                     dynClass2:CheckFieldList(filter:FieldList, output oFieldList, output lOk).
                     if not lOk then 
                     do:
-                        response:StatusCode = 400.
+                        response:StatusCode = 422.
                         jsonObject = new JsonObject().
                         jsonObject:Add("Error", "Following field(s) in query do not exist for this entity").
                         jsonObject:Add("Fields", oFieldList).
@@ -99,14 +82,37 @@ class GenericService inherits WebHandler:
                 else 
                 do:
                     dynClass:CheckFieldList(filter:FieldList, output oFieldList, output lOk).
+                    
                     if not lOk then
                     do:
-                        response:StatusCode = 400.
+                        response:StatusCode = 422.
                         jsonObject = new JsonObject().
                         jsonObject:Add("Error", "Following field(s) in query do not exist for this entity").
                         jsonObject:Add("Fields", oFieldList).
                         body = jsonObject:GetJsonText().
-                    end.    
+                    end.
+                    dynClass:CheckValueList(input table-handle hQueryParams, output oValueList, output lOk) no-error. 
+                    if not lOk then
+                    do:
+                        def var iii as integer no-undo.
+                        def var listItem as character no-undo.
+                        
+                        response:StatusCode = 422.
+                        if num-entries(oValueList, ",") > 1 then do:
+                            jsonArray = new JsonArray().
+                        end.
+                        do iii = 1 to num-entries(right-trim(oValueList, ","), "," ):
+                            listItem = entry(iii, oValueList, ",").
+                            jsonObject = new JsonObject().
+                            jsonObject:Add("Error", "Following field in query has an incorrect value according to the datatype for field").
+                            jsonObject:Add("Field", entry(1, listItem, "/")).
+                            jsonObject:Add("Value", entry(2, listItem, "/")).
+                            jsonObject:Add("Expected Datatype", entry(3, listItem, "/") ).
+                            jsonArray:Add(-1 + iii, jsonObject).
+                            
+                        end.
+                        body = body + jsonArray:GetJsonText().
+                    end.
                 end.
             end.
             
@@ -173,9 +179,7 @@ class GenericService inherits WebHandler:
         define variable body        as jsonObject        no-undo.
         
         define variable entityName  as character         no-undo.
-        define variable entityName2 as character         no-undo.
         define variable id1         as character         no-undo.
-        define variable id2         as character         no-undo.
         define variable queryString as character         no-undo.        
         define variable oFieldlist  as character         no-undo.
         define variable lcModel     as longchar          no-undo.   
@@ -185,14 +189,11 @@ class GenericService inherits WebHandler:
         define variable filter      as generics.FilterParams      no-undo.
         define variable lOk         as logical           no-undo initial true.   
         
-        define variable entity      as generics.GenericEntity     no-undo.
         define variable dynClass    as interfaces.CRUD   no-undo.
         define variable dynClass2   as interfaces.CRUD   no-undo.
         
         define variable hDataSet    as handle            no-undo.
-        define variable hTempTable  as handle            no-undo.
-        define variable hCP         as handle            no-undo.
-       
+        
         define variable jsonObject  as JsonObject        no-undo.       
         define variable jsonArray   as JsonArray         no-undo.
         
@@ -210,7 +211,7 @@ class GenericService inherits WebHandler:
                 response:StatusCode = 400.
                 jsonObject = new JsonObject().
                 jsonObject:Add("Error", "Following entities or combination of these entities do not exist for this api").
-                jsonObject:Add("Entity", right-trim(left-trim(entityName + "," + entityName2, ","), ",")).
+                jsonObject:Add("Entity", right-trim(left-trim(entityName + ","))).
                 
                 responseBody = jsonObject:GetJsonText().
         end.
@@ -232,27 +233,22 @@ class GenericService inherits WebHandler:
         define variable writer      as WebResponseWriter no-undo.
         define variable body        as jsonObject        no-undo.
         
-        define variable entityName  as character         no-undo.
+        define variable entityName as character no-undo.
         define variable entityName2 as character         no-undo.
         define variable id1         as character         no-undo.
-        define variable id2         as character         no-undo.
         define variable queryString as character         no-undo.        
         define variable oFieldlist  as character         no-undo.
-        define variable lcModel     as longchar          no-undo.   
         define variable apiType     as character         no-undo.   
         define variable responseBody as longchar         no-undo.
         
         define variable filter      as generics.FilterParams      no-undo.
         define variable lOk         as logical           no-undo initial true.   
         
-        define variable entity      as generics.GenericEntity     no-undo.
         define variable dynClass    as interfaces.CRUD   no-undo.
-        define variable dynClass2   as interfaces.CRUD   no-undo.
         
         define variable hDataSet    as handle            no-undo.
-        define variable hTempTable  as handle            no-undo.
-        define variable hCP         as handle            no-undo.
-       
+        define variable hQueryParams as handle no-undo.
+        
         define variable jsonObject  as JsonObject        no-undo.       
         define variable jsonArray   as JsonArray         no-undo.
         
@@ -264,7 +260,7 @@ class GenericService inherits WebHandler:
         
         body        = cast(poRequest:Entity, JsonObject).
         
-        filter = new generics.FilterParams(entityName, "", "", id1, "").
+        filter = new generics.FilterParams(entityName, "", "", id1, "", table-handle hQueryParams).
         
         dynClass = dynamic-new string("entities." + entityName) () no-error.
         
@@ -296,26 +292,20 @@ class GenericService inherits WebHandler:
         define variable body        as jsonObject        no-undo.
         
         define variable entityName  as character         no-undo.
-        define variable entityName2 as character         no-undo.
         define variable id1         as character         no-undo.
-        define variable id2         as character         no-undo.
         define variable queryString as character         no-undo.        
         define variable oFieldlist  as character         no-undo.
-        define variable lcModel     as longchar          no-undo.   
         define variable apiType     as character         no-undo.   
         define variable responseBody as longchar         no-undo.
         
         define variable filter      as generics.FilterParams      no-undo.
         define variable lOk         as logical           no-undo initial true.   
         
-        define variable entity      as generics.GenericEntity     no-undo.
         define variable dynClass    as interfaces.CRUD   no-undo.
-        define variable dynClass2   as interfaces.CRUD   no-undo.
         
         define variable hDataSet    as handle            no-undo.
-        define variable hTempTable  as handle            no-undo.
-        define variable hCP         as handle            no-undo.
-       
+        define variable hQueryParams as handle           no-undo. 
+        
         define variable jsonObject  as JsonObject        no-undo.       
         define variable jsonArray   as JsonArray         no-undo.
         
@@ -327,7 +317,7 @@ class GenericService inherits WebHandler:
         
         body        = cast(poRequest:Entity, JsonObject).
         
-        filter = new generics.FilterParams(entityName, "", "", id1, "").
+        filter = new generics.FilterParams(entityName, "", "", id1, "", table-handle hQueryParams).
         
         dynClass = dynamic-new string("entities." + entityName) () no-error.
         
@@ -335,8 +325,8 @@ class GenericService inherits WebHandler:
         do:
                 response:StatusCode = 400.
                 jsonObject = new JsonObject().
-                jsonObject:Add("Error", "Following entities or combination of these entities do not exist for this api").
-                jsonObject:Add("Entity", right-trim(left-trim(entityName + "," + entityName2, ","), ",")).
+                jsonObject:Add("Error", "Following entity does not exist for this api").
+                jsonObject:Add("Entity", right-trim(left-trim(entityName + ","), ",")).
                 
                 responseBody = jsonObject:GetJsonText().
         end.

@@ -1,5 +1,4 @@
- 
- /*------------------------------------------------------------------------
+/*------------------------------------------------------------------------
     File        : orders
     Syntax      : 
     Author(s)   : rdroge
@@ -84,7 +83,7 @@ class entities.orders inherits OpenEdge.BusinessLogic.BusinessEntity implements 
         dao:attachSource("ttorder", "ordernum", "order", "ordernum", filter:id1, filter, input-output dataset dsOrder by-reference).
         this-object:Deleteorder(input-output dataset dsOrder by-reference).
         hDataSet = dataset dsOrder:handle.
-        dao:dettachSource(dataset dsOrder by-reference).
+        dao:detachSource(dataset dsOrder by-reference).
     
     end method.
         
@@ -96,7 +95,7 @@ class entities.orders inherits OpenEdge.BusinessLogic.BusinessEntity implements 
         
         daO = new data.DataAccess().
         daO:attachSource(this-object:ttName, this-object:piName, this-object:dbName, this-object:piName, filter:id1, filter, input-output dataset dsOrder by-reference).
-        daO:dettachSource(dataset dsOrder by-reference).    
+        daO:detachSource(dataset dsOrder by-reference).    
             
     end method.
     

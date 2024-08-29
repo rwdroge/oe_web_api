@@ -38,6 +38,49 @@
         delete tt{&entity}.
         
     end method.
+
+    method public void CheckValueList (input table-handle QueryParams, output oKeyValuePair as character, output lOk as logical):
+        define variable cdataType       as character no-undo.
+        define variable cFieldName      as character no-undo.
+        define variable cValue          as character no-undo.
+        define variable hQuery          as handle no-undo.
+        define variable bQueryParams    as handle no-undo.
+
+        lOk = true.
+        //Create an empty temp-table of the requested entity to be able to validate fields and values in querystring
+        create tt{&entity}.
+
+        bQueryParams = QueryParams:default-buffer-handle.
+        
+        create query hQuery.
+        hQuery:set-buffers(bQueryParams).
+        hQuery:query-prepare("for each ttQueryParams").
+        hQuery:query-open.
+        
+        // Go through all query string parameters and check their values for incorrect datatypes
+        repeat:
+            hQuery:get-next().
+            if hQuery:query-off-end then leave.
+            if bQueryParams:available then do:
+                cFieldName   = bQueryParams:buffer-field("fieldname"):buffer-value().
+                cValue       = bQueryParams:buffer-field("fieldvalue"):buffer-value().
+                cdataType = buffer tt{&entity}:buffer-field(cFieldName):data-type.
+                case cdataType:
+                   when "integer" then integer(cValue) no-error.
+                   when "decimal" then decimal(cValue) no-error.    
+                   when "logical" then logical(cValue) no-error.
+                   when "date"    then date(cValue) no-error.
+                end.
+                if error-status:error then do:
+                    oKeyValuePair = oKeyValuePair + cFieldName + "/" + cValue + "/" + cdataType + "/" + ",".
+                        lOk = false.
+                end.
+            end.
+        end.
+        
+        //delete object hQuery.
+        //delete object bQueryParams.
+    end method.    
     
     method public void CreateEntityModel (output lcModel as longchar ):
         define variable ii as integer no-undo.
