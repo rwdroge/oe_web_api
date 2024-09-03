@@ -45,8 +45,8 @@ class GenericService inherits WebHandler:
         
         var interfaces.CRUD dynClass.
         var interfaces.RO dynClass2.
-        var JsonObject jsonObject.
-        var JsonArray jsonArray.
+        var JsonObject joError, joResult.
+        var JsonArray jaError, jaResult.
         
         if apiType = "data" then
         do:
@@ -60,10 +60,10 @@ class GenericService inherits WebHandler:
             do:
                 lOk = false.
                 response:StatusCode = 422.
-                jsonObject = new JsonObject().
-                jsonObject:Add("Error", "Following entities or combination of these entities do not exist for this api").
-                jsonObject:Add("Entity", right-trim(left-trim(entityName + "," + entityName2, ","), ",")).
-                body = jsonObject:GetJsonText().
+                joError = new JsonObject().
+                joError:Add("Error", "Following entities or combination of these entities do not exist for this api").
+                joError:Add("Entity", right-trim(left-trim(entityName + "," + entityName2, ","), ",")).
+                body = joError:GetJsonText().
             end.
             else if filter:where > "" then
             do:
@@ -73,10 +73,10 @@ class GenericService inherits WebHandler:
                     if not lOk then 
                     do:
                         response:StatusCode = 422.
-                        jsonObject = new JsonObject().
-                        jsonObject:Add("Error", "Following field(s) in query do not exist for this entity").
-                        jsonObject:Add("Fields", oFieldList).
-                        body = jsonObject:GetJsonText().
+                        joError = new JsonObject().
+                        joError:Add("Error", "Following field(s) in query do not exist for this entity").
+                        joError:Add("Fields", oFieldList).
+                        body = joError:GetJsonText().
                     end.
                 end.
                 else 
@@ -86,10 +86,10 @@ class GenericService inherits WebHandler:
                     if not lOk then
                     do:
                         response:StatusCode = 422.
-                        jsonObject = new JsonObject().
-                        jsonObject:Add("Error", "Following field(s) in query do not exist for this entity").
-                        jsonObject:Add("Fields", oFieldList).
-                        body = jsonObject:GetJsonText().
+                        joError = new JsonObject().
+                        joError:Add("Error", "Following field(s) in query do not exist for this entity").
+                        joError:Add("Fields", oFieldList).
+                        body = joError:GetJsonText().
                     end.
                     dynClass:CheckValueList(input table-handle hQueryParams, output oValueList, output lOk) no-error. 
                     if not lOk then
@@ -99,19 +99,19 @@ class GenericService inherits WebHandler:
                         
                         response:StatusCode = 422.
                         if num-entries(oValueList, ",") > 1 then do:
-                            jsonArray = new JsonArray().
+                            jaError = new JsonArray().
                         end.
                         do iii = 1 to num-entries(right-trim(oValueList, ","), "," ):
                             listItem = entry(iii, oValueList, ",").
-                            jsonObject = new JsonObject().
-                            jsonObject:Add("Error", "Following field in query has an incorrect value according to the datatype for field").
-                            jsonObject:Add("Field", entry(1, listItem, "/")).
-                            jsonObject:Add("Value", entry(2, listItem, "/")).
-                            jsonObject:Add("Expected Datatype", entry(3, listItem, "/") ).
-                            jsonArray:Add(-1 + iii, jsonObject).
+                            joError = new JsonObject().
+                            joError:Add("Error", "Following field in query has an incorrect value according to the datatype for field").
+                            joError:Add("Field", entry(1, listItem, "/")).
+                            joError:Add("Value", entry(2, listItem, "/")).
+                            joError:Add("Expected Datatype", entry(3, listItem, "/") ).
+                            jaError:Add(-1 + iii, joError).
                             
                         end.
-                        body = body + jsonArray:GetJsonText().
+                        body = body + jaError:GetJsonText().
                     end.
                 end.
             end.
@@ -123,26 +123,26 @@ class GenericService inherits WebHandler:
                 dynClass2:Read(filter, output dataset-handle hDataSet).
                
                 hTempTable = hDataSet:get-buffer-handle(1):table-handle.
-                jsonObject = new JsonObject().
-                jsonObject:Read(hTempTable).
+                joResult = new JsonObject().
+                joResult:Read(hTempTable).
                 
                 do ii=2 to hDataSet:num-buffers:
                     hTempTable = hDataSet:get-buffer-handle(ii):table-handle.
-                    jsonArray = new JsonArray().
-                    jsonArray:read(hTempTable).
-                    jsonObject:add(entityName2, jsonArray ).
+                    jaResult = new JsonArray().
+                    jaResult:read(hTempTable).
+                    joResult:add(entityName2, jaResult ).
                                            
                 end.
-                body = jsonObject:GetJsonText(). 
+                body = joResult:GetJsonText(). 
             end.
             else if lOk then
             do:
                 response:StatusCode = 200.
                 dynClass:Read(filter, output dataset-handle hDataSet).
                 hTempTable = hDataSet:get-buffer-handle(1):table-handle.
-                jsonObject = new JsonObject().
-                jsonObject:read(hTempTable).
-                body = jsonObject:GetJsonText().
+                joResult = new JsonObject().
+                joResult:read(hTempTable).
+                body = joResult:GetJsonText().
             end.
         end.
         else if apiType = "meta" then
@@ -158,8 +158,10 @@ class GenericService inherits WebHandler:
         writer:flush().
         writer:close().        
         finally:  
-            delete object JsonArray     no-error.
-            delete object JsonObject    no-error.
+            delete object joResult      no-error.
+            delete object jaResult      no-error.
+            delete object joError       no-error.
+            delete object jaError       no-error.
             delete object dynClass      no-error.
             delete object dynClass2     no-error.
             delete object hDataSet      no-error.
