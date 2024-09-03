@@ -166,12 +166,13 @@ define variable iSeq            as integer   no-undo.
                         iSeq = iSeq + 1.
                         phDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
                     end.
-                    
+                    delete object hQuery.
                 end. 
             end.
+            
+            
         end. /* DO iEntry = 1 TO NUM-ENTRIES */
-
-        
+        delete object hBuffer. 
     end method.
 
     method public void AddIdField (input DATASET-handle phDataSet):

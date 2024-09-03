@@ -113,4 +113,8 @@ class generics.FilterParams:
         end.
     end method.  
     
+DESTRUCTOR PUBLIC FilterParams( ):
+    if available ttQueryParams then delete ttQueryParams.
+END DESTRUCTOR.
+    
 end class.

@@ -167,6 +167,7 @@ class GenericService inherits WebHandler:
             delete object filter        no-error.  
             delete object response      no-error.
             delete object writer        no-error.
+            delete object hQueryParams  no-error.
             
         end.
         

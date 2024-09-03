@@ -28,6 +28,7 @@ services:
       - ../conf/as.pf:/app/config/as.pf
     ports:
       - ${PAS_PORT}:8810
+      - ${PAS_HTTPS_PORT}:8811
     environment:
       - PASWEBHANDLERS=/app/src/webhandlers/ROOT.handlers
     depends_on:

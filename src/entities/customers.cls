@@ -114,6 +114,10 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
     
         
     end method.
-     
+
+    destructor public customers():
+        delete object dao.
+    end destructor.
+    
     
 end class.
