@@ -12,7 +12,7 @@ using Progress.Json.ObjectModel.*.
 using data.DataAccess.*.
 using OpenEdge.BusinessLogic.*.
 using OpenEdge.Logging.*.
-
+ 
 
 block-level on error undo, throw.
 
@@ -24,22 +24,19 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
     
     {"entities/inc/customers.i"}
   
-    
-    define data-source srcCustomer for sports2020.Customer.
     define variable iSeq as integer no-undo.
-    define variable daO as data.DataAccess.
+    define variable dao as data.DataAccess.
     define public property ttName as character no-undo initial "ttcustomer" get. set. 
     define public property piName as character no-undo initial "custnum" get. set.
     define public property dbName as character no-undo initial "customer" get. set.
     define variable logger as ILogWriter no-undo.
-    
+     
     /*------------------------------------------------------------------------------
             Purpose:                                                                      
             Notes:                                                                        
     ------------------------------------------------------------------------------*/
     constructor public customers():
-        
-        
+         
         super (dataset dsCustomer:HANDLE).
         
     end constructor.
@@ -118,6 +115,5 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
     destructor public customers():
         delete object dao.
     end destructor.
-    
-    
+     
 end class.

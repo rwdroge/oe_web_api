@@ -77,9 +77,11 @@
                 end.
             end.
         end.
-        
-        //delete object hQuery.
-        //delete object bQueryParams.
+        delete object hQuery.
+        delete object bQueryParams.
+        delete object QueryParams.
+        delete tt{&entity}.
+      
     end method.    
     
     method public void CreateEntityModel (output lcModel as longchar ):
