@@ -77,10 +77,11 @@
                 end.
             end.
         end.
-        delete object hQuery.
-        delete object bQueryParams.
-        delete object QueryParams.
-        delete tt{&entity}.
+        finally:
+            delete object QueryParams no-error.
+            delete object hQuery no-error.
+            delete tt{&entity}.
+        end.
       
     end method.    
     

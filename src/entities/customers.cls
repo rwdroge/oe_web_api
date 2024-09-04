@@ -6,14 +6,14 @@
     File        : customers
     Notes       : 
   ----------------------------------------------------------------------*/
-
+ 
 using Progress.Lang.*.
 using Progress.Json.ObjectModel.*.
 using data.DataAccess.*.
 using OpenEdge.BusinessLogic.*.
 using OpenEdge.Logging.*.
  
-
+ 
 block-level on error undo, throw.
 
 class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implements interfaces.CRUD:
@@ -85,8 +85,8 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
         daO = new data.DataAccess().
         daO:attachSource(this-object:ttName, this-object:piName, this-object:dbName, this-object:piName, filter:id1, filter, input-output dataset dsCustomer by-reference).
         daO:detachSource(dataset dsCustomer by-reference).    
-            
-    end method.
+             
+    end method. 
     
     {entities/inc/metadata.i &entity=customer}
     
@@ -111,9 +111,11 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
     
         
     end method.
-
+  
     destructor public customers():
-        delete object dao.
-    end destructor.
-     
+        delete object dao no-error.
+        
+        delete ttcustomer no-error.
+    end destructor. 
+      
 end class.
