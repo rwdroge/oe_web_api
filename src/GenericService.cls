@@ -54,7 +54,7 @@ class GenericService inherits WebHandler:
             dynClass = dynamic-new string("entities." + entityName) () no-error.
             
             if entityName2 > "" then
-                dynClass2 = dynamic-new string(entityName + entityName2) () no-error.                
+                dynClass2 = dynamic-new string("entities.joined." + entityName + entityName2) ().                
             
             if dynClass = ? or ( entityName2 > "" and dynClass2 = ?) then 
             do:

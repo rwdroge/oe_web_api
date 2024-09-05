@@ -14,14 +14,14 @@ using generics.FilterParams.*.
 using Progress.Json.ObjectModel.*.
 
 block-level on error undo, throw.
-
-class entities.customersorders inherits BusinessEntity implements interfaces.RO:
+ 
+class entities.joined.customersorders inherits BusinessEntity implements interfaces.RO:
     /*------------------------------------------------------------------------------
             Purpose:                                                                      
             Notes:                                                                        
     ------------------------------------------------------------------------------*/
     
-    {"entities/inc/custorders.i"}
+    {"entities/inc/custorders.i"}  
     
     /* TODO Fill in appropriate datasource tables */ 
     define public property ttName as character no-undo initial "ttcustomer,ttorder" get. set. 
