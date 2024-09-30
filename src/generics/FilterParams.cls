@@ -44,8 +44,6 @@ class generics.FilterParams:
                                         input pcid2 as character,
                                         output table ttQueryParams 
                                            ):
-        define variable oValueList as character no-undo.
-        
         super ().
         
         

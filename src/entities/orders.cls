@@ -9,7 +9,7 @@
 
 using Progress.Lang.*.
 using Progress.Json.ObjectModel.*.
-using data.DataAccess.*.
+using data.*.
 using OpenEdge.BusinessLogic.*.
 
  
@@ -23,14 +23,12 @@ class entities.orders inherits OpenEdge.BusinessLogic.BusinessEntity implements 
     
     {"entities/inc/orders.i"}
   
-    
-    define data-source srcorder for sports2020.order.
-    define variable iSeq as integer no-undo.
-    define variable daO as data.DataAccess.
     define public property ttName as character no-undo initial "ttorder" get. set. 
     define public property piName as character no-undo initial "ordernum" get. set.
     define public property dbName as character no-undo initial "order" get. set.
     
+    var integer iSeq.
+    var DataAccess daO.
     
     /*------------------------------------------------------------------------------
             Purpose:                                                                      

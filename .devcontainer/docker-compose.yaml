@@ -26,6 +26,7 @@ services:
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
       - ../src:/app/src
       - ../conf/as.pf:/app/config/as.pf
+      - ../openedge.properties:/app/pas/as/conf/openedge.properties
     ports:
       - ${PAS_PORT}:8810
       - ${PAS_HTTPS_PORT}:8811
@@ -33,4 +34,13 @@ services:
       - PASWEBHANDLERS=/app/src/webhandlers/ROOT.handlers
     depends_on:
       - sports2020-db
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.35
+    container_name: jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "4317-4318:4317-4318"
+      - "16685-16686:16685-16686"
     

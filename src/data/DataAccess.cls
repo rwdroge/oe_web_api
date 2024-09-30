@@ -53,6 +53,7 @@ define variable iSeq            as integer   no-undo.
         define variable cid             as character initial ? no-undo.
         define variable lUseReposition  as logical   no-undo.
         
+        
         iMaxRows    = pFilter:TopRecs   no-error.
         iSkipRows   = pFilter:SkipRecs  no-error.
         cWhere      = pFilter:Where     no-error.
@@ -203,10 +204,10 @@ define variable iSeq            as integer   no-undo.
         define variable hTopBuff    as handle  no-undo.
         define variable iBuff       as integer no-undo.
         
-       
+       message "commitchanges".
         do iBuff = 1 to hDataSet:num-top-buffers:
             hTopBuff = hDataSet:get-top-buffer(iBuff).
-            
+            hTopBuff:write-json('file', '/tmp/hTop.json').
             /* Skip the reposition children. */
             if hTopBuff:parent-relation ne ? then next. 
             this-object:traverseBuffers(pcSkipList, hTopBuff, dataset-handle hDataSet by-reference).
@@ -216,6 +217,7 @@ define variable iSeq            as integer   no-undo.
     
     method private void traverseBuffers (input pcSkipList as character, input phBuffer as handle, input-output dataset-handle hDataSet):
             define variable iChildRel as integer no-undo.
+            message "traverseBuffers".
         
             this-object:saveBuffer(pcSkipList, phBuffer, dataset-handle hDataSet by-reference).
             do iChildRel = 1 to phBuffer:num-child-relations:
@@ -230,9 +232,14 @@ define variable iSeq            as integer   no-undo.
         define variable cLogicProc  as character    no-undo.
         define variable hDataSource as handle       no-undo.
         define variable hBuffer     as handle       no-undo.
-
+        
         
         hBeforeBuff = phBuffer:before-buffer.
+        
+        //hDataSet:set-buffers(hBeforeBuff).
+        create data-source hDataSource.
+       
+        hDataSet:get-top-buffer():attach-data-source(hDataSource).
         if valid-handle(hBeforeBuff) then 
         do:
             
@@ -241,6 +248,7 @@ define variable iSeq            as integer   no-undo.
             
             
             create query hBeforeQry.
+           
             hBeforeQry:add-buffer(hBeforeBuff).
             hBeforeQry:query-prepare("for each " + hBeforeBuff:name).
             hBeforeQry:query-open().
@@ -270,6 +278,9 @@ define variable iSeq            as integer   no-undo.
             end. /* DO WHILE NOT QUERY-OFF-END */
             delete object hBeforeQry.
         end. /* DO IF VALID-HANDLE */
+        else do:
+            message 'no valid handle for before-buffer'.
+        end.
         
     end method.
 end class.

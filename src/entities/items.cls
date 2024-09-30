@@ -11,7 +11,7 @@
 using Progress.Lang.*.
 using OpenEdge.BusinessLogic.BusinessEntity.
 using Progress.Json.ObjectModel.*.
-using data.DataAccess.*.
+using data.*.
 
 block-level on error undo, throw.
 
@@ -23,61 +23,72 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
     
     {"entities/inc/items.i"}
      
-    define data-source srcItem for sports2020.Item.
-    define variable iSeq as integer no-undo.
-    define variable daO as data.DataAccess.
     define public property ttName as character no-undo initial "ttitem" get. set. 
     define public property piName as character no-undo initial "itemnum" get. set.
     define public property dbName as character no-undo initial "item" get. set.
     
+    var integer iSeq.
+    var DataAccess dao.
     /*------------------------------------------------------------------------------
             Purpose:                                                                      
             Notes:                                                                        
     ------------------------------------------------------------------------------*/
     constructor public items():
         super (dataset dsItem:HANDLE).
+        
     end constructor.
-    
+   
         method public void Read(input filter as generics.FilterParams, output dataset-handle hDataSet):
         this-object:GetItems(filter, output dataset dsItem by-reference).
         hDataSet = dataset dsItem:handle.    
     end method.
     
     method public void Create(input jsonObject as JsonObject, output dataset-handle hDataSet):
-        dao = new data.DataAccess().
+        dao = new DataAccess().
         dao:attachSource("ttitem", "itemnum", "item", "itemnum", "", ?, input-output dataset dsItem by-reference).
-        dataset dsItem:get-buffer-handle (1):table-handle:tracking-changes = true.
         dataset dsItem:read-json('JsonObject', jsonObject).
-        dataset dsItem:get-buffer-handle (1):table-handle:tracking-changes = false.
-        
         dao:CommitChanges(piName, dataset dsItem by-reference).
         hDataSet = dataset dsItem:handle.
     
     end method.
     
     method public void Update(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
-        define variable hChanges as handle.
-        dao = new data.DataAccess().
+        var handle hChanges, hTTold, hTTnew.
+        var handle pds.
+        var character cvalue.
+        var logical lRead = false.
+        dao = new DataAccess().
+        
+
         dao:attachSource("ttitem", "itemnum", "item", "itemnum", filter:id1, filter, input-output dataset dsItem by-reference).
-        //dataset dsItem:write-json('file', '/usr/wrk/emeapas/work/dsitem_before.json', true, ?, ?,?,true ).      
+        hTTold = dataset dsItem:get-buffer-handle(1):table-handle.
+        hTTold:tracking-changes = true. 
+        
+        lRead = dataset dsItem:read-json('JsonObject', jsonObject, "replace").
+        dataset dsItem:write-json('file', '/tmp/dsItem.json'). 
+        message string(lRead).
+        
+         
         create dataset hChanges.
         hChanges:create-like(dataset dsItem:handle).
-        hChanges:read-json('JsonObject', jsonObject).
+        //hChanges:get-buffer-handle(1):attach-data-source(data-source pds:handle, "itemnum,itemnum" ).
+        hChanges:get-changes(dataset dsItem:handle, true).
         
-        hChanges:get-changes(dataset dsItem:handle).
-        //hChanges:write-json('file', '/usr/wrk/emeapas/work/dsitem_before.json', true, ?, ?,?,true ).
-        hChanges:merge-changes(dataset dsItem:handle).
-        //dataset dsItem:get-buffer-handle (1):table-handle:tracking-changes = false.
-        hChanges:write-json('file', '/usr/wrk/emeapas/work/dsitem_after.json', true, ?, ?,?,true ).
-        //this-object:Updateitems(filter, input-output dataset dsItem by-reference).
-        dao:CommitChanges(piName, input-output dataset dsItem by-reference).
+        hTTold:TRACKING-CHANGES = FALSE.
+        hChanges:write-json('file', '/tmp/hChanges.json' ).
+        
+        //hTTnew:write-json('file', '/tmp/httnew.json' ).
+       hTTold:write-json('file', '/tmp/httold.json' ).
+        //hTTnew:write-json('file', '/tmp/httnew2.json' ).
+        dao:CommitChanges(piName, input-output dataset-handle hChanges by-reference).
+        dao:detachSource(dataset dsItem by-reference).
         hDataSet = dataset dsItem:handle.
+
     
     end method.
     
     method public void Delete(input filter as generics.FilterParams, output dataset-handle hDataSet):
-        
-        dao = new data.DataAccess().
+        dao = new DataAccess().
         dao:attachSource("ttitem", "itemnum", "item", "itemnum", filter:id1, filter, input-output dataset dsItem by-reference).
         this-object:Deleteitem(input-output dataset dsItem by-reference).
         hDataSet = dataset dsItem:handle.
@@ -90,11 +101,10 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
             Notes:                                                                        
     ------------------------------------------------------------------------------*/
     method private void GetItems( input filter as generics.FilterParams, output DATASET dsItem ):
-        
-        daO = new data.DataAccess().
-        daO:attachSource(this-object:ttName, this-object:piName, this-object:dbName, this-object:piName, filter:id1, filter, input-output dataset dsItem by-reference).
-        daO:detachSource(dataset dsItem by-reference).    
-            
+        dao = new DataAccess().
+        dao:attachSource(this-object:ttName, this-object:piName, this-object:dbName, this-object:piName, filter:id1, filter, input-output dataset dsItem by-reference).
+        dao:detachSource(dataset dsItem by-reference).    
+
     end method.
     
     {entities/inc/metadata.i &entity=item}
@@ -104,8 +114,7 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
             Notes:                                                                        
     ------------------------------------------------------------------------------*/
     method public void Updateitems(input filter as generics.FilterParams, input-output DATASET dsItem):            
-    
-        dao = new data.DataAccess().
+        dao = new DataAccess().
         dao:CommitChanges(piName, input-output dataset dsItem by-reference).
               
     end method.
@@ -115,8 +124,11 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
             Notes:                                                                        
     ------------------------------------------------------------------------------*/
     method public void Deleteitem(input-output DATASET dsItem):                    
-    
-        
     end method.     
+
+    destructor public items():
+        delete object dao.
+        delete ttitem no-error.
+    end destructor.
     
 end class.

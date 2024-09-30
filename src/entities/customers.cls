@@ -9,10 +9,8 @@
  
 using Progress.Lang.*.
 using Progress.Json.ObjectModel.*.
-using data.DataAccess.*.
+using data.*.
 using OpenEdge.BusinessLogic.*.
-using OpenEdge.Logging.*.
- 
  
 block-level on error undo, throw.
 
@@ -24,13 +22,13 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
     
     {"entities/inc/customers.i"}
   
-    define variable iSeq as integer no-undo.
-    define variable dao as data.DataAccess.
     define public property ttName as character no-undo initial "ttcustomer" get. set. 
     define public property piName as character no-undo initial "custnum" get. set.
     define public property dbName as character no-undo initial "customer" get. set.
-    define variable logger as ILogWriter no-undo.
-     
+    
+    var integer iSeq.
+    var DataAccess dao.
+    
     /*------------------------------------------------------------------------------
             Purpose:                                                                      
             Notes:                                                                        
@@ -48,7 +46,7 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
     end method.
     
     method public void Create(input jsonObject as JsonObject, output dataset-handle hDataSet):
-        dao = new data.DataAccess().
+        dao = new DataAccess().
         dao:attachSource("ttcustomer", "CustNum", "Customer", "CustNum", "", ?, input-output dataset dsCustomer by-reference).
         dataset dscustomer:get-buffer-handle (1):table-handle:tracking-changes = true.
         dataset dsCustomer:read-json('JsonObject', jsonObject).
@@ -68,7 +66,7 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
     
     method public void Delete(input filter as generics.FilterParams, output dataset-handle hDataSet):
         
-        dao = new data.DataAccess().
+        dao = new DataAccess().
         dao:attachSource("ttcustomer", "custnum", "customer", "custnum", filter:id1, filter, input-output dataset dsCustomer by-reference).
         this-object:Deletecustomer(input-output dataset dsCustomer by-reference).
         hDataSet = dataset dsCustomer:handle.
@@ -82,7 +80,7 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
     ------------------------------------------------------------------------------*/
     method private void GetCustomers( input filter as generics.FilterParams, output DATASET dsCustomer ):
         
-        daO = new data.DataAccess().
+        daO = new DataAccess().
         daO:attachSource(this-object:ttName, this-object:piName, this-object:dbName, this-object:piName, filter:id1, filter, input-output dataset dsCustomer by-reference).
         daO:detachSource(dataset dsCustomer by-reference).    
              
@@ -96,7 +94,7 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
     ------------------------------------------------------------------------------*/
     method public void Updatecustomers(input filter as generics.FilterParams, input-output DATASET dsCustomer):            
     
-        dao = new data.DataAccess().
+        dao = new DataAccess().
         dao:attachSource("ttcustomer", "CustNum", "Customer", "CustNum", filter:id1, filter, input-output dataset dsCustomer by-reference).
         dao:CommitChanges(piName, input-output dataset dsCustomer by-reference).
         dao:detachSource(dataset dsCustomer by-reference).
