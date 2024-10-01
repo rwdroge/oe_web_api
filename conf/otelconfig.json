@@ -4,7 +4,7 @@
         "otlp": {
             "grpc": [
                 {
-                    "endpoint": "http://localhost:4317",
+                    "endpoint": "http://jaeger:4317",
                     "span_processor": "batch",
                     "batch_processor_options": {
                     "max_queue_size": 500
