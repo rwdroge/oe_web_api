@@ -17,7 +17,7 @@
 "OpenEdgeTelemetryConfiguration": {
     "trace_classes": "*",
     "trace_procedures": "*",
-    "trace_requires_parent": true,
+    "trace_requires_parent": false,
     "trace_abl_transactions": true,
     "trace_request_start": true
     }
