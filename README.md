@@ -22,6 +22,8 @@ api than the JSDO implementation.
 
 Make sure to select to <b>Reopen In Container</b> once that message pops up in Visual Studio Code.
 That's all there is to it, VSC will do the rest. It will spin up containers for a compiler, PASOE instance and OE DB. 
+I've also setup the PASOE instance for tracing and [Jaeger](https://www.jaegertracing.io/) as a way to visualize those traces (running at http://localhost:16686). 
+This way you can even trace the performance impact of changes that you've made to earlier versions of the same program.
 Right now these are container images that are downloaded from an online DockerHub repository while starting the environment for the first time (can take some time).
 But of course, these could be replaced by your own home build Docker images.
 
