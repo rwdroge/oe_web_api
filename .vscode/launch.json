@@ -4,15 +4,16 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "Attach to process",
             "type": "abl",
             "request": "attach",
-            "hostname": "localhost",
+            "hostname": "devcontainer",
             "mode": "legacy",
             "port": 3099,
-            "localRoot": "${workspaceFolder}",
-            //"pauseOnAttach": true
+            "localRoot": "${workspaceFolder}"
+                        //"pauseOnAttach": true
             // "remoteRoot": "${workspaceFolder}",
             // "sourceMap": {
             //     "${workspaceFolder}/**": "${workspaceFolder}/**"

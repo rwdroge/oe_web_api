@@ -1,6 +1,6 @@
 # the Dockerfile for the actual devcontainer
 
-FROM docker.io/devbfvio/openedge-compiler:12.8.3
+FROM progressofficial/oe_compiler:12.8.4
 
 RUN apt-get update && apt-get install -y xz-utils
 RUN apt-get install git -y
@@ -11,4 +11,6 @@ ENV DLC=/usr/dlc
 ENV WRKDIR=/usr/wrk
 ENV PATH=$DLC:$DLC/bin:$PATH
 
-# this script is build as docker.io/devbfvio/openedge-devcontainer:12.8.1-rc1
+
+
+# this script is build as docker.io/rdroge/oe_devcontainer:12.8.4

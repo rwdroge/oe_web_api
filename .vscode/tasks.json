@@ -1,0 +1,36 @@
+ {
+     "label": "My non-gui Application - Debugger",
+     "type": "process",
+     "command": "/usr/dlc/bin/_progres.exe",
+     "args": [
+         "-basekey",
+         "INI",
+         "-ininame",
+         "conf/gui.ini",
+         "-db",
+         "sports2000",
+         "-H",
+         "localhost",
+         "-S",
+         "12345",
+         "-cpinternal",
+         "iso8859-15",
+         "-p",
+         "test.p",
+         "-nosplash", "-debugReady", "3099"
+     ],
+     "windows": {
+         "command": "/usr/dlc/bin/_progres.exe"
+     },
+     "presentation": {
+         "reveal": "silent",
+         "panel": "new",
+         "focus": true
+     },
+     "options": {
+         "env": {
+             "DLC": "/usr/dlc"
+         }
+     },
+     "problemMatcher": []
+ }
