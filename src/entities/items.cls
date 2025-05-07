@@ -52,39 +52,9 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
     
     end method.
     
-    method public void Update(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
-        var handle hChanges, hTTold, hTTnew.
-        var handle pds.
-        var character cvalue.
-        var logical lRead = false.
-        dao = new DataAccess().
-        
-
-        dao:attachSource("ttitem", "itemnum", "item", "itemnum", filter:id1, filter, input-output dataset dsItem by-reference).
-        hTTold = dataset dsItem:get-buffer-handle(1):table-handle.
-        hTTold:tracking-changes = true. 
-        
-        lRead = dataset dsItem:read-json('JsonObject', jsonObject, "replace").
-        dataset dsItem:write-json('file', '/tmp/dsItem.json'). 
-        message string(lRead).
-        
-         
-        create dataset hChanges.
-        hChanges:create-like(dataset dsItem:handle).
-        //hChanges:get-buffer-handle(1):attach-data-source(data-source pds:handle, "itemnum,itemnum" ).
-        hChanges:get-changes(dataset dsItem:handle, true).
-        
-        hTTold:TRACKING-CHANGES = FALSE.
-        hChanges:write-json('file', '/tmp/hChanges.json' ).
-        
-        //hTTnew:write-json('file', '/tmp/httnew.json' ).
-       hTTold:write-json('file', '/tmp/httold.json' ).
-        //hTTnew:write-json('file', '/tmp/httnew2.json' ).
-        dao:CommitChanges(piName, input-output dataset-handle hChanges by-reference).
-        dao:detachSource(dataset dsItem by-reference).
+    method public void update(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
+        this-object:updateItems(filter, input-output dataset dsItem by-reference).
         hDataSet = dataset dsItem:handle.
-
-    
     end method.
     
     method public void Delete(input filter as generics.FilterParams, output dataset-handle hDataSet):
