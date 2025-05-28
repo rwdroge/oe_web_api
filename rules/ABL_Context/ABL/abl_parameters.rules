@@ -1,0 +1,361 @@
+# ABL Parameter Usage Reference
+# Comprehensive reference for parameter usage in ABL, especially for datasets and temp-tables
+
+[metadata]
+name = "ABL Parameter Usage Reference"
+version = "1.0.0"
+description = "Reference documentation for parameter usage in ABL"
+author = "Progress Software"
+language = "abl"
+
+# Parameter Passing Modes
+[parameter_modes]
+# Input parameters - data flows into the procedure
+input = {
+    "syntax": "DEFINE INPUT PARAMETER {param_name} AS {data_type} NO-UNDO",
+    "naming": "pi{Name}",
+    "description": "Data flows into the procedure only",
+    "example": "DEFINE INPUT PARAMETER piCustNum AS INTEGER NO-UNDO"
+}
+
+# Output parameters - data flows out of the procedure
+output = {
+    "syntax": "DEFINE OUTPUT PARAMETER {param_name} AS {data_type} NO-UNDO",
+    "naming": "po{Name}",
+    "description": "Data flows out of the procedure only",
+    "example": "DEFINE OUTPUT PARAMETER poResult AS LOGICAL NO-UNDO"
+}
+
+# Input-Output parameters - data flows both ways
+input_output = {
+    "syntax": "DEFINE INPUT-OUTPUT PARAMETER {param_name} AS {data_type} NO-UNDO",
+    "naming": "pio{Name}",
+    "description": "Data flows both into and out of the procedure",
+    "example": "DEFINE INPUT-OUTPUT PARAMETER pioDataset AS DATASET dsCustomer NO-UNDO"
+}
+
+# Dataset Parameter Usage
+[dataset_parameters]
+# Basic dataset parameter patterns
+basic = {
+    "input": "DEFINE INPUT PARAMETER piDataset AS DATASET dsCustomer NO-UNDO",
+    "output": "DEFINE OUTPUT PARAMETER poDataset AS DATASET dsCustomer NO-UNDO",
+    "input_output": "DEFINE INPUT-OUTPUT PARAMETER pioDataset AS DATASET dsCustomer NO-UNDO"
+}
+
+# Dataset by-reference parameter patterns
+by_reference = {
+    "description": "Passes the dataset by reference, allowing the called procedure to modify the original dataset",
+    "syntax": "DEFINE INPUT PARAMETER piDataset AS DATASET dsCustomer BY-REFERENCE NO-UNDO",
+    "example": """
+    /* Define dataset */
+    DEFINE DATASET dsCustomer.
+    
+    /* Procedure with by-reference parameter */
+    PROCEDURE ProcessCustomers:
+        DEFINE INPUT PARAMETER piDataset AS DATASET dsCustomer BY-REFERENCE NO-UNDO.
+        
+        /* Modify the dataset directly */
+        FOR EACH Customer IN piDataset:
+            Customer.CreditLimit = Customer.CreditLimit * 1.1.
+        END.
+    END PROCEDURE.
+    
+    /* Call procedure */
+    RUN ProcessCustomers (INPUT dsCustomer).
+    """
+}
+
+# Reference-only dataset patterns
+reference_only = {
+    "description": "Defines a reference-only dataset that can be bound to another dataset instance",
+    "syntax": "DEFINE DATASET dsCustomer REFERENCE-ONLY",
+    "example": """
+    /* Define reference-only dataset */
+    DEFINE DATASET dsCustomer REFERENCE-ONLY.
+    
+    /* Procedure that creates and returns a dataset */
+    PROCEDURE GetCustomers:
+        DEFINE OUTPUT PARAMETER poDataset AS DATASET dsCustomer BIND NO-UNDO.
+        
+        /* Create dataset */
+        DEFINE DATASET dsTemp.
+        CREATE DATASET dsTemp.
+        dsTemp:CREATE-BUFFER("Customer").
+        
+        /* Fill dataset */
+        FOR EACH Customer NO-LOCK:
+            CREATE Customer IN dsTemp.
+            ASSIGN Customer.CustNum = Customer.CustNum
+                   Customer.Name = Customer.Name.
+        END.
+        
+        /* Bind output parameter to created dataset */
+        poDataset = dsTemp.
+    END PROCEDURE.
+    
+    /* Call procedure */
+    RUN GetCustomers (OUTPUT dsCustomer).
+    
+    /* Use the bound dataset */
+    FOR EACH Customer IN dsCustomer:
+        DISPLAY Customer.Name.
+    END.
+    """
+}
+
+# Dynamic dataset handle patterns
+dynamic_handle = {
+    "description": "Uses a dataset handle for dynamic datasets",
+    "syntax": "DEFINE INPUT PARAMETER piDataset AS DATASET-HANDLE NO-UNDO",
+    "example": """
+    /* Create dynamic dataset */
+    DEFINE VARIABLE hDataset AS HANDLE NO-UNDO.
+    CREATE DATASET hDataset.
+    hDataset:CREATE-BUFFER("Customer").
+    
+    /* Procedure with dataset handle parameter */
+    PROCEDURE ProcessDataset:
+        DEFINE INPUT-OUTPUT PARAMETER pioDataset AS DATASET-HANDLE NO-UNDO.
+        
+        /* Add data to dataset */
+        DEFINE VARIABLE hBuffer AS HANDLE NO-UNDO.
+        hBuffer = pioDataset:GET-BUFFER("Customer").
+        
+        FOR EACH Customer NO-LOCK:
+            hBuffer:BUFFER-CREATE().
+            hBuffer:BUFFER-FIELD("CustNum"):BUFFER-VALUE = Customer.CustNum.
+            hBuffer:BUFFER-FIELD("Name"):BUFFER-VALUE = Customer.Name.
+        END.
+    END PROCEDURE.
+    
+    /* Call procedure */
+    RUN ProcessDataset (INPUT-OUTPUT hDataset).
+    """
+}
+
+# Temp-Table Parameter Usage
+[temp_table_parameters]
+# Basic temp-table parameter patterns
+basic = {
+    "input": "DEFINE INPUT PARAMETER piTempTable AS TABLE ttCustomer NO-UNDO",
+    "output": "DEFINE OUTPUT PARAMETER poTempTable AS TABLE ttCustomer NO-UNDO",
+    "input_output": "DEFINE INPUT-OUTPUT PARAMETER pioTempTable AS TABLE ttCustomer NO-UNDO"
+}
+
+# Temp-table by-reference parameter patterns
+by_reference = {
+    "description": "Passes the temp-table by reference, allowing the called procedure to modify the original temp-table",
+    "syntax": "DEFINE INPUT PARAMETER piTempTable AS TABLE ttCustomer BY-REFERENCE NO-UNDO",
+    "example": """
+    /* Define temp-table */
+    DEFINE TEMP-TABLE ttCustomer
+        FIELD CustNum AS INTEGER
+        FIELD Name AS CHARACTER.
+    
+    /* Procedure with by-reference parameter */
+    PROCEDURE ProcessCustomers:
+        DEFINE INPUT PARAMETER piTempTable AS TABLE ttCustomer BY-REFERENCE NO-UNDO.
+        
+        /* Modify the temp-table directly */
+        FOR EACH ttCustomer:
+            ttCustomer.Name = CAPS(ttCustomer.Name).
+        END.
+    END PROCEDURE.
+    
+    /* Call procedure */
+    RUN ProcessCustomers (INPUT ttCustomer).
+    """
+}
+
+# Reference-only temp-table patterns
+reference_only = {
+    "description": "Defines a reference-only temp-table that can be bound to another temp-table instance",
+    "syntax": "DEFINE TEMP-TABLE ttCustomer REFERENCE-ONLY",
+    "example": """
+    /* Define reference-only temp-table */
+    DEFINE TEMP-TABLE ttCustomer REFERENCE-ONLY.
+    
+    /* Procedure that creates and returns a temp-table */
+    PROCEDURE GetCustomers:
+        DEFINE OUTPUT PARAMETER poTempTable AS TABLE ttCustomer BIND NO-UNDO.
+        
+        /* Create temp-table */
+        DEFINE TEMP-TABLE ttTemp
+            FIELD CustNum AS INTEGER
+            FIELD Name AS CHARACTER.
+        
+        /* Fill temp-table */
+        FOR EACH Customer NO-LOCK:
+            CREATE ttTemp.
+            ASSIGN ttTemp.CustNum = Customer.CustNum
+                   ttTemp.Name = Customer.Name.
+        END.
+        
+        /* Bind output parameter to created temp-table */
+        poTempTable = ttTemp.
+    END PROCEDURE.
+    
+    /* Call procedure */
+    RUN GetCustomers (OUTPUT ttCustomer).
+    
+    /* Use the bound temp-table */
+    FOR EACH ttCustomer:
+        DISPLAY ttCustomer.Name.
+    END.
+    """
+}
+
+# Dynamic temp-table handle patterns
+dynamic_handle = {
+    "description": "Uses a temp-table handle for dynamic temp-tables",
+    "syntax": "DEFINE INPUT PARAMETER piTempTable AS TABLE-HANDLE NO-UNDO",
+    "example": """
+    /* Create dynamic temp-table */
+    DEFINE VARIABLE hTempTable AS HANDLE NO-UNDO.
+    CREATE TEMP-TABLE hTempTable.
+    hTempTable:ADD-FIELD("CustNum", "INTEGER").
+    hTempTable:ADD-FIELD("Name", "CHARACTER").
+    
+    /* Procedure with temp-table handle parameter */
+    PROCEDURE ProcessTempTable:
+        DEFINE INPUT-OUTPUT PARAMETER pioTempTable AS TABLE-HANDLE NO-UNDO.
+        
+        /* Add data to temp-table */
+        FOR EACH Customer NO-LOCK:
+            pioTempTable:BUFFER-CREATE().
+            pioTempTable:BUFFER-FIELD("CustNum"):BUFFER-VALUE = Customer.CustNum.
+            pioTempTable:BUFFER-FIELD("Name"):BUFFER-VALUE = Customer.Name.
+        END.
+    END PROCEDURE.
+    
+    /* Call procedure */
+    RUN ProcessTempTable (INPUT-OUTPUT hTempTable).
+    """
+}
+
+# Buffer Parameter Usage
+[buffer_parameters]
+# Basic buffer parameter patterns
+basic = {
+    "description": "Passes a buffer for a database table",
+    "syntax": "DEFINE INPUT PARAMETER piBuffer AS BUFFER FOR Customer",
+    "example": """
+    /* Procedure with buffer parameter */
+    PROCEDURE ProcessCustomer:
+        DEFINE INPUT PARAMETER piCustomer AS BUFFER FOR Customer.
+        
+        /* Use the buffer */
+        DISPLAY piCustomer.Name piCustomer.CreditLimit.
+    END PROCEDURE.
+    
+    /* Call procedure with buffer */
+    FOR EACH Customer NO-LOCK:
+        RUN ProcessCustomer (INPUT BUFFER Customer).
+    END.
+    """
+}
+
+# Best Practices for Parameter Usage
+[parameter_best_practices]
+# General best practices
+general = [
+    "Always include NO-UNDO for all parameters",
+    "Use pi prefix for INPUT parameters",
+    "Use po prefix for OUTPUT parameters",
+    "Use pio prefix for INPUT-OUTPUT parameters",
+    "Use descriptive parameter names",
+    "Document parameter purpose and usage"
+]
+
+# Dataset best practices
+dataset = [
+    "Use BY-REFERENCE for datasets when the called procedure needs to modify the dataset",
+    "Use REFERENCE-ONLY for static datasets that will be bound to another dataset instance",
+    "Use DATASET-HANDLE for dynamic datasets",
+    "Use INPUT-OUTPUT for datasets that will be both read and modified",
+    "Consider performance implications of large datasets"
+]
+
+# Temp-table best practices
+temp_table = [
+    "Use BY-REFERENCE for temp-tables when the called procedure needs to modify the temp-table",
+    "Use REFERENCE-ONLY for static temp-tables that will be bound to another temp-table instance",
+    "Use TABLE-HANDLE for dynamic temp-tables",
+    "Use INPUT-OUTPUT for temp-tables that will be both read and modified",
+    "Consider performance implications of large temp-tables"
+]
+
+# AppServer parameter best practices
+appserver = [
+    "Always use strongly typed parameters with AppServer procedures",
+    "Use OUTPUT parameters to return data from AppServer procedures",
+    "Use INPUT-OUTPUT parameters sparingly with AppServer procedures",
+    "Consider performance implications of large datasets or temp-tables with AppServer procedures",
+    "Use BY-REFERENCE only for local procedures, not for AppServer procedures"
+]
+
+# Common Parameter Patterns
+[common_patterns]
+# AppServer procedure pattern
+appserver_procedure = """
+/* AppServer Procedure */
+DEFINE INPUT  PARAMETER piCustNum     AS INTEGER   NO-UNDO.
+DEFINE INPUT  PARAMETER pdCreditLimit AS DECIMAL   NO-UNDO.
+DEFINE OUTPUT PARAMETER pdMaxLimit    AS DECIMAL   NO-UNDO.
+DEFINE OUTPUT PARAMETER plValid       AS LOGICAL   NO-UNDO.
+
+/* Business logic in server procedure */
+FOR EACH Order WHERE Order.CustNum = piCustNum NO-LOCK:
+    /* Logic here */
+END.
+"""
+
+# Local procedure with dataset pattern
+local_procedure_dataset = """
+/* Local Procedure with Dataset */
+PROCEDURE ProcessCustomers:
+    DEFINE INPUT PARAMETER piState AS CHARACTER NO-UNDO.
+    DEFINE INPUT-OUTPUT PARAMETER pioCustomers AS DATASET dsCustomer BY-REFERENCE NO-UNDO.
+    
+    /* Process dataset */
+    FOR EACH Customer IN pioCustomers WHERE Customer.State = piState:
+        /* Logic here */
+    END.
+END PROCEDURE.
+"""
+
+# Method with temp-table pattern
+method_temp_table = """
+/* Method with Temp-Table */
+METHOD PUBLIC VOID ProcessCustomers (INPUT piState AS CHARACTER,
+                                    INPUT-OUTPUT pioCustomers AS TABLE ttCustomer BY-REFERENCE):
+    /* Process temp-table */
+    FOR EACH ttCustomer WHERE ttCustomer.State = piState:
+        /* Logic here */
+    END.
+END METHOD.
+"""
+
+# Dynamic dataset creation pattern
+dynamic_dataset_creation = """
+/* Dynamic Dataset Creation */
+PROCEDURE CreateCustomerDataset:
+    DEFINE OUTPUT PARAMETER poDataset AS DATASET-HANDLE NO-UNDO.
+    
+    /* Create dataset */
+    CREATE DATASET poDataset.
+    poDataset:CREATE-BUFFER("Customer").
+    
+    /* Fill dataset */
+    DEFINE VARIABLE hBuffer AS HANDLE NO-UNDO.
+    hBuffer = poDataset:GET-BUFFER("Customer").
+    
+    FOR EACH Customer NO-LOCK:
+        hBuffer:BUFFER-CREATE().
+        hBuffer:BUFFER-FIELD("CustNum"):BUFFER-VALUE = Customer.CustNum.
+        hBuffer:BUFFER-FIELD("Name"):BUFFER-VALUE = Customer.Name.
+    END.
+END PROCEDURE.
+"""
+

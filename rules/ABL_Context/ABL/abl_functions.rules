@@ -1,0 +1,651 @@
+# ABL Functions Reference
+# Comprehensive reference for ABL built-in functions
+
+[metadata]
+name = "ABL Functions Reference"
+version = "1.0.0"
+description = "Reference for ABL built-in functions and methods"
+category = "functions"
+
+[syntax_elements]
+# ABL string functions
+
+"STRING" = {
+  type = "function",
+  description = "Converts a value to a string",
+  syntax = "STRING(expression [, format])",
+  example = "var character cValue = STRING(123.45, \"999.99\")."
+}
+
+"SUBSTRING" = {
+  type = "function",
+  description = "Returns a portion of a string",
+  syntax = "SUBSTRING(string, start-position [, length])",
+  example = "var character cSub = SUBSTRING(\"ABCDEF\", 2, 3). /* Returns \"BCD\" */"
+}
+
+"INDEX" = {
+  type = "function",
+  description = "Returns the position of a substring within a string",
+  syntax = "INDEX(string, substring)",
+  example = "var integer iPos = INDEX(\"ABCDEF\", \"CD\"). /* Returns 3 */"
+}
+
+"REPLACE" = {
+  type = "function",
+  description = "Replaces occurrences of a substring within a string",
+  syntax = "REPLACE(string, substring, replacement)",
+  example = "var character cNew = REPLACE(\"ABCDEF\", \"CD\", \"XY\"). /* Returns \"ABYEF\" */"
+}
+
+"LENGTH" = {
+  type = "function",
+  description = "Returns the length of a string",
+  syntax = "LENGTH(string)",
+  example = "var integer iLen = LENGTH(\"ABCDEF\"). /* Returns 6 */"
+}
+
+"TRIM" = {
+  type = "function",
+  description = "Removes leading and trailing spaces from a string",
+  syntax = "TRIM(string)",
+  example = "var character cTrim = TRIM(\"  ABC  \"). /* Returns \"ABC\" */"
+}
+
+"ENTRY" = {
+  type = "function",
+  description = "Returns an entry from a delimited string",
+  syntax = "ENTRY(entry-number, string [, delimiter])",
+  example = "var character cEntry = ENTRY(2, \"A,B,C\", \",\"). /* Returns \"B\" */"
+}
+
+"NUM-ENTRIES" = {
+  type = "function",
+  description = "Returns the number of entries in a delimited string",
+  syntax = "NUM-ENTRIES(string [, delimiter])",
+  example = "var integer iCount = NUM-ENTRIES(\"A,B,C\", \",\"). /* Returns 3 */"
+}
+
+# ABL numeric functions
+
+"INTEGER" = {
+  type = "function",
+  description = "Converts a value to an integer",
+  syntax = "INTEGER(expression)",
+  example = "var integer iValue = INTEGER(123.45). /* Returns 123 */"
+}
+
+"DECIMAL" = {
+  type = "function",
+  description = "Converts a value to a decimal",
+  syntax = "DECIMAL(expression [, decimals])",
+  example = "var decimal dValue = DECIMAL(123.456, 2). /* Returns 123.46 */"
+}
+
+"ROUND" = {
+  type = "function",
+  description = "Rounds a number to a specified number of decimal places",
+  syntax = "ROUND(number, decimals)",
+  example = "var decimal dRound = ROUND(123.456, 2). /* Returns 123.46 */"
+}
+
+"TRUNCATE" = {
+  type = "function",
+  description = "Truncates a number to a specified number of decimal places",
+  syntax = "TRUNCATE(number, decimals)",
+  example = "var decimal dTrunc = TRUNCATE(123.456, 2). /* Returns 123.45 */"
+}
+
+"ABS" = {
+  type = "function",
+  description = "Returns the absolute value of a number",
+  syntax = "ABS(number)",
+  example = "var decimal dAbs = ABS(-123.45). /* Returns 123.45 */"
+}
+
+"MAXIMUM" = {
+  type = "function",
+  description = "Returns the maximum value from a list of expressions",
+  syntax = "MAXIMUM(expression1, expression2 [, ...])",
+  example = "var integer iMax = MAXIMUM(10, 20, 5). /* Returns 20 */"
+}
+
+"MINIMUM" = {
+  type = "function",
+  description = "Returns the minimum value from a list of expressions",
+  syntax = "MINIMUM(expression1, expression2 [, ...])",
+  example = "var integer iMin = MINIMUM(10, 20, 5). /* Returns 5 */"
+}
+
+# ABL date and time functions
+
+"TODAY" = {
+  type = "function",
+  description = "Returns the current date",
+  syntax = "TODAY",
+  example = "var date dToday = TODAY."
+}
+
+"NOW" = {
+  type = "function",
+  description = "Returns the current date and time",
+  syntax = "NOW",
+  example = "var datetime-tz dtNow = NOW."
+}
+
+"YEAR" = {
+  type = "function",
+  description = "Returns the year part of a date",
+  syntax = "YEAR(date)",
+  example = "var integer iYear = YEAR(TODAY). /* Returns current year */"
+}
+
+"MONTH" = {
+  type = "function",
+  description = "Returns the month part of a date",
+  syntax = "MONTH(date)",
+  example = "var integer iMonth = MONTH(TODAY). /* Returns current month */"
+}
+
+"DAY" = {
+  type = "function",
+  description = "Returns the day part of a date",
+  syntax = "DAY(date)",
+  example = "var integer iDay = DAY(TODAY). /* Returns current day */"
+}
+
+"WEEKDAY" = {
+  type = "function",
+  description = "Returns the day of the week (1-7) for a date",
+  syntax = "WEEKDAY(date)",
+  example = "var integer iWeekday = WEEKDAY(TODAY). /* 1=Sunday, 7=Saturday */"
+}
+
+"ADD-INTERVAL" = {
+  type = "function",
+  description = "Adds an interval to a date or datetime value",
+  syntax = "ADD-INTERVAL(date-or-datetime, amount, interval)",
+  example = "var date dNextMonth = ADD-INTERVAL(TODAY, 1, \"months\")."
+}
+
+"INTERVAL" = {
+  type = "function",
+  description = "Returns the interval between two dates or datetimes",
+  syntax = "INTERVAL(date1, date2, interval)",
+  example = "var integer iDays = INTERVAL(TODAY, TODAY + 10, \"days\"). /* Returns 10 */"
+}
+
+"STRING-TO-DATE" = {
+  type = "function",
+  description = "Converts a string to a date",
+  syntax = "DATE(string)",
+  example = "var date dDate = DATE(\"01/01/2023\")."
+}
+
+"STRING-TO-DATETIME" = {
+  type = "function",
+  description = "Converts a string to a datetime",
+  syntax = "DATETIME(string)",
+  example = "var datetime dtDate = DATETIME(\"01/01/2023 12:00:00\")."
+}
+
+# ABL logical functions
+
+"IF" = {
+  type = "function",
+  description = "Returns one of two values based on a condition",
+  syntax = "IF(condition, true-value, false-value)",
+  example = "var character cStatus = IF(iCount > 10, \"High\", \"Low\")."
+}
+
+"CAN-DO" = {
+  type = "function",
+  description = "Checks if a string matches a pattern",
+  syntax = "CAN-DO(pattern, string)",
+  example = "IF CAN-DO(\"A,B,C\", \"B\") THEN /* Returns TRUE */"
+}
+
+"CAN-FIND" = {
+  type = "function",
+  description = "Checks if a record exists",
+  syntax = "CAN-FIND(FIRST record WHERE condition)",
+  example = "IF CAN-FIND(FIRST Customer WHERE Customer.CustNum = 1001) THEN"
+}
+
+"LOOKUP" = {
+  type = "function",
+  description = "Searches for a value in a list",
+  syntax = "LOOKUP(value, list [, delimiter])",
+  example = "var integer iPos = LOOKUP(\"B\", \"A,B,C\", \",\"). /* Returns 2 */"
+}
+
+# ABL database functions
+
+"AVAILABLE" = {
+  type = "function",
+  description = "Checks if a record is available",
+  syntax = "AVAILABLE record",
+  example = "IF AVAILABLE Customer THEN"
+}
+
+"BUFFER-COMPARE" = {
+  type = "function",
+  description = "Compares two buffer records",
+  syntax = "BUFFER-COMPARE(buffer1, buffer2)",
+  example = "IF BUFFER-COMPARE(bCustomer1, bCustomer2) THEN"
+}
+
+"RECID" = {
+  type = "function",
+  description = "Returns the record ID of a record",
+  syntax = "RECID(record)",
+  example = "var recid rCustomer = RECID(Customer)."
+}
+
+"ROWID" = {
+  type = "function",
+  description = "Returns the row ID of a record",
+  syntax = "ROWID(record)",
+  example = "var rowid rCustomer = ROWID(Customer)."
+}
+
+"NEXT-VALUE" = {
+  type = "function",
+  description = "Returns the next value from a sequence",
+  syntax = "NEXT-VALUE(sequence-name)",
+  example = "var integer iCustNum = NEXT-VALUE(CustNum)."
+}
+
+"COUNT" = {
+  type = "function",
+  description = "Returns the number of records in a query or temp-table",
+  syntax = "COUNT(record [WHERE condition])",
+  example = "var integer iCount = COUNT(Customer WHERE Customer.State = \"CA\")."
+}
+
+"SUM" = {
+  type = "function",
+  description = "Returns the sum of a field for records in a query or temp-table",
+  syntax = "SUM(record.field [WHERE condition])",
+  example = "var decimal dTotal = SUM(Order.Amount WHERE Order.CustNum = 1001)."
+}
+
+"AVERAGE" = {
+  type = "function",
+  description = "Returns the average of a field for records in a query or temp-table",
+  syntax = "AVERAGE(record.field [WHERE condition])",
+  example = "var decimal dAvg = AVERAGE(Order.Amount WHERE Order.CustNum = 1001)."
+}
+
+"MAXIMUM" = {
+  type = "function",
+  description = "Returns the maximum value of a field for records in a query or temp-table",
+  syntax = "MAXIMUM(record.field [WHERE condition])",
+  example = "var decimal dMax = MAXIMUM(Order.Amount WHERE Order.CustNum = 1001)."
+}
+
+"MINIMUM" = {
+  type = "function",
+  description = "Returns the minimum value of a field for records in a query or temp-table",
+  syntax = "MINIMUM(record.field [WHERE condition])",
+  example = "var decimal dMin = MINIMUM(Order.Amount WHERE Order.CustNum = 1001)."
+}
+
+# ABL type conversion functions
+
+"CAST" = {
+  type = "function",
+  description = "Casts an object to a specific type",
+  syntax = "CAST(expression, type)",
+  example = "var Progress.Lang.Object oCustomer = CAST(Customer, Progress.Lang.Object)."
+}
+
+"DYNAMIC-CAST" = {
+  type = "function",
+  description = "Dynamically casts an object to a specific type",
+  syntax = "DYNAMIC-CAST(expression, type)",
+  example = "var Customer oCustomer = DYNAMIC-CAST(oObject, Customer)."
+}
+
+"TYPE-OF" = {
+  type = "function",
+  description = "Returns the type of an expression",
+  syntax = "TYPE-OF(expression)",
+  example = "IF TYPE-OF(oObject) = Customer THEN"
+}
+
+"VALID-OBJECT" = {
+  type = "function",
+  description = "Checks if an object reference is valid",
+  syntax = "VALID-OBJECT(object)",
+  example = "IF VALID-OBJECT(oCustomer) THEN"
+}
+
+[best_practices]
+# Best practices for ABL functions
+
+"function_usage" = {
+  title = "Function Usage Best Practices",
+  description = """
+When using ABL functions, follow these best practices:
+
+1. Use built-in functions instead of custom code when available
+2. Use appropriate data types for function parameters
+3. Handle potential errors in function calls
+4. Use functions to make code more readable and maintainable
+
+```abl
+/* Good practice */
+IF CAN-FIND(FIRST Customer WHERE Customer.CustNum = piCustNum) THEN
+    DISPLAY "Customer exists".
+ELSE
+    DISPLAY "Customer not found".
+
+/* Instead of */
+FIND FIRST Customer WHERE Customer.CustNum = piCustNum NO-LOCK NO-ERROR.
+IF AVAILABLE Customer THEN
+    DISPLAY "Customer exists".
+ELSE
+    DISPLAY "Customer not found".
+```
+"""
+}
+
+"string_function_best_practices" = {
+  title = "String Function Best Practices",
+  description = """
+When working with string functions, follow these best practices:
+
+1. Use TRIM to clean input data
+2. Use SUBSTRING with proper bounds checking
+3. Use REPLACE for string manipulation
+4. Use ENTRY and NUM-ENTRIES for delimited strings
+
+```abl
+/* Good practice */
+var character cInput = TRIM(pcInput).
+IF LENGTH(cInput) > 0 THEN DO:
+    var integer iPos = INDEX(cInput, ",").
+    IF iPos > 0 THEN
+        var character cFirst = SUBSTRING(cInput, 1, iPos - 1).
+    ELSE
+        var character cFirst = cInput.
+END.
+```
+"""
+}
+
+"date_function_best_practices" = {
+  title = "Date Function Best Practices",
+  description = """
+When working with date functions, follow these best practices:
+
+1. Use TODAY and NOW for current date and time
+2. Use ADD-INTERVAL for date arithmetic
+3. Use INTERVAL to calculate differences
+4. Use YEAR, MONTH, DAY for date components
+
+```abl
+/* Good practice */
+var date dToday = TODAY.
+var date dDueDate = ADD-INTERVAL(dToday, 30, "days").
+var integer iDaysRemaining = INTERVAL(dToday, dDueDate, "days").
+
+DISPLAY
+    "Today:" dToday
+    "Due Date:" dDueDate
+    "Days Remaining:" iDaysRemaining.
+```
+"""
+}
+
+"numeric_function_best_practices" = {
+  title = "Numeric Function Best Practices",
+  description = """
+When working with numeric functions, follow these best practices:
+
+1. Use ROUND for consistent rounding
+2. Use DECIMAL for proper decimal precision
+3. Use INTEGER for integer conversion
+4. Use ABS, MAXIMUM, MINIMUM for value comparisons
+
+```abl
+/* Good practice */
+var decimal dAmount = 123.456.
+var decimal dRounded = ROUND(dAmount, 2).
+var decimal dTruncated = TRUNCATE(dAmount, 2).
+var decimal dAbsolute = ABS(dAmount).
+
+DISPLAY
+    "Original:" dAmount
+    "Rounded:" dRounded
+    "Truncated:" dTruncated
+    "Absolute:" dAbsolute.
+```
+"""
+}
+
+[examples]
+# Examples of ABL functions
+
+"string_functions_example" = {
+  title = "String Functions Example",
+  description = "Example of string manipulation functions in ABL",
+  code = """
+/* String function examples */
+PROCEDURE StringFunctions:
+    /* Input string */
+    var character cInput = " ABCdef,GHIjkl,MNOpqr ".
+    
+    /* Basic string functions */
+    var character cTrimmed = TRIM(cInput).                 /* "ABCdef,GHIjkl,MNOpqr" */
+    var integer iLength = LENGTH(cTrimmed).                /* 17 */
+    var character cUpper = CAPS(cTrimmed).                 /* "ABCDEF,GHIJKL,MNOPQR" */
+    var character cLower = LC(cTrimmed).                   /* "abcdef,ghijkl,mnopqr" */
+    
+    /* Substring operations */
+    var integer iPos = INDEX(cTrimmed, ",").               /* 7 */
+    var character cBefore = SUBSTRING(cTrimmed, 1, iPos - 1). /* "ABCdef" */
+    var character cAfter = SUBSTRING(cTrimmed, iPos + 1).  /* "GHIjkl,MNOpqr" */
+    var character cSub = SUBSTRING(cTrimmed, 3, 4).        /* "Cdef" */
+    
+    /* String replacement */
+    var character cReplaced = REPLACE(cTrimmed, ",", "|"). /* "ABCdef|GHIjkl|MNOpqr" */
+    
+    /* Delimited string operations */
+    var integer iEntries = NUM-ENTRIES(cTrimmed, ",").     /* 3 */
+    var character cEntry1 = ENTRY(1, cTrimmed, ",").       /* "ABCdef" */
+    var character cEntry2 = ENTRY(2, cTrimmed, ",").       /* "GHIjkl" */
+    var character cEntry3 = ENTRY(3, cTrimmed, ",").       /* "MNOpqr" */
+    
+    /* Display results */
+    DISPLAY
+        "Original:" cInput SKIP
+        "Trimmed:" cTrimmed SKIP
+        "Length:" iLength SKIP
+        "Uppercase:" cUpper SKIP
+        "Lowercase:" cLower SKIP
+        "Position of ',':" iPos SKIP
+        "Before ',':" cBefore SKIP
+        "After ',':" cAfter SKIP
+        "Substring(3,4):" cSub SKIP
+        "Replaced:" cReplaced SKIP
+        "Number of entries:" iEntries SKIP
+        "Entry 1:" cEntry1 SKIP
+        "Entry 2:" cEntry2 SKIP
+        "Entry 3:" cEntry3.
+END PROCEDURE.
+
+/* Usage */
+RUN StringFunctions.
+"""
+}
+
+"date_functions_example" = {
+  title = "Date Functions Example",
+  description = "Example of date and time functions in ABL",
+  code = """
+/* Date function examples */
+PROCEDURE DateFunctions:
+    /* Current date and time */
+    var date dToday = TODAY.
+    var datetime-tz dtNow = NOW.
+    
+    /* Date components */
+    var integer iYear = YEAR(dToday).
+    var integer iMonth = MONTH(dToday).
+    var integer iDay = DAY(dToday).
+    var integer iWeekday = WEEKDAY(dToday).
+    
+    /* Date calculations */
+    var date dYesterday = dToday - 1.
+    var date dTomorrow = dToday + 1.
+    var date dNextMonth = ADD-INTERVAL(dToday, 1, "months").
+    var date dNextYear = ADD-INTERVAL(dToday, 1, "years").
+    
+    /* Date intervals */
+    var integer iDaysInMonth = INTERVAL(dToday, dNextMonth, "days").
+    var integer iDaysInYear = INTERVAL(dToday, dNextYear, "days").
+    
+    /* Date formatting */
+    var character cDateString = STRING(dToday, "99/99/9999").
+    var character cMonthName = STRING(dToday, "mmmm").
+    var character cDayName = STRING(dToday, "ddd").
+    
+    /* Display results */
+    DISPLAY
+        "Today:" dToday SKIP
+        "Now:" dtNow SKIP
+        "Year:" iYear SKIP
+        "Month:" iMonth SKIP
+        "Day:" iDay SKIP
+        "Weekday:" iWeekday SKIP
+        "Yesterday:" dYesterday SKIP
+        "Tomorrow:" dTomorrow SKIP
+        "Next Month:" dNextMonth SKIP
+        "Next Year:" dNextYear SKIP
+        "Days in Month:" iDaysInMonth SKIP
+        "Days in Year:" iDaysInYear SKIP
+        "Date String:" cDateString SKIP
+        "Month Name:" cMonthName SKIP
+        "Day Name:" cDayName.
+END PROCEDURE.
+
+/* Usage */
+RUN DateFunctions.
+"""
+}
+
+"numeric_functions_example" = {
+  title = "Numeric Functions Example",
+  description = "Example of numeric functions in ABL",
+  code = """
+/* Numeric function examples */
+PROCEDURE NumericFunctions:
+    /* Input values */
+    var decimal dValue1 = 123.456.
+    var decimal dValue2 = -78.901.
+    
+    /* Type conversion */
+    var integer iInteger1 = INTEGER(dValue1).              /* 123 */
+    var integer iInteger2 = INTEGER(dValue2).              /* -78 */
+    var decimal dDecimal1 = DECIMAL(dValue1, 1).           /* 123.5 */
+    var decimal dDecimal2 = DECIMAL(dValue2, 1).           /* -78.9 */
+    
+    /* Rounding and truncation */
+    var decimal dRounded1 = ROUND(dValue1, 2).             /* 123.46 */
+    var decimal dRounded2 = ROUND(dValue2, 2).             /* -78.90 */
+    var decimal dTruncated1 = TRUNCATE(dValue1, 2).        /* 123.45 */
+    var decimal dTruncated2 = TRUNCATE(dValue2, 2).        /* -78.90 */
+    
+    /* Absolute values */
+    var decimal dAbs1 = ABS(dValue1).                      /* 123.456 */
+    var decimal dAbs2 = ABS(dValue2).                      /* 78.901 */
+    
+    /* Min/Max values */
+    var decimal dMax = MAXIMUM(dValue1, dValue2).          /* 123.456 */
+    var decimal dMin = MINIMUM(dValue1, dValue2).          /* -78.901 */
+    
+    /* Mathematical operations */
+    var decimal dSum = dValue1 + dValue2.                  /* 44.555 */
+    var decimal dDiff = dValue1 - dValue2.                 /* 202.357 */
+    var decimal dProduct = dValue1 * dValue2.              /* -9740.76 */
+    var decimal dQuotient = dValue1 / dValue2.             /* -1.564 */
+    
+    /* Display results */
+    DISPLAY
+        "Value 1:" dValue1 SKIP
+        "Value 2:" dValue2 SKIP
+        "Integer 1:" iInteger1 SKIP
+        "Integer 2:" iInteger2 SKIP
+        "Decimal 1:" dDecimal1 SKIP
+        "Decimal 2:" dDecimal2 SKIP
+        "Rounded 1:" dRounded1 SKIP
+        "Rounded 2:" dRounded2 SKIP
+        "Truncated 1:" dTruncated1 SKIP
+        "Truncated 2:" dTruncated2 SKIP
+        "Abs 1:" dAbs1 SKIP
+        "Abs 2:" dAbs2 SKIP
+        "Max:" dMax SKIP
+        "Min:" dMin SKIP
+        "Sum:" dSum SKIP
+        "Difference:" dDiff SKIP
+        "Product:" dProduct SKIP
+        "Quotient:" dQuotient.
+END PROCEDURE.
+
+/* Usage */
+RUN NumericFunctions.
+"""
+}
+
+"database_functions_example" = {
+  title = "Database Functions Example",
+  description = "Example of database functions in ABL",
+  code = """
+/* Database function examples */
+PROCEDURE DatabaseFunctions:
+    DEFINE INPUT PARAMETER piCustNum AS INTEGER NO-UNDO.
+    
+    /* Check if customer exists */
+    var logical lCustomerExists = CAN-FIND(FIRST Customer WHERE Customer.CustNum = piCustNum).
+    
+    /* If customer doesn't exist, return */
+    IF NOT lCustomerExists THEN DO:
+        MESSAGE "Customer not found: " + STRING(piCustNum)
+            VIEW-AS ALERT-BOX ERROR.
+        RETURN.
+    END.
+    
+    /* Find customer */
+    FIND FIRST Customer WHERE Customer.CustNum = piCustNum NO-LOCK.
+    
+    /* Get record ID */
+    var recid rCustomer = RECID(Customer).
+    var rowid rwCustomer = ROWID(Customer).
+    
+    /* Count orders */
+    var integer iOrderCount = COUNT(Order WHERE Order.CustNum = piCustNum).
+    
+    /* Calculate order statistics */
+    var decimal dTotalAmount = SUM(Order.Amount WHERE Order.CustNum = piCustNum).
+    var decimal dAvgAmount = AVERAGE(Order.Amount WHERE Order.CustNum = piCustNum).
+    var decimal dMaxAmount = MAXIMUM(Order.Amount WHERE Order.CustNum = piCustNum).
+    var decimal dMinAmount = MINIMUM(Order.Amount WHERE Order.CustNum = piCustNum).
+    
+    /* Display results */
+    DISPLAY
+        "Customer:" Customer.Name SKIP
+        "Record ID:" rCustomer SKIP
+        "Row ID:" rwCustomer SKIP
+        "Order Count:" iOrderCount SKIP
+        "Total Amount:" dTotalAmount SKIP
+        "Average Amount:" dAvgAmount SKIP
+        "Maximum Amount:" dMaxAmount SKIP
+        "Minimum Amount:" dMinAmount.
+END PROCEDURE.
+
+/* Usage */
+RUN DatabaseFunctions (INPUT 1001).
+"""
+}

@@ -1,0 +1,55 @@
+# ABL Linting Rules
+# Contains linting rules for ABL code based on best practices
+
+[linting]
+# Naming conventions (based on memory about variable declarations)
+variable_naming = {
+    "character": "^c[A-Z].*$",  # cName
+    "integer": "^i[A-Z].*$",    # iCount
+    "decimal": "^d[A-Z].*$",    # dAmount
+    "logical": "^l[A-Z].*$",    # lValid
+    "handle": "^h[A-Z].*$",     # hWidget
+    "date": "^dt[A-Z].*$",      # dtStart
+    "datetime": "^dt[A-Z].*$",  # dtTimestamp
+    "memptr": "^mp[A-Z].*$",    # mpData
+    "longchar": "^lc[A-Z].*$",  # lcText
+    "raw": "^r[A-Z].*$",        # rData
+    "rowid": "^row[A-Z].*$",    # rowCustomer
+    "recid": "^rec[A-Z].*$",    # recOrder
+    "class": "^[A-Z][a-zA-Z0-9]*$", # Customer
+    "temp_table": "^tt[A-Z].*$", # ttCustomer
+    "buffer": "^b[A-Z].*$",     # bCustomer (based on memory about buffer usage)
+    "parameter_input": "^pi[A-Z].*$", # piCustomerId
+    "parameter_output": "^po[A-Z].*$", # poResult
+    "parameter_inputoutput": "^pio[A-Z].*$", # pioData
+    "constant": "^[A-Z][A-Z0-9_]*$", # MAX_SIZE
+    "enum": "^e[A-Z].*$",       # eStatus
+    "property": "^m_[a-z].*$"   # m_name
+}
+
+# Code style rules
+code_style = {
+    "use_var_keyword": true,           # Use var instead of DEFINE VARIABLE
+    "no_undo_with_var": false,         # Don't use NO-UNDO with var (it's implicit)
+    "explicit_no_undo_parameters": true, # Always use NO-UNDO with parameters
+    "use_block_for_single_statement": true, # Use DO/END blocks for single statements
+    "align_variable_declarations": true, # Align variable declarations
+    "group_buffer_definitions": true,   # Group buffer definitions together
+    "use_buffer_references": true,      # Use buffer references in queries
+    "document_buffer_relationships": true, # Document buffer relationships
+    "maintain_no_lock_attributes": true # Maintain NO-LOCK and other attributes
+}
+
+# Error detection
+error_detection = {
+    "unused_variables": true,
+    "undeclared_variables": true,
+    "unreachable_code": true,
+    "missing_return": true,
+    "implicit_variable_declaration": true,
+    "inconsistent_returns": true,
+    "missing_parameter": true,
+    "unused_parameter": true,
+    "missing_no_undo": true,
+    "missing_buffer_definition": true
+}

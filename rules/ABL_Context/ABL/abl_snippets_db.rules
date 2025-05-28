@@ -1,0 +1,229 @@
+# ABL Database Snippets Rules
+# Contains code snippets for ABL database operations
+
+[snippets]
+# Buffer definitions and usage (based on memory about buffer usage best practices)
+"buffer_definitions" = {
+    title = "Buffer Definitions",
+    description = "Define buffers for tables following best practices",
+    code = """
+/* Buffer Definitions */
+DEFINE BUFFER b${1:Table}     FOR ${1:Table}.      /* Main table buffer */
+DEFINE BUFFER b${2:Related}   FOR ${2:Related}.    /* Related table buffer */
+"""
+}
+
+"buffer_for_each" = {
+    title = "Buffer For Each",
+    description = "Use buffers in FOR EACH statements",
+    code = """
+FOR EACH b${1:Table} WHERE b${1:Table}.${2:Field} = ${3:Value} ${4:NO-LOCK},
+    EACH b${5:Related} OF b${1:Table} ${4:NO-LOCK}:
+    /* Use buffer references */
+    ${6:// Your code here}
+END.
+"""
+}
+
+"buffer_find" = {
+    title = "Buffer Find",
+    description = "Find a record using a buffer",
+    code = """
+FIND FIRST b${1:Table} WHERE b${1:Table}.${2:Field} = ${3:Value} ${4:NO-LOCK} NO-ERROR.
+IF AVAILABLE b${1:Table} THEN DO:
+    /* Use buffer reference */
+    ${5:// Your code here}
+END.
+"""
+}
+
+"buffer_create" = {
+    title = "Buffer Create",
+    description = "Create a record using a buffer",
+    code = """
+CREATE b${1:Table}.
+ASSIGN
+    b${1:Table}.${2:Field1} = ${3:Value1}
+    b${1:Table}.${4:Field2} = ${5:Value2}.
+"""
+}
+
+"buffer_copy" = {
+    title = "Buffer Copy",
+    description = "Copy data between buffers",
+    code = """
+BUFFER-COPY b${1:Source} TO b${2:Target}.
+"""
+}
+
+"buffer_compare" = {
+    title = "Buffer Compare",
+    description = "Compare two buffer records",
+    code = """
+IF BUFFER-COMPARE b${1:Buffer1} TO b${2:Buffer2} THEN DO:
+    /* Buffers are identical */
+    ${3:// Your code here}
+END.
+ELSE DO:
+    /* Buffers are different */
+    ${4:// Your code here}
+END.
+"""
+}
+
+# Database operations
+"temp_table_definition" = {
+    title = "Temp-Table Definition",
+    description = "Define a temp-table",
+    code = """
+DEFINE TEMP-TABLE tt${1:Name}
+    FIELD ${2:Field1} AS ${3:CHARACTER}
+    FIELD ${4:Field2} AS ${5:INTEGER}
+    INDEX ${6:PrimaryIdx} ${2:Field1}.
+"""
+}
+
+"dataset_definition" = {
+    title = "Dataset Definition",
+    description = "Define a dataset with related tables",
+    code = """
+DEFINE DATASET ds${1:Name}
+    FOR tt${2:Table1}, tt${3:Table2}
+    DATA-RELATION rel${2:Table1}${3:Table2}
+    FOR tt${2:Table1}, tt${3:Table2} RELATION-FIELDS(${4:Field1}, ${5:Field2})
+    NESTED.
+"""
+}
+
+"data_relation" = {
+    title = "Data Relation",
+    description = "Define a relation between tables",
+    code = """
+DATA-RELATION rel${1:Name}
+    FOR ${2:Table1}, ${3:Table2} RELATION-FIELDS(${4:Field1}, ${5:Field2})
+    NESTED.
+"""
+}
+
+"transaction_block" = {
+    title = "Transaction Block",
+    description = "Define a transaction block with error handling",
+    code = """
+DO TRANSACTION ON ERROR UNDO, THROW:
+    /* Transaction operations */
+    ${1:// Database operations}
+    
+    /* Commit if all operations succeed */
+    COMMIT.
+END.
+"""
+}
+
+"query_definition" = {
+    title = "Query Definition",
+    description = "Define and prepare a query",
+    code = """
+DEFINE QUERY q${1:Name} FOR ${2:Table}.
+OPEN QUERY q${1:Name} FOR EACH ${2:Table} WHERE ${3:condition} ${4:NO-LOCK}.
+"""
+}
+
+"query_get_next" = {
+    title = "Query Get Next",
+    description = "Get next record from a query",
+    code = """
+GET NEXT q${1:Name}.
+DO WHILE AVAILABLE ${2:Table}:
+    /* Process record */
+    ${3:// Your code here}
+    
+    GET NEXT q${1:Name}.
+END.
+"""
+}
+
+"database_connection" = {
+    title = "Database Connection",
+    description = "Connect to a database",
+    code = """
+CONNECT -db ${1:database} -ld ${2:logical} -dt ${3:dbtype} -U ${4:username} -P ${5:password}.
+"""
+}
+
+"disconnect_database" = {
+    title = "Disconnect Database",
+    description = "Disconnect from a database",
+    code = """
+DISCONNECT ${1:logical}.
+"""
+}
+
+"dump_load" = {
+    title = "Dump and Load",
+    description = "Dump and load data",
+    code = """
+/* Dump data */
+OUTPUT TO ${1:filename}.d.
+EXPORT ${2:table} ${3:ALL}.
+OUTPUT CLOSE.
+
+/* Load data */
+INPUT FROM ${1:filename}.d.
+IMPORT ${2:table}.
+INPUT CLOSE.
+"""
+}
+
+"for_each_where" = {
+    title = "For Each Where",
+    description = "Iterate over filtered records",
+    code = """
+FOR EACH ${1:table} WHERE ${2:condition} ${3:NO-LOCK}:
+    /* Process records */
+    ${4:// Your code here}
+END.
+"""
+}
+
+"can_find" = {
+    title = "Can-Find",
+    description = "Check if records exist",
+    code = """
+IF CAN-FIND(FIRST ${1:table} WHERE ${2:condition}) THEN DO:
+    /* Record exists */
+    ${3:// Your code here}
+END.
+ELSE DO:
+    /* Record does not exist */
+    ${4:// Your code here}
+END.
+"""
+}
+
+"dynamic_query" = {
+    title = "Dynamic Query",
+    description = "Build and execute a dynamic query",
+    code = """
+DEFINE VARIABLE cWhere AS CHARACTER NO-UNDO.
+DEFINE VARIABLE qh AS HANDLE NO-UNDO.
+
+/* Build WHERE clause */
+ASSIGN cWhere = "WHERE " + ${1:dynamic_condition}.
+
+/* Create query */
+CREATE QUERY qh.
+qh:SET-BUFFERS(BUFFER ${2:table}:HANDLE).
+qh:QUERY-PREPARE("FOR EACH ${2:table} " + cWhere).
+qh:QUERY-OPEN().
+
+/* Process results */
+DO WHILE qh:GET-NEXT():
+    /* Process record */
+    ${3:// Your code here}
+END.
+
+/* Clean up */
+qh:QUERY-CLOSE().
+DELETE OBJECT qh.
+"""
+}

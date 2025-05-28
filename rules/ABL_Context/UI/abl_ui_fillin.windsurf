@@ -1,0 +1,360 @@
+# ABL UI Fill-in Reference
+# Fill-in input widget for ABL UI
+
+[metadata]
+name = "ABL UI Fill-in Reference"
+version = "1.0.0"
+description = "Reference for ABL UI fill-in widget and best practices"
+category = "ui"
+
+[syntax_elements]
+# ABL UI fill-in elements
+
+"FILL-IN" = {
+  type = "widget",
+  description = "Single-line text input widget",
+  syntax = "field VIEW-AS FILL-IN [options]",
+  example = "Customer.Name VIEW-AS FILL-IN SIZE 30 BY 1."
+}
+
+"SIZE" = {
+  type = "attribute",
+  description = "Specifies the size of a fill-in",
+  syntax = "SIZE width BY height",
+  example = "VIEW-AS FILL-IN SIZE 30 BY 1"
+}
+
+"FORMAT" = {
+  type = "attribute",
+  description = "Specifies the display format for a fill-in",
+  syntax = "FORMAT \"format\"",
+  example = "VIEW-AS FILL-IN FORMAT \"X(30)\""
+}
+
+"PASSWORD-FIELD" = {
+  type = "attribute",
+  description = "Creates a password field that masks input",
+  syntax = "PASSWORD-FIELD",
+  example = "VIEW-AS FILL-IN PASSWORD-FIELD"
+}
+
+"READ-ONLY" = {
+  type = "attribute",
+  description = "Makes a fill-in read-only",
+  syntax = "READ-ONLY",
+  example = "VIEW-AS FILL-IN READ-ONLY"
+}
+
+"TOOLTIP" = {
+  type = "attribute",
+  description = "Adds a tooltip to a fill-in",
+  syntax = "TOOLTIP \"tooltip\"",
+  example = "VIEW-AS FILL-IN TOOLTIP \"Enter your name\""
+}
+
+"SENSITIVE" = {
+  type = "attribute",
+  description = "Makes a fill-in sensitive to user interaction",
+  syntax = "SENSITIVE",
+  example = "VIEW-AS FILL-IN SENSITIVE"
+}
+
+"AUTO-RETURN" = {
+  type = "attribute",
+  description = "Automatically moves focus when field is filled",
+  syntax = "AUTO-RETURN",
+  example = "VIEW-AS FILL-IN AUTO-RETURN"
+}
+
+"AUTO-TAB" = {
+  type = "attribute",
+  description = "Automatically moves focus when field is filled",
+  syntax = "AUTO-TAB",
+  example = "VIEW-AS FILL-IN AUTO-TAB"
+}
+
+"NO-UNDO" = {
+  type = "attribute",
+  description = "Prevents undo for a fill-in",
+  syntax = "NO-UNDO",
+  example = "VIEW-AS FILL-IN NO-UNDO"
+}
+
+"SCREEN-VALUE" = {
+  type = "property",
+  description = "Gets or sets the screen value of a fill-in",
+  syntax = "widget-handle:SCREEN-VALUE",
+  example = "var character cName = edName:SCREEN-VALUE."
+}
+
+"VALUE-CHANGED" = {
+  type = "event",
+  description = "Event triggered when a fill-in value changes",
+  syntax = "ON VALUE-CHANGED OF widget DO:\n    statements\nEND.",
+  example = "ON VALUE-CHANGED OF edName DO:\n    MESSAGE \"Name changed\".\nEND."
+}
+
+[best_practices]
+# Best practices for ABL UI fill-ins
+
+"fillin_naming" = {
+  title = "Fill-in Naming Conventions",
+  description = """
+When naming fill-in widgets, follow these best practices:
+
+1. Use the 'ed' prefix for fill-in widgets (short for 'editor')
+2. Use descriptive names that indicate the field's purpose
+3. Use consistent naming conventions across the application
+4. Follow camelCase or PascalCase naming
+
+```abl
+/* Good practice */
+DEFINE VARIABLE edName AS CHARACTER FORMAT "X(30)" VIEW-AS FILL-IN.
+DEFINE VARIABLE edAddress AS CHARACTER FORMAT "X(50)" VIEW-AS FILL-IN.
+DEFINE VARIABLE edEmail AS CHARACTER FORMAT "X(50)" VIEW-AS FILL-IN.
+```
+"""
+}
+
+"fillin_layout" = {
+  title = "Fill-in Layout Best Practices",
+  description = """
+When laying out fill-in widgets, follow these best practices:
+
+1. Use consistent sizing for similar fields
+2. Align labels and fields for readability
+3. Group related fields together
+4. Use appropriate spacing between fields
+5. Use COLON for label alignment
+
+```abl
+/* Good practice */
+DEFINE FRAME frCustomer
+    Customer.Name LABEL "Name" COLON 15 VIEW-AS FILL-IN SIZE 30 BY 1
+    Customer.Address LABEL "Address" COLON 15 VIEW-AS FILL-IN SIZE 30 BY 1
+    Customer.Email LABEL "Email" COLON 15 VIEW-AS FILL-IN SIZE 30 BY 1
+    WITH SIDE-LABELS
+    SIZE 80 BY 10.
+```
+"""
+}
+
+"fillin_validation" = {
+  title = "Fill-in Validation Best Practices",
+  description = """
+When validating fill-in widgets, follow these best practices:
+
+1. Use ON VALUE-CHANGED for immediate validation
+2. Use UPDATE for batch validation
+3. Use APPLY for error messages
+4. Use READ-ONLY for display-only fields
+5. Use PASSWORD-FIELD for sensitive data
+
+```abl
+/* Good practice */
+DEFINE VARIABLE edEmail AS CHARACTER FORMAT "X(50)" 
+    VIEW-AS FILL-IN SIZE 50 BY 1
+    TOOLTIP "Enter a valid email address".
+
+/* Validation */
+ON VALUE-CHANGED OF edEmail DO:
+    var character cEmail = edEmail:SCREEN-VALUE.
+    IF cEmail <> "" AND INDEX(cEmail, "@") = 0 THEN
+        APPLY "ERROR" TO edEmail.
+END.
+```
+"""
+}
+
+[examples]
+# Examples of ABL UI fill-ins
+
+"basic_fillin_example" = {
+  title = "Basic Fill-in Example",
+  description = "Example of basic fill-in usage in ABL",
+  code = """
+/* Basic fill-in example */
+PROCEDURE BasicFillin:
+    /* Define variables */
+    DEFINE VARIABLE edName AS CHARACTER FORMAT "X(30)" NO-UNDO.
+    DEFINE VARIABLE edEmail AS CHARACTER FORMAT "X(50)" NO-UNDO.
+    
+    /* Define frame */
+    DEFINE FRAME frFillin
+        HEADER "Fill-in Example"
+        SKIP(1)
+        "Name:" VIEW-AS TEXT SKIP(0)
+        edName VIEW-AS FILL-IN SIZE 30 BY 1 SKIP(1)
+        "Email:" VIEW-AS TEXT SKIP(0)
+        edEmail VIEW-AS FILL-IN SIZE 30 BY 1 SKIP(1)
+        btnOK LABEL "OK" SIZE 10 BY 1
+        WITH CENTERED
+        SIZE 50 BY 10.
+    
+    /* Button trigger */
+    ON CHOOSE OF btnOK DO:
+        var character cName = edName:SCREEN-VALUE.
+        var character cEmail = edEmail:SCREEN-VALUE.
+        
+        MESSAGE "Name: " + cName + "~nEmail: " + cEmail
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    /* Display frame */
+    DISPLAY WITH FRAME frFillin.
+    
+    /* Enable fields */
+    ENABLE edName edEmail btnOK WITH FRAME frFillin.
+    
+    /* Wait for button click */
+    WAIT-FOR CHOOSE OF btnOK.
+END PROCEDURE.
+
+/* Usage */
+RUN BasicFillin.
+"""
+}
+
+"fillin_validation_example" = {
+  title = "Fill-in Validation Example",
+  description = "Example of fill-in validation in ABL",
+  code = """
+/* Fill-in validation example */
+PROCEDURE FillinValidation:
+    /* Define variables */
+    DEFINE VARIABLE edName AS CHARACTER FORMAT "X(30)" NO-UNDO.
+    DEFINE VARIABLE edEmail AS CHARACTER FORMAT "X(50)" NO-UNDO.
+    DEFINE VARIABLE edAge AS INTEGER FORMAT ">>9" NO-UNDO.
+    
+    /* Define frame */
+    DEFINE FRAME frValidation
+        HEADER "Validation Example"
+        SKIP(1)
+        "Name:" VIEW-AS TEXT SKIP(0)
+        edName VIEW-AS FILL-IN SIZE 30 BY 1 
+            TOOLTIP "Required field" SKIP(1)
+        "Email:" VIEW-AS TEXT SKIP(0)
+        edEmail VIEW-AS FILL-IN SIZE 30 BY 1 
+            TOOLTIP "Enter a valid email address" SKIP(1)
+        "Age:" VIEW-AS TEXT SKIP(0)
+        edAge VIEW-AS FILL-IN SIZE 5 BY 1 
+            TOOLTIP "Must be between 18 and 100" SKIP(1)
+        btnSubmit LABEL "Submit" SIZE 10 BY 1
+        WITH CENTERED
+        SIZE 50 BY 12.
+    
+    /* Name validation */
+    ON VALUE-CHANGED OF edName DO:
+        var character cName = edName:SCREEN-VALUE.
+        IF cName = "" THEN
+            APPLY "ERROR" TO edName.
+    END.
+    
+    /* Email validation */
+    ON VALUE-CHANGED OF edEmail DO:
+        var character cEmail = edEmail:SCREEN-VALUE.
+        IF cEmail <> "" AND INDEX(cEmail, "@") = 0 THEN
+            APPLY "ERROR" TO edEmail.
+    END.
+    
+    /* Age validation */
+    ON VALUE-CHANGED OF edAge DO:
+        var integer iAge = INTEGER(edAge:SCREEN-VALUE) NO-ERROR.
+        IF iAge < 18 OR iAge > 100 THEN
+            APPLY "ERROR" TO edAge.
+    END.
+    
+    /* Button trigger */
+    ON CHOOSE OF btnSubmit DO:
+        var logical lValid = TRUE.
+        
+        /* Validate name */
+        IF edName:SCREEN-VALUE = "" THEN DO:
+            APPLY "ERROR" TO edName.
+            lValid = FALSE.
+        END.
+        
+        /* Validate email */
+        IF edEmail:SCREEN-VALUE <> "" AND INDEX(edEmail:SCREEN-VALUE, "@") = 0 THEN DO:
+            APPLY "ERROR" TO edEmail.
+            lValid = FALSE.
+        END.
+        
+        /* Validate age */
+        var integer iAge = INTEGER(edAge:SCREEN-VALUE) NO-ERROR.
+        IF iAge < 18 OR iAge > 100 THEN DO:
+            APPLY "ERROR" TO edAge.
+            lValid = FALSE.
+        END.
+        
+        /* Submit if valid */
+        IF lValid THEN
+            MESSAGE "Form submitted successfully"
+                VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    /* Display frame */
+    DISPLAY WITH FRAME frValidation.
+    
+    /* Enable fields */
+    ENABLE edName edEmail edAge btnSubmit WITH FRAME frValidation.
+    
+    /* Wait for button click */
+    WAIT-FOR CHOOSE OF btnSubmit.
+END PROCEDURE.
+
+/* Usage */
+RUN FillinValidation.
+"""
+}
+
+"password_fillin_example" = {
+  title = "Password Fill-in Example",
+  description = "Example of password fill-in in ABL",
+  code = """
+/* Password fill-in example */
+PROCEDURE PasswordFillin:
+    /* Define variables */
+    DEFINE VARIABLE edUsername AS CHARACTER FORMAT "X(30)" NO-UNDO.
+    DEFINE VARIABLE edPassword AS CHARACTER FORMAT "X(30)" NO-UNDO.
+    
+    /* Define frame */
+    DEFINE FRAME frLogin
+        HEADER "Login"
+        SKIP(1)
+        "Username:" VIEW-AS TEXT SKIP(0)
+        edUsername VIEW-AS FILL-IN SIZE 30 BY 1 SKIP(1)
+        "Password:" VIEW-AS TEXT SKIP(0)
+        edPassword VIEW-AS FILL-IN SIZE 30 BY 1 PASSWORD-FIELD SKIP(1)
+        btnLogin LABEL "Login" SIZE 10 BY 1
+        WITH CENTERED
+        SIZE 50 BY 10.
+    
+    /* Button trigger */
+    ON CHOOSE OF btnLogin DO:
+        var character cUsername = edUsername:SCREEN-VALUE.
+        var character cPassword = edPassword:SCREEN-VALUE.
+        
+        /* Simple validation */
+        IF cUsername = "admin" AND cPassword = "password" THEN
+            MESSAGE "Login successful"
+                VIEW-AS ALERT-BOX INFO.
+        ELSE
+            MESSAGE "Invalid username or password"
+                VIEW-AS ALERT-BOX ERROR.
+    END.
+    
+    /* Display frame */
+    DISPLAY WITH FRAME frLogin.
+    
+    /* Enable fields */
+    ENABLE edUsername edPassword btnLogin WITH FRAME frLogin.
+    
+    /* Wait for button click */
+    WAIT-FOR CHOOSE OF btnLogin.
+END PROCEDURE.
+
+/* Usage */
+RUN PasswordFillin.
+"""
+}

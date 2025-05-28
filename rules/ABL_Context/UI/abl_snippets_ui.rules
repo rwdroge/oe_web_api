@@ -1,0 +1,328 @@
+# ABL UI Snippets Rules
+# Contains code snippets for ABL UI components
+
+[snippets]
+# UI components
+"frame_definition" = {
+    title = "Frame Definition",
+    description = "Define a frame for UI elements",
+    code = """
+DEFINE FRAME ${1:frName}
+    ${2:/* Frame fields */}
+    WITH TITLE "${3:Frame Title}"
+    SIDE-LABELS
+    SIZE ${4:80} BY ${5:15}.
+"""
+}
+
+"browse_definition" = {
+    title = "Browse Definition",
+    description = "Define a browse widget",
+    code = """
+DEFINE BROWSE ${1:brName}
+    DISPLAY ${2:table}.${3:field1} ${2:table}.${4:field2} ${2:table}.${5:field3}
+    WITH ${6:width} DOWN ${7:height}
+    TITLE "${8:Browse Title}"
+    ${9:/* Additional browse options */}.
+"""
+}
+
+"button_definition" = {
+    title = "Button Definition",
+    description = "Define a button widget",
+    code = """
+DEFINE BUTTON ${1:btnName}
+    LABEL "${2:Button Label}"
+    SIZE ${3:15} BY ${4:1}
+    TRIGGERS:
+        ON CHOOSE PERSISTENT RUN ${5:btnHandler}.
+    END TRIGGERS.
+"""
+}
+
+"menu_definition" = {
+    title = "Menu Definition",
+    description = "Define a menu",
+    code = """
+DEFINE MENU ${1:mName}
+    MENUBAR
+    TITLE "${2:Menu Title}".
+"""
+}
+
+"submenu_definition" = {
+    title = "Submenu Definition",
+    description = "Define a submenu",
+    code = """
+DEFINE SUB-MENU ${1:smName}
+    LABEL "${2:Submenu Label}"
+    MENU-ITEM "${3:Item1}" TRIGGERS:
+        ON CHOOSE PERSISTENT RUN ${4:item1Handler}.
+    END TRIGGERS
+    MENU-ITEM "${5:Item2}" TRIGGERS:
+        ON CHOOSE PERSISTENT RUN ${6:item2Handler}.
+    END TRIGGERS.
+"""
+}
+
+"fill_in_definition" = {
+    title = "Fill-In Definition",
+    description = "Define a fill-in field",
+    code = """
+DEFINE VARIABLE ${1:vField} AS ${2:CHARACTER} FORMAT "${3:X(30)}" 
+    LABEL "${4:Field Label}" ${5:INITIAL ""}.
+"""
+}
+
+"radio_set_definition" = {
+    title = "Radio-Set Definition",
+    description = "Define a radio-set widget",
+    code = """
+DEFINE VARIABLE ${1:vRadio} AS ${2:INTEGER} 
+    VIEW-AS RADIO-SET RADIO-BUTTONS 
+        "${3:Option1}", ${4:1},
+        "${5:Option2}", ${6:2},
+        "${7:Option3}", ${8:3}
+    INITIAL ${4:1}
+    HORIZONTAL.
+"""
+}
+
+"combo_box_definition" = {
+    title = "Combo-Box Definition",
+    description = "Define a combo-box widget",
+    code = """
+DEFINE VARIABLE ${1:vCombo} AS ${2:CHARACTER} 
+    VIEW-AS COMBO-BOX 
+    LIST-ITEMS "${3:Item1}", "${4:Item2}", "${5:Item3}"
+    DROP-DOWN-LIST
+    INNER-LINES 10
+    INITIAL "${3:Item1}".
+"""
+}
+
+"selection_list_definition" = {
+    title = "Selection-List Definition",
+    description = "Define a selection-list widget",
+    code = """
+DEFINE VARIABLE ${1:vList} AS ${2:CHARACTER} 
+    VIEW-AS SELECTION-LIST
+    LIST-ITEMS "${3:Item1}", "${4:Item2}", "${5:Item3}"
+    INNER-LINES 5
+    SCROLLBAR-VERTICAL
+    SIZE ${6:30} BY ${7:5}.
+"""
+}
+
+"editor_definition" = {
+    title = "Editor Definition",
+    description = "Define an editor widget",
+    code = """
+DEFINE VARIABLE ${1:vEditor} AS ${2:CHARACTER} 
+    VIEW-AS EDITOR
+    SIZE ${3:50} BY ${4:10}
+    SCROLLBAR-HORIZONTAL
+    SCROLLBAR-VERTICAL
+    LARGE.
+"""
+}
+
+"toggle_box_definition" = {
+    title = "Toggle-Box Definition",
+    description = "Define a toggle-box widget",
+    code = """
+DEFINE VARIABLE ${1:vToggle} AS ${2:LOGICAL} 
+    VIEW-AS TOGGLE-BOX
+    LABEL "${3:Toggle Label}"
+    INITIAL ${4:FALSE}.
+"""
+}
+
+"slider_definition" = {
+    title = "Slider Definition",
+    description = "Define a slider widget",
+    code = """
+DEFINE VARIABLE ${1:vSlider} AS ${2:INTEGER} 
+    VIEW-AS SLIDER
+    MIN-VALUE ${3:0}
+    MAX-VALUE ${4:100}
+    HORIZONTAL
+    INITIAL ${5:50}
+    SIZE ${6:30} BY ${7:1}.
+"""
+}
+
+"image_definition" = {
+    title = "Image Definition",
+    description = "Define an image widget",
+    code = """
+DEFINE IMAGE ${1:imgName}
+    FILENAME "${2:image.jpg}"
+    SIZE ${3:30} BY ${4:20}.
+"""
+}
+
+"rectangle_definition" = {
+    title = "Rectangle Definition",
+    description = "Define a rectangle widget",
+    code = """
+DEFINE RECTANGLE ${1:rectName}
+    EDGE-PIXELS 2
+    SIZE ${2:30} BY ${3:10}
+    BGCOLOR ${4:7}.
+"""
+}
+
+"enable_widgets" = {
+    title = "Enable Widgets",
+    description = "Enable widgets in a frame",
+    code = """
+ENABLE ${1:widget1} ${2:widget2} ${3:widget3} WITH FRAME ${4:frName}.
+"""
+}
+
+"disable_widgets" = {
+    title = "Disable Widgets",
+    description = "Disable widgets in a frame",
+    code = """
+DISABLE ${1:widget1} ${2:widget2} ${3:widget3} WITH FRAME ${4:frName}.
+"""
+}
+
+"display_with_frame" = {
+    title = "Display With Frame",
+    description = "Display data with a frame",
+    code = """
+DISPLAY 
+    ${1:field1} ${2:field2} ${3:field3}
+    WITH FRAME ${4:frName}.
+"""
+}
+
+"update_with_frame" = {
+    title = "Update With Frame",
+    description = "Update data with a frame",
+    code = """
+UPDATE 
+    ${1:field1} LABEL "${2:Label1}"
+    ${3:field2} LABEL "${4:Label2}"
+    ${5:field3} LABEL "${6:Label3}"
+    WITH FRAME ${7:frName}.
+"""
+}
+
+"wait_for" = {
+    title = "Wait For",
+    description = "Wait for user interaction",
+    code = """
+WAIT-FOR ${1:CHOOSE OF ${2:btnOK}} OR ${3:CHOOSE OF ${4:btnCancel}} 
+    FOCUS ${2:btnOK} WITH FRAME ${5:frName}.
+"""
+}
+
+"message_box" = {
+    title = "Message Box",
+    description = "Display a message box",
+    code = """
+MESSAGE "${1:Message text}"
+    VIEW-AS ALERT-BOX ${2:INFORMATION} BUTTONS ${3:OK}.
+"""
+}
+
+"question_box" = {
+    title = "Question Box",
+    description = "Display a question box",
+    code = """
+MESSAGE "${1:Question text}"
+    VIEW-AS ALERT-BOX QUESTION BUTTONS YES-NO-CANCEL UPDATE ${2:lAnswer}.
+"""
+}
+
+"file_dialog" = {
+    title = "File Dialog",
+    description = "Display a file dialog",
+    code = """
+SYSTEM-DIALOG FILE ${1:"OPEN"} 
+    FILTERS "${2:Text Files}" "${3:*.txt}",
+            "${4:All Files}" "${5:*.*}"
+    INITIAL-FILTER ${6:1}
+    DEFAULT-EXTENSION "${7:.txt}"
+    UPDATE ${8:cFileName}.
+"""
+}
+
+"color_dialog" = {
+    title = "Color Dialog",
+    description = "Display a color dialog",
+    code = """
+SYSTEM-DIALOG COLOR 
+    INITIAL-COLOR ${1:0}
+    UPDATE ${2:iColor}.
+"""
+}
+
+"font_dialog" = {
+    title = "Font Dialog",
+    description = "Display a font dialog",
+    code = """
+SYSTEM-DIALOG FONT 
+    INITIAL-FONT ${1:0}
+    UPDATE ${2:hFont}.
+"""
+}
+
+"printer_setup" = {
+    title = "Printer Setup",
+    description = "Display printer setup dialog",
+    code = """
+PRINTER-SETUP ${1:LANDSCAPE} ${2:FONT 0, "Arial", 10}.
+"""
+}
+
+"run_persistent" = {
+    title = "Run Persistent",
+    description = "Run a persistent procedure",
+    code = """
+RUN ${1:procedureName} PERSISTENT SET ${2:hProc}
+    (${3:INPUT ${4:param1}}, ${5:OUTPUT ${6:param2}}).
+"""
+}
+
+"apply_entry" = {
+    title = "Apply Entry",
+    description = "Apply changes to entry fields",
+    code = """
+APPLY "${1:Message}" TO ${2:field1} ${3:field2} ${4:field3} IN FRAME ${5:frName}.
+"""
+}
+
+"status_bar" = {
+    title = "Status Bar",
+    description = "Update the status bar",
+    code = """
+STATUS DEFAULT "${1:Status message}".
+"""
+}
+
+"progress_bar" = {
+    title = "Progress Bar",
+    description = "Create and update a progress bar",
+    code = """
+/* Initialize progress bar */
+DEFINE VARIABLE iProgress AS INTEGER INITIAL 0 NO-UNDO.
+DEFINE RECTANGLE rectProgress NO-UNDO
+    EDGE-PIXELS 2
+    SIZE 50 BY 1
+    BGCOLOR 15.
+DEFINE RECTANGLE rectProgressBar NO-UNDO
+    EDGE-PIXELS 0
+    SIZE 1 BY 1
+    BGCOLOR 12.
+
+/* Update progress */
+ASSIGN iProgress = iProgress + ${1:10}.
+IF iProgress > 100 THEN iProgress = 100.
+ASSIGN rectProgressBar:WIDTH-PIXELS = 
+    (rectProgress:WIDTH-PIXELS - 4) * (iProgress / 100).
+"""
+}

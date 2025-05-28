@@ -1,0 +1,617 @@
+# ABL UI Button Reference
+# Button components and management for ABL UI
+
+[metadata]
+name = "ABL UI Button Reference"
+version = "1.0.0"
+description = "Reference for ABL UI buttons and button controls"
+category = "ui"
+
+[syntax_elements]
+# ABL UI button elements
+
+"BUTTON" = {
+  type = "widget",
+  description = "Standard push button control",
+  syntax = "button-name AS BUTTON [options]",
+  example = "btnSave AS BUTTON LABEL \"Save\"."
+}
+
+"TOGGLE-BOX" = {
+  type = "widget",
+  description = "Toggle button/checkbox control",
+  syntax = "toggle-name AS TOGGLE-BOX [options]",
+  example = "tgEnable AS TOGGLE-BOX LABEL \"Enable\"."
+}
+
+"RADIO-SET" = {
+  type = "container",
+  description = "Container for radio buttons",
+  syntax = "radio-set-name AS RADIO-SET [options]",
+  example = "rsOptions AS RADIO-SET HORIZONTAL."
+}
+
+"RADIO-BUTTON" = {
+  type = "widget",
+  description = "Radio button within a radio-set",
+  syntax = "RADIO-BUTTON radio-button-name [options]",
+  example = "RADIO-BUTTON rbOption1 LABEL \"Option 1\"."
+}
+
+"IMAGE-BUTTON" = {
+  type = "widget",
+  description = "Button with an image",
+  syntax = "image-button-name AS IMAGE-BUTTON [options]",
+  example = "ibSave AS IMAGE-BUTTON FILE \"save.jpg\"."
+}
+
+"DEFINE BUTTON" = {
+  type = "statement",
+  description = "Defines a button widget",
+  syntax = "DEFINE BUTTON button-name [options]",
+  example = "DEFINE BUTTON btnSave LABEL \"Save\"."
+}
+
+"LABEL" = {
+  type = "attribute",
+  description = "Specifies the button text",
+  syntax = "LABEL \"text\"",
+  example = "LABEL \"Save\""
+}
+
+"SIZE" = {
+  type = "attribute",
+  description = "Sets the button size",
+  syntax = "SIZE width BY height",
+  example = "SIZE 15 BY 1"
+}
+
+"AUTO-GO" = {
+  type = "attribute",
+  description = "Button triggered by Enter key",
+  syntax = "AUTO-GO",
+  example = "AUTO-GO"
+}
+
+"AUTO-END-KEY" = {
+  type = "attribute",
+  description = "Button triggered by Escape key",
+  syntax = "AUTO-END-KEY",
+  example = "AUTO-END-KEY"
+}
+
+"DEFAULT" = {
+  type = "attribute", 
+  description = "Defines the default button",
+  syntax = "DEFAULT",
+  example = "DEFAULT"
+}
+
+"FLAT-BUTTON" = {
+  type = "attribute",
+  description = "Creates a flat style button",
+  syntax = "FLAT-BUTTON",
+  example = "FLAT-BUTTON"
+}
+
+"SENSITIVE" = {
+  type = "property",
+  description = "Controls if a button is enabled",
+  syntax = "SENSITIVE",
+  example = "btnSave:SENSITIVE = FALSE."
+}
+
+"CHECKED" = {
+  type = "property",
+  description = "Controls if a toggle is checked",
+  syntax = "CHECKED",
+  example = "tgEnable:CHECKED = TRUE."
+}
+
+"IMAGE" = {
+  type = "property",
+  description = "Sets the button image",
+  syntax = "IMAGE",
+  example = "btnSave:IMAGE = \"save.jpg\"."
+}
+
+"IMAGE-DOWN" = {
+  type = "property",
+  description = "Sets the button pressed image",
+  syntax = "IMAGE-DOWN",
+  example = "btnSave:IMAGE-DOWN = \"save_down.jpg\"."
+}
+
+"IMAGE-INSENSITIVE" = {
+  type = "property",
+  description = "Sets the button disabled image",
+  syntax = "IMAGE-INSENSITIVE",
+  example = "btnSave:IMAGE-INSENSITIVE = \"save_disabled.jpg\"."
+}
+
+"IMAGE-POSITION" = {
+  type = "property",
+  description = "Sets the image position",
+  syntax = "IMAGE-POSITION",
+  example = "btnSave:IMAGE-POSITION = \"left\"."
+}
+
+"ON CHOOSE" = {
+  type = "event",
+  description = "Handles button click",
+  syntax = "ON CHOOSE OF button-name DO: ... END.",
+  example = "ON CHOOSE OF btnSave DO: RUN SaveData. END."
+}
+
+[best_practices]
+# Best practices for ABL UI buttons
+
+"button_organization" = {
+  title = "Button Organization Best Practices",
+  description = """
+When organizing buttons, follow these best practices:
+
+1. Group related buttons together
+2. Use consistent button sizes and positioning
+3. Follow standard platform conventions for button placement
+4. Provide meaningful and concise button labels
+5. Consider using images for common actions
+
+```abl
+/* Good practice - well-organized buttons */
+DEFINE FRAME frMain
+    HEADER "Document Editor"
+    SKIP(1)
+    edDocument AT ROW 2 COL 1 SIZE 80 BY 15 SCROLLBAR-VERTICAL SKIP(1)
+    
+    /* Button area with consistent sizing and spacing */
+    btnNew     LABEL "&New"     AT ROW 18 COL 5  SIZE 12 BY 1
+    btnOpen    LABEL "&Open..." AT ROW 18 COL 18 SIZE 12 BY 1
+    btnSave    LABEL "&Save"    AT ROW 18 COL 31 SIZE 12 BY 1
+    btnSaveAs  LABEL "Save &As" AT ROW 18 COL 44 SIZE 12 BY 1
+    btnPrint   LABEL "&Print"   AT ROW 18 COL 57 SIZE 12 BY 1
+    
+    /* Action buttons at bottom */
+    btnClose   LABEL "Close"    AT ROW 20 COL 57 SIZE 12 BY 1 AUTO-END-KEY
+    
+    WITH CENTERED SIDE-LABELS
+    SIZE 85 BY 22.
+```
+"""
+}
+
+"button_usability" = {
+  title = "Button Usability Best Practices",
+  description = """
+When designing buttons for usability, follow these best practices:
+
+1. Make buttons look clickable 
+2. Size buttons appropriately for their function
+3. Provide keyboard shortcuts (access keys with &)
+4. Use DEFAULT for the primary action
+5. Use AUTO-END-KEY for cancel operations
+
+```abl
+/* Good practice - usable button design */
+DEFINE FRAME frDialog
+    HEADER "Save Changes"
+    SKIP(1)
+    "Save changes to the current document?" SKIP(2)
+    
+    /* Well-designed action buttons */
+    btnSave    LABEL "&Save"     SIZE 12 BY 1 DEFAULT AUTO-GO
+    btnDiscard LABEL "&Discard"  SIZE 12 BY 1
+    btnCancel  LABEL "&Cancel"   SIZE 12 BY 1 AUTO-END-KEY
+    
+    WITH CENTERED
+    VIEW-AS DIALOG-BOX
+    SIZE 50 BY 10.
+```
+"""
+}
+
+"button_feedback" = {
+  title = "Button Feedback Best Practices",
+  description = """
+When designing button feedback, follow these best practices:
+
+1. Provide visual feedback when buttons are clicked
+2. Disable rather than hide buttons when unavailable
+3. Use appropriate state images for image buttons
+4. Provide status messages for button actions
+5. Consider hover effects for modern UIs
+
+```abl
+/* Good practice - button feedback */
+PROCEDURE UpdateButtonState:
+    DEFINE INPUT PARAMETER plDocumentLoaded AS LOGICAL NO-UNDO.
+    DEFINE INPUT PARAMETER plDocumentModified AS LOGICAL NO-UNDO.
+    
+    /* Update button states */
+    btnSave:SENSITIVE = plDocumentLoaded AND plDocumentModified.
+    btnSaveAs:SENSITIVE = plDocumentLoaded.
+    btnPrint:SENSITIVE = plDocumentLoaded.
+    
+    /* Update button images for visual feedback */
+    IF plDocumentLoaded AND plDocumentModified THEN DO:
+        btnSave:IMAGE = "save_enabled.jpg".
+        btnSave:IMAGE-DOWN = "save_pressed.jpg".
+        btnSave:IMAGE-INSENSITIVE = "save_disabled.jpg".
+    END ELSE DO:
+        btnSave:IMAGE = "save_disabled.jpg". 
+        btnSave:IMAGE-INSENSITIVE = "save_disabled.jpg".
+    END.
+    
+    /* Update status message */
+    IF plDocumentLoaded THEN
+        wMain:STATUS = "Document " + 
+           (IF plDocumentModified THEN "modified" ELSE "unchanged").
+    ELSE
+        wMain:STATUS = "No document loaded".
+END PROCEDURE.
+
+/* Usage example */
+RUN UpdateButtonState(TRUE, TRUE).
+```
+"""
+}
+
+[examples]
+# Examples of ABL UI buttons
+
+"basic_button_example" = {
+  title = "Basic Button Example",
+  description = "Example of basic button usage in ABL",
+  code = """
+/* Basic button example */
+PROCEDURE BasicButtons:
+    /* Define frame */
+    DEFINE FRAME frButtons
+        HEADER "Button Examples"
+        SKIP(1)
+        "Standard Button:" AT ROW 3 COL 5 VIEW-AS TEXT SKIP(0)
+        btnStandard LABEL "Click Me" AT ROW 3 COL 25 SIZE 15 BY 1 SKIP(1)
+        
+        "Default Button:" AT ROW 5 COL 5 VIEW-AS TEXT SKIP(0)
+        btnDefault LABEL "Default" AT ROW 5 COL 25 SIZE 15 BY 1 DEFAULT SKIP(1)
+        
+        "Auto-End Button:" AT ROW 7 COL 5 VIEW-AS TEXT SKIP(0)
+        btnCancel LABEL "Cancel" AT ROW 7 COL 25 SIZE 15 BY 1 AUTO-END-KEY SKIP(1)
+        
+        "Toggle Button:" AT ROW 9 COL 5 VIEW-AS TEXT SKIP(0)
+        tgToggle LABEL "Enable" AT ROW 9 COL 25 TOGGLE-BOX SKIP(1)
+        
+        "Radio Set:" AT ROW 11 COL 5 VIEW-AS TEXT SKIP(0)
+        rsOptions RADIO-SET AT ROW 11 COL 25 SKIP(0)
+            RADIO-BUTTONS
+                "Option 1", "1",
+                "Option 2", "2",
+                "Option 3", "3" SKIP(2)
+        
+        btnClose LABEL "Close" AT ROW 15 COL 30 SIZE 15 BY 1
+        
+        WITH CENTERED
+        SIZE 70 BY 18.
+    
+    /* Button events */
+    ON CHOOSE OF btnStandard DO:
+        MESSAGE "Standard button clicked."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON CHOOSE OF btnDefault DO:
+        MESSAGE "Default button clicked."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON CHOOSE OF btnCancel DO:
+        MESSAGE "Cancel button clicked."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON VALUE-CHANGED OF tgToggle DO:
+        MESSAGE "Toggle button " + 
+              (IF tgToggle:CHECKED THEN "checked" ELSE "unchecked") + "."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON VALUE-CHANGED OF rsOptions DO:
+        MESSAGE "Selected option: " + rsOptions:SCREEN-VALUE
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON CHOOSE OF btnClose DO:
+        APPLY "CLOSE" TO FRAME frButtons.
+    END.
+    
+    /* Initialize */
+    tgToggle:CHECKED = TRUE.
+    rsOptions:SCREEN-VALUE = "1".
+    
+    /* Display and enable */
+    DISPLAY tgToggle rsOptions WITH FRAME frButtons.
+    ENABLE ALL WITH FRAME frButtons.
+    
+    /* Wait for frame close */
+    WAIT-FOR CLOSE OF FRAME frButtons.
+END PROCEDURE.
+
+/* Usage */
+RUN BasicButtons.
+"""
+}
+
+"image_button_example" = {
+  title = "Image Button Example",
+  description = "Example of image buttons in ABL",
+  code = """
+/* Image button example */
+PROCEDURE ImageButtons:
+    /* Define frame */
+    DEFINE FRAME frImageButtons
+        HEADER "Image Button Examples"
+        SKIP(1)
+        "Image Button:" AT ROW 3 COL 5 VIEW-AS TEXT SKIP(0)
+        ibSave IMAGE-NAME "save" AT ROW 3 COL 25 SIZE 5 BY 1 FLAT-BUTTON SKIP(1)
+        
+        "Image with Label:" AT ROW 5 COL 5 VIEW-AS TEXT SKIP(0)
+        ibOpen LABEL "Open" IMAGE-NAME "open" 
+            AT ROW 5 COL 25 SIZE 15 BY 1 
+            IMAGE-POSITION LEFT SKIP(1)
+        
+        "Multiple States:" AT ROW 7 COL 5 VIEW-AS TEXT SKIP(0)
+        ibPrint LABEL "Print" IMAGE-NAME "print" 
+            AT ROW 7 COL 25 SIZE 15 BY 1 
+            IMAGE-POSITION LEFT SKIP(1)
+        
+        "Button Strip:" AT ROW 9 COL 5 VIEW-AS TEXT SKIP(0)
+        ibNew    IMAGE-NAME "new"    AT ROW 9 COL 25 SIZE 5 BY 1 FLAT-BUTTON
+        ibOpen2  IMAGE-NAME "open"   AT ROW 9 COL 31 SIZE 5 BY 1 FLAT-BUTTON
+        ibSave2  IMAGE-NAME "save"   AT ROW 9 COL 37 SIZE 5 BY 1 FLAT-BUTTON
+        ibPrint2 IMAGE-NAME "print"  AT ROW 9 COL 43 SIZE 5 BY 1 FLAT-BUTTON
+        SKIP(2)
+        
+        tgDisablePrint LABEL "Disable Print Button" AT ROW 12 COL 5 TOGGLE-BOX SKIP(2)
+        
+        btnClose LABEL "Close" AT ROW 15 COL 30 SIZE 15 BY 1
+        
+        WITH CENTERED
+        SIZE 70 BY 18.
+    
+    /* Button events */
+    ON CHOOSE OF ibSave DO:
+        MESSAGE "Save button clicked."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON CHOOSE OF ibOpen DO:
+        MESSAGE "Open button clicked."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON CHOOSE OF ibPrint DO:
+        MESSAGE "Print button clicked."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON CHOOSE OF ibNew DO:
+        MESSAGE "New button clicked."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON CHOOSE OF ibOpen2 DO:
+        MESSAGE "Open button clicked."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON CHOOSE OF ibSave2 DO:
+        MESSAGE "Save button clicked."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON CHOOSE OF ibPrint2 DO:
+        MESSAGE "Print button clicked."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON VALUE-CHANGED OF tgDisablePrint DO:
+        ibPrint:SENSITIVE = NOT tgDisablePrint:CHECKED.
+        ibPrint2:SENSITIVE = NOT tgDisablePrint:CHECKED.
+    END.
+    
+    ON CHOOSE OF btnClose DO:
+        APPLY "CLOSE" TO FRAME frImageButtons.
+    END.
+    
+    /* Initialize */
+    /* Note: In a real application, you would specify actual image files */
+    /* Here we're just demonstrating the syntax */
+    ibSave:IMAGE = "save.jpg".
+    ibSave:IMAGE-DOWN = "save_down.jpg".
+    ibSave:IMAGE-INSENSITIVE = "save_disabled.jpg".
+    
+    ibOpen:IMAGE = "open.jpg".
+    ibOpen:IMAGE-DOWN = "open_down.jpg".
+    ibOpen:IMAGE-INSENSITIVE = "open_disabled.jpg".
+    
+    ibPrint:IMAGE = "print.jpg".
+    ibPrint:IMAGE-DOWN = "print_down.jpg".
+    ibPrint:IMAGE-INSENSITIVE = "print_disabled.jpg".
+    
+    ibNew:IMAGE = "new.jpg".
+    ibNew:IMAGE-DOWN = "new_down.jpg".
+    ibNew:IMAGE-INSENSITIVE = "new_disabled.jpg".
+    
+    ibOpen2:IMAGE = "open.jpg".
+    ibOpen2:IMAGE-DOWN = "open_down.jpg".
+    ibOpen2:IMAGE-INSENSITIVE = "open_disabled.jpg".
+    
+    ibSave2:IMAGE = "save.jpg".
+    ibSave2:IMAGE-DOWN = "save_down.jpg".
+    ibSave2:IMAGE-INSENSITIVE = "save_disabled.jpg".
+    
+    ibPrint2:IMAGE = "print.jpg".
+    ibPrint2:IMAGE-DOWN = "print_down.jpg".
+    ibPrint2:IMAGE-INSENSITIVE = "print_disabled.jpg".
+    
+    /* Display and enable */
+    DISPLAY tgDisablePrint WITH FRAME frImageButtons.
+    ENABLE ALL WITH FRAME frImageButtons.
+    
+    /* Wait for frame close */
+    WAIT-FOR CLOSE OF FRAME frImageButtons.
+END PROCEDURE.
+
+/* Usage */
+RUN ImageButtons.
+"""
+}
+
+"toolbutton_example" = {
+  title = "Tool Button Example",
+  description = "Example of creating a toolbar with buttons in ABL",
+  code = """
+/* Toolbar button example */
+PROCEDURE ToolbarButtons:
+    /* Define frame */
+    DEFINE FRAME frToolbar
+        HEADER "Toolbar Example"
+        SKIP(1)
+        /* Toolbar area */
+        RECT-1 AT ROW 2 COL 2 SIZE 66 BY 2 BGCOLOR 8 FGCOLOR 8 SKIP(0)
+        ibNew   IMAGE-NAME "new"     AT ROW 2.5 COL 4  SIZE 4 BY 1 FLAT-BUTTON
+        ibOpen  IMAGE-NAME "open"    AT ROW 2.5 COL 10 SIZE 4 BY 1 FLAT-BUTTON
+        ibSave  IMAGE-NAME "save"    AT ROW 2.5 COL 16 SIZE 4 BY 1 FLAT-BUTTON
+        ibPrint IMAGE-NAME "print"   AT ROW 2.5 COL 22 SIZE 4 BY 1 FLAT-BUTTON
+        RECT-2  AT ROW 2.5 COL 28 SIZE 1 BY 1 BGCOLOR 0 FGCOLOR 0
+        ibCut   IMAGE-NAME "cut"     AT ROW 2.5 COL 31 SIZE 4 BY 1 FLAT-BUTTON
+        ibCopy  IMAGE-NAME "copy"    AT ROW 2.5 COL 37 SIZE 4 BY 1 FLAT-BUTTON
+        ibPaste IMAGE-NAME "paste"   AT ROW 2.5 COL 43 SIZE 4 BY 1 FLAT-BUTTON
+        RECT-3  AT ROW 2.5 COL 49 SIZE 1 BY 1 BGCOLOR 0 FGCOLOR 0
+        ibHelp  IMAGE-NAME "help"    AT ROW 2.5 COL 52 SIZE 4 BY 1 FLAT-BUTTON
+        SKIP(0)
+        
+        /* Document area */
+        edDocument AT ROW 5 COL 2 SIZE 66 BY 12
+        SCROLLBAR-VERTICAL
+        SCROLLBAR-HORIZONTAL SKIP(2)
+        
+        /* Status area */
+        "Status:" AT ROW 19 COL 2 VIEW-AS TEXT SKIP(0)
+        txtStatus FORMAT "X(50)" AT ROW 19 COL 10 VIEW-AS TEXT SKIP(1)
+        
+        btnClose LABEL "Close" AT ROW 21 COL 57 SIZE 10 BY 1 AUTO-END-KEY
+        
+        WITH CENTERED SIDE-LABELS
+        SIZE 70 BY 22.
+    
+    /* Button events */
+    ON CHOOSE OF ibNew DO:
+        RUN UpdateStatus("New document created.").
+        edDocument:SCREEN-VALUE = "".
+    END.
+    
+    ON CHOOSE OF ibOpen DO:
+        RUN UpdateStatus("Document opened.").
+        edDocument:SCREEN-VALUE = "This is a sample document content.~n" +
+                                 "It demonstrates the toolbar functionality.~n~n" +
+                                 "You can use the toolbar buttons to perform actions.".
+    END.
+    
+    ON CHOOSE OF ibSave DO:
+        RUN UpdateStatus("Document saved.").
+    END.
+    
+    ON CHOOSE OF ibPrint DO:
+        RUN UpdateStatus("Document sent to printer.").
+    END.
+    
+    ON CHOOSE OF ibCut DO:
+        RUN UpdateStatus("Text cut to clipboard.").
+    END.
+    
+    ON CHOOSE OF ibCopy DO:
+        RUN UpdateStatus("Text copied to clipboard.").
+    END.
+    
+    ON CHOOSE OF ibPaste DO:
+        RUN UpdateStatus("Text pasted from clipboard.").
+    END.
+    
+    ON CHOOSE OF ibHelp DO:
+        RUN UpdateStatus("Help displayed.").
+        MESSAGE "Toolbar Demo Help~n~n" +
+               "This application demonstrates toolbar buttons in ABL.~n" +
+               "Click the toolbar buttons to perform actions.~n~n" +
+               "The status area shows the last action performed."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON CHOOSE OF btnClose DO:
+        APPLY "CLOSE" TO FRAME frToolbar.
+    END.
+    
+    /* Update status */
+    PROCEDURE UpdateStatus:
+        DEFINE INPUT PARAMETER pcStatus AS CHARACTER NO-UNDO.
+        
+        txtStatus:SCREEN-VALUE = pcStatus.
+    END PROCEDURE.
+    
+    /* Initialize */
+    /* Note: In a real application, you would specify actual image files */
+    /* Here we're just demonstrating the syntax */
+    ibNew:IMAGE = "new.jpg".
+    ibNew:IMAGE-DOWN = "new_down.jpg".
+    ibNew:IMAGE-INSENSITIVE = "new_disabled.jpg".
+    ibNew:TOOLTIP = "New Document".
+    
+    ibOpen:IMAGE = "open.jpg".
+    ibOpen:IMAGE-DOWN = "open_down.jpg".
+    ibOpen:IMAGE-INSENSITIVE = "open_disabled.jpg".
+    ibOpen:TOOLTIP = "Open Document".
+    
+    ibSave:IMAGE = "save.jpg".
+    ibSave:IMAGE-DOWN = "save_down.jpg".
+    ibSave:IMAGE-INSENSITIVE = "save_disabled.jpg".
+    ibSave:TOOLTIP = "Save Document".
+    
+    ibPrint:IMAGE = "print.jpg".
+    ibPrint:IMAGE-DOWN = "print_down.jpg".
+    ibPrint:IMAGE-INSENSITIVE = "print_disabled.jpg".
+    ibPrint:TOOLTIP = "Print Document".
+    
+    ibCut:IMAGE = "cut.jpg".
+    ibCut:IMAGE-DOWN = "cut_down.jpg".
+    ibCut:IMAGE-INSENSITIVE = "cut_disabled.jpg".
+    ibCut:TOOLTIP = "Cut".
+    
+    ibCopy:IMAGE = "copy.jpg".
+    ibCopy:IMAGE-DOWN = "copy_down.jpg".
+    ibCopy:IMAGE-INSENSITIVE = "copy_disabled.jpg".
+    ibCopy:TOOLTIP = "Copy".
+    
+    ibPaste:IMAGE = "paste.jpg".
+    ibPaste:IMAGE-DOWN = "paste_down.jpg".
+    ibPaste:IMAGE-INSENSITIVE = "paste_disabled.jpg".
+    ibPaste:TOOLTIP = "Paste".
+    
+    ibHelp:IMAGE = "help.jpg".
+    ibHelp:IMAGE-DOWN = "help_down.jpg".
+    ibHelp:IMAGE-INSENSITIVE = "help_disabled.jpg".
+    ibHelp:TOOLTIP = "Help".
+    
+    RUN UpdateStatus("Ready").
+    
+    /* Display and enable */
+    DISPLAY edDocument txtStatus WITH FRAME frToolbar.
+    ENABLE ALL WITH FRAME frToolbar.
+    
+    /* Wait for frame close */
+    WAIT-FOR CLOSE OF FRAME frToolbar.
+END PROCEDURE.
+
+/* Usage */
+RUN ToolbarButtons.
+"""
+}

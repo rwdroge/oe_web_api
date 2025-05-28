@@ -1,0 +1,734 @@
+# ABL UI Events Reference
+# Event handling and triggers for ABL UI
+
+[metadata]
+name = "ABL UI Events Reference"
+version = "1.0.0"
+description = "Reference for ABL UI event handling and triggers"
+category = "ui"
+
+[syntax_elements]
+# ABL UI event elements
+
+"ON" = {
+  type = "statement",
+  description = "Defines an event trigger in ABL",
+  syntax = "ON {event} [OF {widget}] DO:\n    {statements}\nEND.",
+  example = "ON CHOOSE OF btnOK DO:\n    MESSAGE \"OK clicked\".\nEND."
+}
+
+"CHOOSE" = {
+  type = "event",
+  description = "Button click or menu item selection event",
+  syntax = "ON CHOOSE [OF widget] DO",
+  example = "ON CHOOSE OF btnSave DO"
+}
+
+"VALUE-CHANGED" = {
+  type = "event",
+  description = "Event when a widget's value changes",
+  syntax = "ON VALUE-CHANGED [OF widget] DO",
+  example = "ON VALUE-CHANGED OF cmbState DO"
+}
+
+"GO" = {
+  type = "event",
+  description = "Window or frame exit event",
+  syntax = "ON GO [OF frame] DO",
+  example = "ON GO OF FRAME frMain DO"
+}
+
+"WINDOW-CLOSE" = {
+  type = "event",
+  description = "Window close event",
+  syntax = "ON WINDOW-CLOSE [OF window] DO",
+  example = "ON WINDOW-CLOSE OF wMain DO"
+}
+
+"MOUSE-SELECT-CLICK" = {
+  type = "event",
+  description = "Mouse click event",
+  syntax = "ON MOUSE-SELECT-CLICK [OF widget] DO",
+  example = "ON MOUSE-SELECT-CLICK OF brwCustomers DO"
+}
+
+"MOUSE-SELECT-DBLCLICK" = {
+  type = "event",
+  description = "Mouse double-click event",
+  syntax = "ON MOUSE-SELECT-DBLCLICK [OF widget] DO",
+  example = "ON MOUSE-SELECT-DBLCLICK OF brwCustomers DO"
+}
+
+"DEFAULT-ACTION" = {
+  type = "event",
+  description = "Default action event (double-click or Enter key)",
+  syntax = "ON DEFAULT-ACTION [OF widget] DO",
+  example = "ON DEFAULT-ACTION OF brwCustomers DO"
+}
+
+"RETURN" = {
+  type = "event",
+  description = "Enter key press event",
+  syntax = "ON RETURN [OF widget] DO",
+  example = "ON RETURN OF edName DO"
+}
+
+"TAB" = {
+  type = "event",
+  description = "Tab key press event",
+  syntax = "ON TAB [OF widget] DO",
+  example = "ON TAB OF edName DO"
+}
+
+"ENTRY" = {
+  type = "event",
+  description = "Widget receives focus event",
+  syntax = "ON ENTRY [OF widget] DO",
+  example = "ON ENTRY OF edName DO"
+}
+
+"LEAVE" = {
+  type = "event",
+  description = "Widget loses focus event",
+  syntax = "ON LEAVE [OF widget] DO",
+  example = "ON LEAVE OF edName DO"
+}
+
+"KEY" = {
+  type = "event",
+  description = "Keyboard key press event",
+  syntax = "ON KEY {key-value} [OF widget] DO",
+  example = "ON KEY \"F1\" OF FRAME frMain DO"
+}
+
+"MOUSE-MOVE" = {
+  type = "event",
+  description = "Mouse move event",
+  syntax = "ON MOUSE-MOVE [OF widget] DO",
+  example = "ON MOUSE-MOVE OF canGraph DO"
+}
+
+"DRAG-DROP" = {
+  type = "event",
+  description = "Drag and drop event",
+  syntax = "ON DRAG-DROP [OF widget] DO",
+  example = "ON DRAG-DROP OF edTarget DO"
+}
+
+"END-RESIZE" = {
+  type = "event",
+  description = "Window resize completion event",
+  syntax = "ON END-RESIZE [OF window] DO",
+  example = "ON END-RESIZE OF wMain DO"
+}
+
+"MENU-DROP" = {
+  type = "event",
+  description = "Menu dropdown event",
+  syntax = "ON MENU-DROP [OF menu] DO",
+  example = "ON MENU-DROP OF mFile DO"
+}
+
+"APPLY" = {
+  type = "method",
+  description = "Applies an event to a widget",
+  syntax = "APPLY \"{event}\" TO {widget}.",
+  example = "APPLY \"CHOOSE\" TO btnOK."
+}
+
+"FIND-WIDGET" = {
+  type = "function",
+  description = "Finds a widget by name",
+  syntax = "FIND-WIDGET({widget-name}, {frame}) SEARCHING {scope}",
+  example = "FIND-WIDGET(\"btnOK\", FRAME frMain) SEARCHING ALL."
+}
+
+"SUPER" = {
+  type = "keyword",
+  description = "Calls the superclass event handler",
+  syntax = "SUPER.",
+  example = "SUPER."
+}
+
+"PUBLISH" = {
+  type = "statement",
+  description = "Publishes an event to subscribers",
+  syntax = "PUBLISH \"{event-name}\" [TO {handle}] [{parameters}].",
+  example = "PUBLISH \"customer-selected\" (Customer.CustNum)."
+}
+
+"SUBSCRIBE" = {
+  type = "statement",
+  description = "Subscribes to an event",
+  syntax = "SUBSCRIBE [TO] \"{event-name}\" [ANYWHERE | IN handle] RUN-PROCEDURE \"{procedure-name}\" [{parameters}].",
+  example = "SUBSCRIBE TO \"customer-selected\" ANYWHERE RUN-PROCEDURE \"UpdateCustomer\" (INPUT cust-num)."
+}
+
+"UNSUBSCRIBE" = {
+  type = "statement",
+  description = "Unsubscribes from an event",
+  syntax = "UNSUBSCRIBE [TO] \"{event-name}\" [ANYWHERE | IN handle] [RUN-PROCEDURE \"{procedure-name}\"].",
+  example = "UNSUBSCRIBE TO \"customer-selected\" ANYWHERE RUN-PROCEDURE \"UpdateCustomer\"."
+}
+
+[best_practices]
+# Best practices for ABL UI events
+
+"event_organization" = {
+  title = "Event Handler Organization",
+  description = """
+When organizing event handlers, follow these best practices:
+
+1. Group related event handlers together
+2. Place event handlers near the widgets they handle
+3. Use consistent naming for event handler procedures
+4. Keep event handlers focused on a single responsibility
+5. Avoid deeply nested event handlers
+
+```abl
+/* Good practice - grouping related events */
+DEFINE BUTTON btnSave LABEL "Save".
+DEFINE BUTTON btnCancel LABEL "Cancel".
+
+/* Button event handlers */
+ON CHOOSE OF btnSave DO:
+    RUN SaveCustomer.
+END.
+
+ON CHOOSE OF btnCancel DO:
+    RUN CancelCustomer.
+END.
+
+/* Separate procedures for complex logic */
+PROCEDURE SaveCustomer:
+    /* Save implementation */
+END PROCEDURE.
+
+PROCEDURE CancelCustomer:
+    /* Cancel implementation */
+END PROCEDURE.
+```
+"""
+}
+
+"event_delegation" = {
+  title = "Event Delegation and Bubbling",
+  description = """
+When handling events, follow these best practices:
+
+1. Use event delegation for similar widgets
+2. Keep event handlers modular
+3. Use PUBLISH/SUBSCRIBE for loose coupling
+4. Pass relevant data in event parameters
+5. Handle event propagation appropriately
+
+```abl
+/* Good practice - event delegation */
+DEFINE VARIABLE hBtn AS HANDLE NO-UNDO.
+DEFINE VARIABLE cBtn AS CHARACTER NO-UNDO.
+
+/* Single handler for multiple buttons */
+ON CHOOSE OF btnSave, btnSaveNew, btnSaveClose DO:
+    hBtn = LAST-EVENT:WIDGET-HANDLE.
+    cBtn = hBtn:NAME.
+    
+    /* Common save logic */
+    RUN SaveCustomer.
+    
+    /* Button-specific actions */
+    CASE cBtn:
+        WHEN "btnSave" THEN 
+            /* Just save */
+            .
+        WHEN "btnSaveNew" THEN 
+            RUN ClearForm.
+        WHEN "btnSaveClose" THEN 
+            APPLY "CLOSE" TO FRAME frCustomer.
+    END CASE.
+END.
+
+/* Publish/Subscribe example */
+ON CHOOSE OF btnCustomerSelect DO:
+    /* Publish event with customer data */
+    PUBLISH "customer-selected" (Customer.CustNum, Customer.Name).
+END.
+
+/* Subscribe to the event */
+SUBSCRIBE TO "customer-selected" ANYWHERE 
+    RUN-PROCEDURE "HandleCustomerSelection" (INPUT p_cust-num, INPUT p_cust-name).
+
+/* Subscriber procedure */
+PROCEDURE HandleCustomerSelection:
+    DEFINE INPUT PARAMETER p_cust-num AS INTEGER NO-UNDO.
+    DEFINE INPUT PARAMETER p_cust-name AS CHARACTER NO-UNDO.
+    
+    /* Handle the selected customer */
+    DISPLAY p_cust-num p_cust-name WITH FRAME frCustomerInfo.
+END PROCEDURE.
+```
+"""
+}
+
+"event_error_handling" = {
+  title = "Event Error Handling",
+  description = """
+When handling errors in events, follow these best practices:
+
+1. Use structured error handling with CATCH blocks
+2. Return NO-APPLY to cancel default event behavior
+3. Provide meaningful error messages
+4. Log errors for debugging
+5. Maintain UI state consistency after errors
+
+```abl
+/* Good practice - error handling in events */
+ON CHOOSE OF btnSave DO:
+    DO ON ERROR UNDO, THROW:
+        /* Validate input */
+        IF edName:SCREEN-VALUE = "" THEN DO:
+            MESSAGE "Name is required."
+                VIEW-AS ALERT-BOX ERROR.
+            APPLY "ENTRY" TO edName.
+            RETURN NO-APPLY.
+        END.
+        
+        /* Try to save */
+        RUN SaveCustomer.
+        
+        CATCH eError AS Progress.Lang.Error:
+            MESSAGE "Error saving customer: " + eError:GetMessage(1)
+                VIEW-AS ALERT-BOX ERROR.
+            RETURN NO-APPLY.
+        END CATCH.
+    END.
+END.
+
+/* Prevent tab navigation on error */
+ON LEAVE OF edEmail DO:
+    DEFINE VARIABLE cEmail AS CHARACTER NO-UNDO.
+    cEmail = edEmail:SCREEN-VALUE.
+    
+    /* Validate email format */
+    IF cEmail <> "" AND INDEX(cEmail, "@") = 0 THEN DO:
+        MESSAGE "Invalid email format."
+            VIEW-AS ALERT-BOX ERROR.
+        RETURN NO-APPLY.
+    END.
+END.
+```
+"""
+}
+
+"event_performance" = {
+  title = "Event Performance Considerations",
+  description = """
+When optimizing event performance, follow these best practices:
+
+1. Keep event handlers lightweight
+2. Avoid expensive operations in frequently triggered events
+3. Use debouncing for high-frequency events
+4. Defer complex processing to separate procedures
+5. Use WAIT-FOR with timeout for long-running operations
+
+```abl
+/* Good practice - lightweight event handler */
+DEFINE VARIABLE iLastKeyTime AS INTEGER NO-UNDO.
+DEFINE VARIABLE iDebounceDelay AS INTEGER INITIAL 300 NO-UNDO.
+
+/* Debounced search as user types */
+ON VALUE-CHANGED OF edSearch DO:
+    DEFINE VARIABLE iCurrentTime AS INTEGER NO-UNDO.
+    
+    /* Get current time */
+    iCurrentTime = ETIME.
+    
+    /* Store time for debouncing */
+    iLastKeyTime = iCurrentTime.
+    
+    /* Schedule delayed search */
+    RUN DelayedSearch.
+END.
+
+/* Delayed search procedure */
+PROCEDURE DelayedSearch:
+    DEFINE VARIABLE iCurrentTime AS INTEGER NO-UNDO.
+    
+    /* Wait for debounce delay */
+    WAIT-FOR WAIT-COMPLETE OF SELF.
+    
+    /* Check if enough time has passed */
+    iCurrentTime = ETIME.
+    IF iCurrentTime - iLastKeyTime < iDebounceDelay THEN
+        RETURN.
+    
+    /* Perform actual search */
+    RUN PerformSearch(edSearch:SCREEN-VALUE).
+END PROCEDURE.
+
+/* Separate procedure for expensive operation */
+PROCEDURE PerformSearch:
+    DEFINE INPUT PARAMETER pcSearchTerm AS CHARACTER NO-UNDO.
+    
+    /* Expensive search operation */
+    OPEN QUERY qryCustomer FOR EACH Customer WHERE 
+        Customer.Name BEGINS pcSearchTerm OR
+        Customer.Address CONTAINS pcSearchTerm
+        NO-LOCK.
+    
+    /* Display results */
+    DISPLAY brwCustomer WITH FRAME frSearch.
+END PROCEDURE.
+```
+"""
+}
+
+[examples]
+# Examples of ABL UI events
+
+"basic_events_example" = {
+  title = "Basic Event Handling Example",
+  description = "Example of common event handling in ABL",
+  code = """
+/* Basic event handling example */
+PROCEDURE BasicEventHandling:
+    /* Define variables */
+    DEFINE VARIABLE edName AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE edEmail AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE chkActive AS LOGICAL INITIAL TRUE NO-UNDO.
+    
+    /* Define frame */
+    DEFINE FRAME frCustomer
+        HEADER "Customer Information"
+        SKIP(1)
+        "Name:" VIEW-AS TEXT SKIP(0)
+        edName VIEW-AS FILL-IN SIZE 30 BY 1 SKIP(1)
+        "Email:" VIEW-AS TEXT SKIP(0)
+        edEmail VIEW-AS FILL-IN SIZE 30 BY 1 SKIP(1)
+        chkActive LABEL "Active Customer" SKIP(2)
+        btnSave LABEL "Save" SIZE 10 BY 1
+        btnCancel LABEL "Cancel" SIZE 10 BY 1
+        WITH CENTERED
+        SIZE 50 BY 12.
+    
+    /* Button click events */
+    ON CHOOSE OF btnSave DO:
+        /* Validate input */
+        IF edName = "" THEN DO:
+            MESSAGE "Name is required."
+                VIEW-AS ALERT-BOX ERROR.
+            APPLY "ENTRY" TO edName.
+            RETURN NO-APPLY.
+        END.
+        
+        IF edEmail <> "" AND INDEX(edEmail, "@") = 0 THEN DO:
+            MESSAGE "Invalid email format."
+                VIEW-AS ALERT-BOX ERROR.
+            APPLY "ENTRY" TO edEmail.
+            RETURN NO-APPLY.
+        END.
+        
+        /* Process form */
+        MESSAGE "Customer saved:~n" +
+                "Name: " + edName + "~n" +
+                "Email: " + edEmail + "~n" +
+                "Active: " + STRING(chkActive)
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON CHOOSE OF btnCancel DO:
+        MESSAGE "Operation cancelled."
+            VIEW-AS ALERT-BOX INFO.
+        APPLY "CLOSE" TO FRAME frCustomer.
+    END.
+    
+    /* Field events */
+    ON ENTRY OF edName DO:
+        /* Field entry event */
+        FRAME frCustomer:TITLE = "Editing Name...".
+    END.
+    
+    ON LEAVE OF edName DO:
+        /* Field leave event */
+        FRAME frCustomer:TITLE = "Customer Information".
+    END.
+    
+    ON RETURN OF edName DO:
+        /* Enter key in field */
+        APPLY "ENTRY" TO edEmail.
+    END.
+    
+    ON VALUE-CHANGED OF chkActive DO:
+        /* Checkbox value changed */
+        IF chkActive THEN
+            MESSAGE "Customer set to active."
+                VIEW-AS ALERT-BOX INFO.
+        ELSE
+            MESSAGE "Customer set to inactive."
+                VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    /* Key events */
+    ON KEY "F1" ANYWHERE DO:
+        /* Help key */
+        MESSAGE "Help: This form allows you to edit customer information."
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    ON KEY "CTRL-S" ANYWHERE DO:
+        /* Save shortcut */
+        APPLY "CHOOSE" TO btnSave.
+    END.
+    
+    ON KEY "ESCAPE" ANYWHERE DO:
+        /* Cancel shortcut */
+        APPLY "CHOOSE" TO btnCancel.
+    END.
+    
+    /* Display and enable */
+    DISPLAY edName edEmail chkActive WITH FRAME frCustomer.
+    ENABLE edName edEmail chkActive btnSave btnCancel WITH FRAME frCustomer.
+    
+    /* Wait for frame to close */
+    WAIT-FOR CLOSE OF FRAME frCustomer.
+END PROCEDURE.
+
+/* Usage */
+RUN BasicEventHandling.
+"""
+}
+
+"event_propagation_example" = {
+  title = "Event Propagation Example",
+  description = "Example of event propagation and bubbling in ABL",
+  code = """
+/* Event propagation example */
+PROCEDURE EventPropagation:
+    /* Define variables */
+    DEFINE VARIABLE rOption AS CHARACTER INITIAL "Option 1" NO-UNDO.
+    
+    /* Define frame */
+    DEFINE FRAME frMain
+        HEADER "Event Propagation"
+        SKIP(1)
+        rOption VIEW-AS RADIO-SET
+            RADIO-BUTTONS "Option 1", "Option 1",
+                         "Option 2", "Option 2",
+                         "Option 3", "Option 3"
+            SIZE 20 BY 3 SKIP(1)
+        btnAction1 LABEL "Action 1" SIZE 10 BY 1
+        btnAction2 LABEL "Action 2" SIZE 10 BY 1
+        btnAction3 LABEL "Action 3" SIZE 10 BY 1 SKIP(1)
+        btnClose LABEL "Close" SIZE 10 BY 1
+        WITH CENTERED
+        SIZE 40 BY 12.
+    
+    /* Frame events */
+    ON WINDOW-CLOSE OF FRAME frMain DO:
+        /* Ask before closing */
+        MESSAGE "Are you sure you want to close this window?"
+            VIEW-AS ALERT-BOX QUESTION BUTTONS YES-NO UPDATE lClose.
+        
+        IF NOT lClose THEN
+            RETURN NO-APPLY.
+    END.
+    
+    /* Radio-set event */
+    ON VALUE-CHANGED OF rOption DO:
+        MESSAGE "Option changed to: " + rOption
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    /* Button events with delegation */
+    ON CHOOSE OF btnAction1, btnAction2, btnAction3 DO:
+        DEFINE VARIABLE hButton AS HANDLE NO-UNDO.
+        DEFINE VARIABLE cButtonLabel AS CHARACTER NO-UNDO.
+        
+        /* Get event source */
+        hButton = LAST-EVENT:WIDGET-HANDLE.
+        cButtonLabel = hButton:LABEL.
+        
+        /* Display action based on button */
+        MESSAGE "Action triggered: " + cButtonLabel + "~n" +
+                "Current option: " + rOption
+            VIEW-AS ALERT-BOX INFO.
+        
+        /* Demonstrate returning NO-APPLY to stop propagation */
+        IF rOption = "Option 3" AND cButtonLabel = "Action 3" THEN DO:
+            MESSAGE "This combination is not allowed."
+                VIEW-AS ALERT-BOX ERROR.
+            RETURN NO-APPLY.
+        END.
+    END.
+    
+    /* Nested event handlers */
+    ON CHOOSE OF btnAction1 DO:
+        /* This runs in addition to the delegated handler above */
+        IF rOption = "Option 1" THEN DO:
+            /* Special case for Action 1 + Option 1 */
+            MESSAGE "Special handler for Action 1 with Option 1."
+                VIEW-AS ALERT-BOX INFO.
+        END.
+    END.
+    
+    /* Close button */
+    ON CHOOSE OF btnClose DO:
+        APPLY "CLOSE" TO FRAME frMain.
+    END.
+    
+    /* Global keyboard events */
+    ON KEY-FUNCTION F1 ANYWHERE DO:
+        MESSAGE "Help for Event Propagation Demo:~n" +
+                "- Select an option from the radio set~n" +
+                "- Click action buttons to see events~n" +
+                "- Notice how events propagate~n" +
+                "- Try Option 3 + Action 3 to see blocked propagation"
+            VIEW-AS ALERT-BOX INFO.
+    END.
+    
+    /* Display and enable */
+    DISPLAY rOption WITH FRAME frMain.
+    ENABLE rOption btnAction1 btnAction2 btnAction3 btnClose WITH FRAME frMain.
+    
+    /* Wait for frame to close */
+    WAIT-FOR CLOSE OF FRAME frMain.
+END PROCEDURE.
+
+/* Usage */
+RUN EventPropagation.
+"""
+}
+
+"publish_subscribe_example" = {
+  title = "Publish-Subscribe Pattern Example",
+  description = "Example of event publish-subscribe pattern in ABL",
+  code = """
+/* Publish-Subscribe pattern example */
+PROCEDURE PublishSubscribeExample:
+    /* Set up the UI */
+    DEFINE VARIABLE wCustomer AS WIDGET-HANDLE NO-UNDO.
+    DEFINE VARIABLE wOrder AS WIDGET-HANDLE NO-UNDO.
+    
+    /* Create the subscriber procedure */
+    PROCEDURE HandleCustomerSelection:
+        DEFINE INPUT PARAMETER piCustNum AS INTEGER NO-UNDO.
+        DEFINE INPUT PARAMETER pcCustName AS CHARACTER NO-UNDO.
+        
+        /* Display selected customer */
+        DISPLAY 
+            piCustNum LABEL "ID" WIDTH 10
+            pcCustName LABEL "Name" WIDTH 30
+            WITH FRAME frSelectedCustomer IN WINDOW wOrder.
+        
+        /* Open orders for this customer */
+        DISPLAY "Orders for " + pcCustName WITH FRAME frOrderHeader IN WINDOW wOrder.
+        
+        /* Simulate opening customer orders */
+        RUN OpenCustomerOrders (piCustNum).
+    END PROCEDURE.
+    
+    /* Procedure to open customer orders */
+    PROCEDURE OpenCustomerOrders:
+        DEFINE INPUT PARAMETER piCustNum AS INTEGER NO-UNDO.
+        
+        /* Display orders (simulated) */
+        DEFINE VARIABLE iOrderCount AS INTEGER INITIAL 0 NO-UNDO.
+        
+        /* Simulate getting order count */
+        CASE piCustNum:
+            WHEN 1001 THEN iOrderCount = 3.
+            WHEN 1002 THEN iOrderCount = 0.
+            WHEN 1003 THEN iOrderCount = 7.
+            OTHERWISE iOrderCount = 2.
+        END CASE.
+        
+        /* Display order count */
+        DISPLAY 
+            iOrderCount LABEL "Order Count" WIDTH 15
+            WITH FRAME frOrderCount IN WINDOW wOrder.
+    END PROCEDURE.
+    
+    /* Create the customer window */
+    CREATE WINDOW wCustomer
+        ASSIGN
+            TITLE = "Customer List"
+            WIDTH = 50
+            HEIGHT = 15
+            X = 50
+            Y = 50.
+    
+    /* Create the order window */
+    CREATE WINDOW wOrder
+        ASSIGN
+            TITLE = "Order Information"
+            WIDTH = 50
+            HEIGHT = 15
+            X = 150
+            Y = 150.
+    
+    /* Customer window frames */
+    DEFINE FRAME frCustomerList
+        HEADER "Available Customers"
+        SKIP(1)
+        btnCust1 LABEL "Customer 1001: ABC Corp" SIZE 30 BY 1 SKIP(0.5)
+        btnCust2 LABEL "Customer 1002: XYZ Ltd" SIZE 30 BY 1 SKIP(0.5)
+        btnCust3 LABEL "Customer 1003: Acme Inc" SIZE 30 BY 1 SKIP(2)
+        txtInfo LABEL "Click a customer to display orders" SIZE 40 BY 1
+        WITH CENTERED IN WINDOW wCustomer.
+    
+    /* Order window frames */
+    DEFINE FRAME frSelectedCustomer
+        SKIP(1)
+        WITH CENTERED IN WINDOW wOrder.
+    
+    DEFINE FRAME frOrderHeader
+        SKIP(1)
+        WITH CENTERED IN WINDOW wOrder.
+    
+    DEFINE FRAME frOrderCount
+        SKIP(1)
+        WITH CENTERED IN WINDOW wOrder.
+    
+    /* Subscribe to the event */
+    SUBSCRIBE TO "customer-selected" ANYWHERE
+        RUN-PROCEDURE "HandleCustomerSelection" (INPUT p_cust-num, INPUT p_cust-name).
+    
+    /* Customer button events */
+    ON CHOOSE OF btnCust1 DO:
+        /* Publish customer selected event */
+        PUBLISH "customer-selected" (1001, "ABC Corp").
+    END.
+    
+    ON CHOOSE OF btnCust2 DO:
+        /* Publish customer selected event */
+        PUBLISH "customer-selected" (1002, "XYZ Ltd").
+    END.
+    
+    ON CHOOSE OF btnCust3 DO:
+        /* Publish customer selected event */
+        PUBLISH "customer-selected" (1003, "Acme Inc").
+    END.
+    
+    /* Show the windows and frames */
+    DISPLAY WITH FRAME frCustomerList.
+    ENABLE btnCust1 btnCust2 btnCust3 WITH FRAME frCustomerList.
+    
+    /* Display initial empty frames in order window */
+    DISPLAY "" LABEL "ID" "" LABEL "Name" WITH FRAME frSelectedCustomer.
+    DISPLAY "No customer selected" WITH FRAME frOrderHeader.
+    DISPLAY 0 LABEL "Order Count" WITH FRAME frOrderCount.
+    
+    /* Wait until customer window is closed */
+    WAIT-FOR WINDOW-CLOSE OF wCustomer.
+    
+    /* Clean up */
+    UNSUBSCRIBE TO "customer-selected" ANYWHERE
+        RUN-PROCEDURE "HandleCustomerSelection".
+    
+    DELETE OBJECT wCustomer.
+    DELETE OBJECT wOrder.
+END PROCEDURE.
+
+/* Usage */
+RUN PublishSubscribeExample.
+"""
+}
