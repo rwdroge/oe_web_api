@@ -69,7 +69,7 @@ Apache Kafka .See Use Apache® Kafka® with Progress® OpenEdge® for informati
 • OpenEdge.Mobile
 • OpenEdge.Net
 • OpenEdge.WebContains common utilities and data writers for WebHandlers and HTTP clients.OpenEdge.ServerAdmin.pl OpenEdge.ServerAdmin.apl
-• OpenEdge.ApplicationServerContains administrative classes for querying and working with application server agents.
+• OpenEdge.ApplicationServerContains administrative classes for querying and working with application server agents.
 
 Library and primary packagesDescriptionMore information• OpenEdge.RestOpenEdge.Security.pl OpenEdge.Security.apl
 • OpenEdge.SecurityContains classes and other types for working with the OpenEdge Authentication Gateway (OEAG). Includes interfaces for the policy and event callbacks.See "Configuring event callbacks" in Learn about the OpenEdge Authentication Gateway.Third-party
