@@ -4,7 +4,6 @@ services:
 
   devcontainer:
     image: ${DEVCONTAINER_IMAGE}
-    user: openedge
     volumes:
       - ../..:/workspaces:cached
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
