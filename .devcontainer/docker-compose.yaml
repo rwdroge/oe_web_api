@@ -4,6 +4,7 @@ services:
 
   devcontainer:
     image: ${DEVCONTAINER_IMAGE}
+    privileged: true
     volumes:
       - ../..:/workspaces:cached
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
