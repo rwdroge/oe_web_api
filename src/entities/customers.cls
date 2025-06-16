@@ -86,7 +86,7 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
                             input jsonObject as JsonObject, 
                             output dataset-handle hDataSet):
         this-object:updateCustomer(filter, input-output dataset dsCustomer by-reference).
-        hDataSet = dataset dsCustomer:handle.,.
+        hDataSet = dataset dsCustomer:handle.
         
     end method.
     
