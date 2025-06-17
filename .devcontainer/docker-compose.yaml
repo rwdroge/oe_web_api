@@ -16,7 +16,7 @@ services:
     image: ${DB_IMAGE}
     user: openedge
     volumes:
-      - ../src/schema:/app/schema
+      - ../src/schema/sports2020.df:/app/schema/sports2020.df
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
     ports:
       - 10000-10010:10000-10010

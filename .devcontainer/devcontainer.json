@@ -3,7 +3,7 @@
 	"dockerComposeFile": "docker-compose.yaml",
 	"service": "devcontainer",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-
+	// feature hack for docker-in-docker for Windsurf: fails to mount
   	"features": {
 		"ghcr.io/devcontainers/features/git:1": {},
     	"./feature/docker-in-docker": {}
