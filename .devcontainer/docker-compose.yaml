@@ -16,6 +16,7 @@ services:
     image: ${DB_IMAGE}
     user: openedge
     volumes:
+      - ../src/schema:/app/schema
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
     ports:
       - 10000-10010:10000-10010
