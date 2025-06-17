@@ -4,6 +4,7 @@ services:
 
   devcontainer:
     image: ${DEVCONTAINER_IMAGE}
+    privileged: true
     volumes:
       - ../..:/workspaces:cached
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
@@ -13,7 +14,9 @@ services:
 
   sports2020-db:
     image: ${DB_IMAGE}
+    user: openedge
     volumes:
+      - ../src/schema:/app/schema
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
     ports:
       - 10000-10010:10000-10010
@@ -22,6 +25,7 @@ services:
       
   sports2020-pas:
     image: ${PAS_IMAGE}
+    user: openedge
     volumes:
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
       - ../src:/app/src
@@ -36,12 +40,12 @@ services:
     depends_on:
       - sports2020-db
 
-  jaeger:
-    image: jaegertracing/all-in-one:1.35
-    container_name: jaeger
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-    ports:
-      - "4317-4318:4317-4318"
-      - "16685-16686:16685-16686"
+  # jaeger:
+  #  image: jaegertracing/all-in-one:1.35
+  #  container_name: jaeger
+  #  environment:
+  #    - COLLECTOR_OTLP_ENABLED=true
+  #  ports:
+  #    - "4317-4318:4317-4318"
+  #    - "16685-16686:16685-16686"
     

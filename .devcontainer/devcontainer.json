@@ -1,20 +1,15 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/python
 {
 	"name": "OpenEdge Dev Containers PoC",
 	"dockerComposeFile": "docker-compose.yaml",
 	"service": "devcontainer",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
-  // Features to add to the dev container. More info: https://containers.dev/features.
-	"features": {
+  	"features": {
 		"ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:2.12.0": {}
+    	"./feature/docker-in-docker": {}
 	},
 
-	// Configure tool-specific properties.
 	"customizations": {
-		// Configure properties specific to VS Code.
 		"vscode": {
 			"settings": {
 				"abl.configuration.runtimes.default": "12.8",
@@ -55,7 +50,9 @@
 	"initializeCommand": "echo Initialize....",
 	"postCreateCommand": "proDebugEnable -enable-all",
 	"shutdownAction": "none",
+	"containerUser": "openedge",
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	"remoteUser": "root"
+	"remoteUser": "openedge"
+	
 }

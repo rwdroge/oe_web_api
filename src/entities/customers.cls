@@ -16,74 +16,122 @@ block-level on error undo, throw.
 
 class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implements interfaces.CRUD:
     /*------------------------------------------------------------------------------
-            Purpose:                                                                      
-            Notes:                                                                        
+     Purpose: Customer entity class for managing customer data
+     Notes: Implements CRUD operations for customer records using DataAccess layer
     ------------------------------------------------------------------------------*/
     
+    /* Include customer temp-table definition */
     {"entities/inc/customers.i"}
   
-    define public property ttName as character no-undo initial "ttcustomer" get. set. 
-    define public property piName as character no-undo initial "custnum" get. set.
-    define public property dbName as character no-undo initial "customer" get. set.
+    /* Public properties */
+    define public property ttName  as character no-undo initial "ttcustomer" get. set.
+    define public property idField as character no-undo initial "custnum"    get. set.
+    define public property dbTable as character no-undo initial "customer"   get. set.
     
-    var integer iSeq.
-    var DataAccess dao.
+    /* Private members */
+    var private integer iSeq.
+    var private DataAccess oDao.
     
     /*------------------------------------------------------------------------------
-            Purpose:                                                                      
-            Notes:                                                                        
+     Purpose: Initialize a new instance of the customers class
+     Notes: Sets up the customer dataset and initializes base class
     ------------------------------------------------------------------------------*/
     constructor public customers():
-         
-        super (dataset dsCustomer:HANDLE).
-        
+        super(dataset dsCustomer:handle).
     end constructor.
     
-    method public void Read(input filter as generics.FilterParams, output dataset-handle hDataSet):
-        this-object:GetCustomers(filter, output dataset dsCustomer by-reference).
-        hDataSet = dataset dsCustomer:handle. 
-         
+    /*------------------------------------------------------------------------------
+     Purpose: Read customer records based on filter criteria
+     Parameters:
+       input  filter  - Filter parameters for customer query
+       output hDataSet - Handle to the resulting dataset
+    ------------------------------------------------------------------------------*/
+    method public void read(input filter as generics.FilterParams, output dataset-handle hDataSet):
+        this-object:getCustomers(filter, output dataset dsCustomer by-reference).
+        hDataSet = dataset dsCustomer:handle.
     end method.
     
-    method public void Create(input jsonObject as JsonObject, output dataset-handle hDataSet):
-        dao = new DataAccess().
-        dao:attachSource("ttcustomer", "CustNum", "Customer", "CustNum", "", ?, input-output dataset dsCustomer by-reference).
-        dataset dscustomer:get-buffer-handle (1):table-handle:tracking-changes = true.
-        dataset dsCustomer:read-json('JsonObject', jsonObject).
-        dataset dscustomer:get-buffer-handle (1):table-handle:tracking-changes = false.
+    /*------------------------------------------------------------------------------
+     Purpose: Create new customer record from JSON data
+     Parameters:
+       input  jsonObject - JSON data containing customer information
+       output hDataSet   - Handle to the resulting dataset
+    ------------------------------------------------------------------------------*/
+    method public void create(input jsonObject as JsonObject, output dataset-handle hDataSet):
+        var handle hBuffer.
         
-        dao:CommitChanges(piName, dataset dsCustomer by-reference).
-        hDataSet = dataset dsCustomer:handle.
-    
+        
+            assign oDao = new DataAccess().
+            oDao:attachSource(ttName, idField, dbTable, idField, "", ?, 
+                            input-output dataset dsCustomer by-reference).
+            
+            hBuffer = dataset dsCustomer:get-buffer-handle(1).
+            hBuffer:table-handle:tracking-changes = true.
+            dataset dsCustomer:read-json('JsonObject', jsonObject).
+            hBuffer:table-handle:tracking-changes = false.
+            
+            oDao:commitChanges(idField, dataset dsCustomer by-reference).
+            hDataSet = dataset dsCustomer:handle.
+        
     end method.
     
-    method public void Update(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
-        this-object:Updatecustomers(filter, input-output dataset dsCustomer by-reference).
+    /*------------------------------------------------------------------------------
+     Purpose: Update existing customer record
+     Parameters:
+       input  filter     - Filter to identify customer record
+       input  jsonObject - JSON data containing updated information
+       output hDataSet   - Handle to the resulting dataset
+    ------------------------------------------------------------------------------*/
+    method public void update(input filter as generics.FilterParams, 
+                            input jsonObject as JsonObject, 
+                            output dataset-handle hDataSet):
+        this-object:updateCustomer(filter, input-output dataset dsCustomer by-reference).
         hDataSet = dataset dsCustomer:handle.
         
-    
     end method.
     
-    method public void Delete(input filter as generics.FilterParams, output dataset-handle hDataSet):
+    /*------------------------------------------------------------------------------
+     Purpose: Delete customer record
+     Parameters:
+       input  filter   - Filter to identify customer record
+       output hDataSet - Handle to the resulting dataset
+    ------------------------------------------------------------------------------*/
+    method public void delete(input filter as generics.FilterParams, 
+                            output dataset-handle hDataSet):
         
-        dao = new DataAccess().
-        dao:attachSource("ttcustomer", "custnum", "customer", "custnum", filter:id1, filter, input-output dataset dsCustomer by-reference).
-        this-object:Deletecustomer(input-output dataset dsCustomer by-reference).
-        hDataSet = dataset dsCustomer:handle.
-        dao:detachSource(dataset dsCustomer by-reference).
-    
+            assign oDao = new DataAccess().
+            oDao:attachSource(ttName, idField, dbTable, idField, 
+                            filter:id1, filter, input-output dataset dsCustomer by-reference).
+            this-object:deleteCustomer(input-output dataset dsCustomer by-reference).
+        
+            hDataSet = dataset dsCustomer:handle.
+        
+        finally:
+            if valid-object(oDao) then
+                oDao:detachSource(dataset dsCustomer by-reference).
+        end finally.
     end method.
         
     /*------------------------------------------------------------------------------
             Purpose:  Get one or more records, based on a filter string                                                                     
             Notes:                                                                        
     ------------------------------------------------------------------------------*/
-    method private void GetCustomers( input filter as generics.FilterParams, output DATASET dsCustomer ):
+    /*------------------------------------------------------------------------------
+     Purpose: Get one or more customer records based on filter criteria
+     Parameters:
+       input  filter     - Filter parameters for customer query
+       output dsCustomer - Customer dataset to populate
+    ------------------------------------------------------------------------------*/
+    method private void getCustomers(input filter as generics.FilterParams,
+                                   output dataset dsCustomer):
         
-        daO = new DataAccess().
-        daO:attachSource(this-object:ttName, this-object:piName, this-object:dbName, this-object:piName, filter:id1, filter, input-output dataset dsCustomer by-reference).
-        daO:detachSource(dataset dsCustomer by-reference).    
-             
+            assign oDao = new DataAccess().
+            oDao:attachSource(ttName, idField, dbTable, idField,
+                            filter:id1, filter, input-output dataset dsCustomer by-reference).
+        finally:
+            if valid-object(oDao) then
+                oDao:detachSource(dataset dsCustomer by-reference).
+        end finally.
     end method. 
     
     {entities/inc/metadata.i &entity=customer}
@@ -92,28 +140,55 @@ class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implemen
             Purpose:  Update one or more records                                                                  
             Notes:                                                                        
     ------------------------------------------------------------------------------*/
-    method public void Updatecustomers(input filter as generics.FilterParams, input-output DATASET dsCustomer):            
-    
-        dao = new DataAccess().
-        dao:attachSource("ttcustomer", "CustNum", "Customer", "CustNum", filter:id1, filter, input-output dataset dsCustomer by-reference).
-        dao:CommitChanges(piName, input-output dataset dsCustomer by-reference).
-        dao:detachSource(dataset dsCustomer by-reference).
-              
+    /*------------------------------------------------------------------------------
+     Purpose: Update one or more customer records
+     Parameters:
+       input        filter     - Filter to identify customer records
+       input-output dsCustomer - Customer dataset with updates
+    ------------------------------------------------------------------------------*/
+    method public void updateCustomer(input filter as generics.FilterParams,
+                                    input-output dataset dsCustomer):
+        
+            assign oDao = new DataAccess().
+            oDao:attachSource(ttName, idField, dbTable, idField,
+                            filter:id1, filter, input-output dataset dsCustomer by-reference).
+            oDao:commitChanges(idField, input-output dataset dsCustomer by-reference).
+        
+        finally:
+            if valid-object(oDao) then
+                oDao:detachSource(dataset dsCustomer by-reference).
+        end finally.
     end method.
     
     /*------------------------------------------------------------------------------
             Purpose:    Delete a record                                                               
             Notes:                                                                        
     ------------------------------------------------------------------------------*/
-    method public void Deletecustomer(input-output DATASET dsCustomer):                    
-    
+    /*------------------------------------------------------------------------------
+     Purpose: Delete customer record
+     Parameters:
+       input-output dsCustomer - Customer dataset with record to delete
+    ------------------------------------------------------------------------------*/
+    method public void deleteCustomer(input-output dataset dsCustomer):
+        var handle hBuffer.
+        
+        
+            hBuffer = dataset dsCustomer:get-buffer-handle(1).
+            if hBuffer:available then
+                hBuffer:buffer-delete().
         
     end method.
   
+    /*------------------------------------------------------------------------------
+     Purpose: Clean up resources when object is destroyed
+    ------------------------------------------------------------------------------*/
     destructor public customers():
-        delete object dao no-error.
         
-        delete ttcustomer no-error.
+        if valid-object(oDao) then do:
+            delete object oDao no-error.
+            
+        end.
+        
     end destructor. 
       
 end class.

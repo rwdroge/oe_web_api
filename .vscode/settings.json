@@ -1,3 +1,8 @@
 {
-    "abl.buildMode": 1
+    "abl.configuration.runtimes": [
+  {
+    "name": "12.8",
+    "path": "/usr/dlc"
+  }
+]
 }

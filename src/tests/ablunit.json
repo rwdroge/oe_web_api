@@ -1,0 +1,50 @@
+{
+    "options": {
+        "output": {
+            "fileName": "results",
+            "location": "./results",
+            "format": "xml"
+        },
+        "debug": false,
+        "properties": {
+            "DLC": "/usr/dlc",
+            "PROPATH": "../src"
+        },
+        "quitOnEnd": true,
+        "writeLog": true,
+        "showErrorMessage": true,
+        "throwError": true,
+        "xref": {
+            "useXref": false,
+            "xrefLocation": "PWD",
+            "xrefExtension": "xref.xml",
+            "xrefThrowError": false
+        }
+    },
+    "tests": [
+        {
+            "folder": "."
+        },
+        {
+            "test": "DataAccessTest.cls",
+            "cases": [
+                "testBasicAttachSource",
+                "testAttachSourceWithFilter",
+                "testAttachSourceWithSorting",
+                "testAttachSourceWithPagination"
+            ]
+        },
+        {
+            "test": "EmailValidatorTest.cls",
+            "cases": [
+                "testValidEmails",
+                "testEmptyEmail",
+                "testNoAtSymbol",
+                "testMultipleAtSymbols",
+                "testNoLocalPart",
+                "testNoDomainPart",
+                "testBoundaryCases"
+            ]
+        }
+    ]
+}
