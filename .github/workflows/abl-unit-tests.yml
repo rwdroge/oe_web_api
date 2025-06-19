@@ -18,7 +18,7 @@ jobs:
         run: |
           echo fetching progress.cfg from secret PROGRESS_CFG_128
           echo "${{ secrets['PROGRESS_CFG_128'] }}" | base64 --decode > ${{ github.workspace }}/license/progress.cfg
-          ls build
+          ls ${{ github.workspace }}/license
 
   test:
     name: Run ABL Unit Tests
