@@ -17,7 +17,7 @@ jobs:
       - name: Get correct progress.cfg (to mount into the container) # using different response files for different containers
         run: |
           echo fetching progress.cfg from secret PROGRESS_CFG_128
-          echo "${{ secrets['PROGRESS_CFG_128'] }}" | base64 --decode > build/progress.cfg
+          echo "${{ secrets['PROGRESS_CFG_128'] }}" | base64 --decode > ${{ github.workspace }}/build/progress.cfg
           ls build
 
   test:
