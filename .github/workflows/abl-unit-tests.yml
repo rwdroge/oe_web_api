@@ -10,6 +10,7 @@ on:
 jobs:
   initialize:
     name: Get things ready
+    runs-on: ubuntu-latest
     
     steps:
       - name: Login to Docker Hub
