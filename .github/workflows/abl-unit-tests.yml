@@ -22,7 +22,6 @@ jobs:
         JAVA_HOME: /opt/java/openjdk
     
     steps:
-    -   name: Get correct progress.cfg (to mount into the container) # using different response files for different containers
       - name: Checkout code
         uses: actions/checkout@v3
       
