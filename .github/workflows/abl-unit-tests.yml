@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: progressofficial/oe_compiler:12.8.7
+      user: root
       credentials:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -21,6 +22,7 @@ jobs:
         JAVA_HOME: /opt/java/openjdk
     
     steps:
+    -   name: Get correct progress.cfg (to mount into the container) # using different response files for different containers
       - name: Checkout code
         uses: actions/checkout@v3
       
