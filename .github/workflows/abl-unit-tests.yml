@@ -20,9 +20,9 @@ jobs:
           cache-name: cache-progress-cfg
         with:
           path: ${{ github.workspace }}/license
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/license/progress.cfg') }}
+          key: ${{ runner.os }}-progresscfg
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-progresscfg
       - name: Get correct progress.cfg (to mount into the container) # using different response files for different containers
         run: |
           echo fetching progress.cfg from secret PROGRESS_CFG_128
