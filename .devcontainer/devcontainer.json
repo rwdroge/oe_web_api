@@ -24,13 +24,12 @@
         }
 			},
 			"extensions": [
-				"riversidesoftware.openedge-abl-lsp@prerelease",
+				"RiversideSoftware.openedge-abl-lsp@prerelease",
 				"formulahendry.code-runner"
 			]
 		}
 	},
-	"mounts": [
-	],
+	"mounts": ["source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"],
 	"containerEnv": {
 		"PROPATH": "./src,./bin,${DLC}/tty,${DLC}/tty/OpenEdge.Core.pl,${DLC}/tty/netlib/OpenEdge.Net.pl,./src/OpenEdge.BusinessLogic.pl"
 	},

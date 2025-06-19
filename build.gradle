@@ -22,8 +22,8 @@ task createSports2020(type: CreateDB){
 }
 
 task compileCode(type: ABLCompile){
-	source('AppServer')
-	propath("AppServer")
+	source('src')
+	propath("src", "${dlcHome}/tty", "${dlcHome}/tty/netlib/OpenEdge.Net.pl")
 	include('**/*.cls')
 	include('**/*.p')
 	include('**/*.w')
@@ -37,3 +37,21 @@ task compileCode(type: ABLCompile){
 }
 compileCode.dependsOn 'createSports2020'
 
+task runUnitTests(type: ABLUnit) {
+	source('src/tests')
+	include('**/*Test.cls')
+	propath("src", "${dlcHome}/tty", "${dlcHome}/tty/netlib/OpenEdge.Net.pl")
+	dbConnection {
+		dbName = "${buildDir}/db/sports2020/sports2020"
+		connectionParameters = "-1"
+	}
+	avmOptions {
+		tty.enabled = true
+	}
+	outputDir = file("${buildDir}/test-results")
+	format = 'xml,html'
+	failOnError = true
+}
+runUnitTests.dependsOn 'createSports2020'
+
+test.dependsOn 'runUnitTests'

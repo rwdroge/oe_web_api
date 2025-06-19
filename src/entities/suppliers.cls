@@ -103,7 +103,7 @@ class entities.suppliers inherits BusinessEntity implements interfaces.CRUD:
         
         assign dao = new DataAccess().
         dao:attachSource("ttsupplier", "supplieridnum", "supplier", "supplieridnum", filter:id1, filter, input-output dataset dsSupplier by-reference).
-        this-object:DeleteSupplier(input-output dataset dsSupplier by-reference);
+        this-object:DeleteSupplier(input-output dataset dsSupplier by-reference).
         hDataSet = dataset dsSupplier:handle.
         
         finally:
@@ -143,7 +143,7 @@ class entities.suppliers inherits BusinessEntity implements interfaces.CRUD:
     
         assign dao = new DataAccess().
         dao:attachSource("ttsupplier", "supplieridnum", "supplier", "supplieridnum", filter:id1, filter, input-output dataset dsSupplier by-reference).
-        dao:CommitChanges(piName, input-output dataset dsSupplier by-reference);
+        dao:CommitChanges(piName, input-output dataset dsSupplier by-reference).
         
         finally:
             if valid-object(dao) then
