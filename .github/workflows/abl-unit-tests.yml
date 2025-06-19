@@ -17,7 +17,7 @@ jobs:
       - name: Get correct progress.cfg (to mount into the container) # using different response files for different containers
         run: |
           echo fetching progress.cfg from secret PROGRESS_CFG_128
-          echo "${{ secrets['PROGRESS_CFG_128'] }}" | base64 --decode > ${{ github.workspace }}/build/progress.cfg
+          echo "${{ secrets['PROGRESS_CFG_128'] }}" | base64 --decode > ${{ github.workspace }}/license/progress.cfg
           ls build
 
   test:
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: progressofficial/oe_compiler:12.8.7
-      options: --user root -v ${{ github.workspace }}/build/progress.cfg:/usr/dlc/progress.cfg
+      options: --user root -v ${{ github.workspace }}/license/progress.cfg:/usr/dlc/progress.cfg
       credentials:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
