@@ -75,7 +75,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: progressofficial/oe_compiler:12.8.7
-          options: -v ${{ github.workspace }}:/workspace -v ${{ github.workspace }}/license/progress.cfg:/usr/dlc/progress.cfg
+          options: --user root -v ${{ github.workspace }}:/workspace -v ${{ github.workspace }}/license/progress.cfg:/usr/dlc/progress.cfg
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
