@@ -83,21 +83,19 @@ jobs:
             cd /workspace
             export DLC=/usr/dlc
             export JAVA_HOME=/opt/java/openjdk
-            # Add your test commands here
-          echo "apply plugin: 'progress.openedge.abl-base'" > init.gradle
-          echo "apply plugin: 'progress.openedge.abl-test'" >> init.gradle
-      
-      - name: Create sports2020 database
-        run: |
-          # Create the database directory
-          mkdir -p build/db/sports2020
-          
-          # Copy the sports2020 database from DLC
-          cp -r /usr/dlc/sports2020/* build/db/sports2020/
-      
-      - name: Run ABL Unit Tests
-        run: |
-          ./gradlew runUnitTests --init-script init.gradle --info
+            
+            # Create Gradle init scripts
+            echo "apply plugin: 'progress.openedge.abl-base'" > init.gradle
+            echo "apply plugin: 'progress.openedge.abl-test'" >> init.gradle
+            
+            # Create the database directory
+            mkdir -p build/db/sports2020
+            
+            # Copy the sports2020 database from DLC
+            cp -r /usr/dlc/sports2020/* build/db/sports2020/
+            
+            # Run the tests
+            ./gradlew runUnitTests --init-script init.gradle --info
       
       - name: Upload test results
         if: always()
