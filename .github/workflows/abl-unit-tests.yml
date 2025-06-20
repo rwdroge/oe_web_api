@@ -30,14 +30,14 @@ jobs:
           key: ${{ runner.os }}-progresscfg
           restore-keys: |
             ${{ runner.os }}-progresscfg
+      
   
-
   test:
     name: Run ABL Unit Tests
     runs-on: ubuntu-latest
     container:
       image: progressofficial/oe_compiler:12.8.7
-      options: --user root -v "${{ env.cache-name.cache-progress-cfg}}":/usr/dlc/progress.cfg
+      options: --user root -v "${{ github.workspace }}/license/progress.cfg":/usr/dlc/progress.cfg
       credentials:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
