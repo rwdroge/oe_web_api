@@ -89,10 +89,10 @@ jobs:
             echo "apply plugin: 'progress.openedge.abl-test'" >> init.gradle
             
             # Create the database directory
-            mkdir -p build/db/sports2020
+            mkdir -p build/db
             
             # Copy the sports2020 database from DLC
-            cp -r /usr/dlc/sports2020/* build/db/sports2020/
+            cp -r /usr/dlc/sports2020* build/db/
             
             # Run the tests
             ./gradlew runUnitTests --init-script init.gradle --info
