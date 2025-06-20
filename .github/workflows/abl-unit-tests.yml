@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: progressofficial/oe_compiler:12.8.7
-      options: --user root -v "$cache-name/license/progress.cfg":/usr/dlc/progress.cfg
+      options: --user root -v ${{ env.cache-name }}:/usr/dlc/progress.cfg
       credentials:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
