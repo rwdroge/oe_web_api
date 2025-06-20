@@ -12,25 +12,26 @@ jobs:
     name: Checkout code
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Get correct progress.cfg (to mount into the container) # using different response files for different containers
-        run: |
-          echo fetching progress.cfg from secret PROGRESS_CFG_128
-          echo "${{ secrets['PROGRESS_CFG_128'] }}" | base64 --decode > ${{ github.workspace }}/license/progress.cfg
-          ls ${{ github.workspace }}/license
 
-      - name: Cache progress.cfg
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-progress-cfg
-        with:
-          path: ${{ github.workspace }}/license/progress.cfg
-          key: ${{ runner.os }}-progresscfg
-          restore-keys: |
-            ${{ runner.os }}-progresscfg
-      
+    - name: Cache progress.cfg
+      uses: actions/cache@v4
+      env:
+        cache-name: cache-progress-cfg
+      with:
+        path: ${{ github.workspace }}/license/progress.cfg
+        key: ${{ runner.os }}-progresscfg
+        restore-keys: |
+          ${{ runner.os }}-progresscfg
+          
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Get correct progress.cfg (to mount into the container) # using different response files for different containers
+      run: |
+        echo fetching progress.cfg from secret PROGRESS_CFG_128
+        echo "${{ secrets['PROGRESS_CFG_128'] }}" | base64 --decode > ${{ github.workspace }}/license/progress.cfg
+        ls ${{ github.workspace }}/license
+
   
   test:
     name: Run ABL Unit Tests
