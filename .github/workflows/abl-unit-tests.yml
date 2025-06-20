@@ -7,21 +7,14 @@ on:
     branches: [ dev ]
   workflow_dispatch:  # Allows manual triggering
 
+
 jobs:
   checkout:
     name: Checkout code
     runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.upload-artifact.outputs.artifact-name }}
     steps:
-
-    - name: Cache progress.cfg
-      uses: actions/cache@v4
-      env:
-        cache-name: ${{ runner.os }}-progresscfg
-      with:
-        path: ${{ github.workspace }}/license/progress.cfg
-        key: ${{ runner.os }}-progresscfg
-        restore-keys: |
-          ${{ runner.os }}-progresscfg
 
     - name: Checkout code
       uses: actions/checkout@v3
@@ -29,8 +22,17 @@ jobs:
     - name: Get correct progress.cfg (to mount into the container) # using different response files for different containers
       run: |
         echo fetching progress.cfg from secret PROGRESS_CFG_128
+        mkdir -p ${{ github.workspace }}/license
         echo "${{ secrets['PROGRESS_CFG_128'] }}" | base64 --decode > ${{ github.workspace }}/license/progress.cfg
         ls ${{ github.workspace }}/license
+
+    - name: Upload progress.cfg as artifact
+      id: upload-artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: progress-cfg-artifact
+        path: ${{ github.workspace }}/license/progress.cfg
+        retention-days: 1
 
     - name: Check env
       run: env
@@ -38,20 +40,17 @@ jobs:
   
   test:
     name: Run ABL Unit Tests
+    needs: checkout
     runs-on: ubuntu-latest
-    container:
-      image: progressofficial/oe_compiler:12.8.7
-      options: --user root -v ${{ env.cache-name }}:/usr/dlc/progress.cfg
-      credentials:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-      env:
-        DLC: /usr/dlc
-        JAVA_HOME: /opt/java/openjdk
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+      
+      - name: Download progress.cfg artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: progress-cfg-artifact
+          path: ${{ github.workspace }}/license
       
       - name: Set up Gradle Wrapper
         run: |
@@ -71,6 +70,20 @@ jobs:
       - name: Set up OpenEdge environment
         run: |
           echo "dlcHome=/usr/dlc" > gradle.properties
+      
+      - name: Run tests in container
+        uses: addnab/docker-run-action@v3
+        with:
+          image: progressofficial/oe_compiler:12.8.7
+          options: -v ${{ github.workspace }}:/workspace -v ${{ github.workspace }}/license/progress.cfg:/usr/dlc/progress.cfg
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          run: |
+            cd /workspace
+            export DLC=/usr/dlc
+            export JAVA_HOME=/opt/java/openjdk
+            # Add your test commands here
           echo "apply plugin: 'progress.openedge.abl-base'" > init.gradle
           echo "apply plugin: 'progress.openedge.abl-test'" >> init.gradle
       
