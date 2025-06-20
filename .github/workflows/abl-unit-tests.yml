@@ -16,7 +16,7 @@ jobs:
     - name: Cache progress.cfg
       uses: actions/cache@v4
       env:
-        cache-name: cache-progress-cfg
+        cache-name: ${{ runner.os }}-progresscfg
       with:
         path: ${{ github.workspace }}/license/progress.cfg
         key: ${{ runner.os }}-progresscfg
@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: progressofficial/oe_compiler:12.8.7
-      options: --user root -v "$/license/progress.cfg":/usr/dlc/progress.cfg
+      options: --user root -v "$cache-name/license/progress.cfg":/usr/dlc/progress.cfg
       credentials:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
