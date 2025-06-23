@@ -38,6 +38,9 @@ class tests.SuppliersTest:
         testJsonObject = new JsonObject().
         testFilter = new FilterParams("supplier", "", "", "", "", output table-handle hQueryParams).
         
+        /* Reset dataset handle for each test */
+        hDataSet = ?.
+        
         /* Initialize test data */
         testJsonObject:Add("SupplierIDNum", 999).
         testJsonObject:Add("Name", "Test Supplier").
@@ -69,6 +72,7 @@ class tests.SuppliersTest:
             
         if valid-handle(hDataSet) then
             delete object hDataSet.
+            assign hDataSet = ?.
     end method.
     
     /*------------------------------------------------------------------------------
