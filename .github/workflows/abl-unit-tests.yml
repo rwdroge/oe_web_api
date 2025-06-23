@@ -52,20 +52,7 @@ jobs:
           name: progress-cfg-artifact
           path: ${{ github.workspace }}/license
       
-      - name: Set up Gradle Wrapper
-        run: |
-          # Create Gradle wrapper files
-          mkdir -p gradle/wrapper
-          echo 'distributionBase=GRADLE_USER_HOME' > gradle/wrapper/gradle-wrapper.properties
-          echo 'distributionPath=wrapper/dists' >> gradle/wrapper/gradle-wrapper.properties
-          echo 'distributionUrl=https\://services.gradle.org/distributions/gradle-8.2.1-bin.zip' >> gradle/wrapper/gradle-wrapper.properties
-          echo 'zipStoreBase=GRADLE_USER_HOME' >> gradle/wrapper/gradle-wrapper.properties
-          echo 'zipStorePath=wrapper/dists' >> gradle/wrapper/gradle-wrapper.properties
-          
-          # Create gradlew script
-          echo '#!/bin/sh' > gradlew
-          echo 'exec java -Dorg.gradle.appname=gradlew $JAVA_OPTS -classpath "/usr/dlc/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"' >> gradlew
-          chmod +x gradlew
+      # We'll set up Gradle inside the container
       
       - name: Set up OpenEdge environment
         run: |
@@ -93,6 +80,22 @@ jobs:
             
             # Copy the sports2020 database from DLC
             cp -r /usr/dlc/sports2020* build/db/
+            
+            # Set up Gradle wrapper properly
+            mkdir -p gradle/wrapper
+            echo 'distributionBase=GRADLE_USER_HOME' > gradle/wrapper/gradle-wrapper.properties
+            echo 'distributionPath=wrapper/dists' >> gradle/wrapper/gradle-wrapper.properties
+            echo 'distributionUrl=https\://services.gradle.org/distributions/gradle-8.2.1-bin.zip' >> gradle/wrapper/gradle-wrapper.properties
+            echo 'zipStoreBase=GRADLE_USER_HOME' >> gradle/wrapper/gradle-wrapper.properties
+            echo 'zipStorePath=wrapper/dists' >> gradle/wrapper/gradle-wrapper.properties
+            
+            # Download Gradle wrapper JAR
+            curl -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.2.1/gradle/wrapper/gradle-wrapper.jar
+            
+            # Create gradlew script
+            echo '#!/bin/sh' > gradlew
+            echo 'exec java -Dorg.gradle.appname=gradlew $JAVA_OPTS -classpath "./gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"' >> gradlew
+            chmod +x gradlew
             
             # Run the tests
             ./gradlew runUnitTests --init-script init.gradle --info
