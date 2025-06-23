@@ -48,7 +48,7 @@ task runUnitTests(type: ABLUnit) {
 		tty.enabled = true
 	}
 	outputDir = file("${buildDir}/test-results")
-	format = 'xml,html'
+	// format property removed as it's not supported in this plugin version
 	failOnError = true
 }
 runUnitTests.dependsOn 'createSports2020'
