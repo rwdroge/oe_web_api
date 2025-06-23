@@ -16,9 +16,6 @@ using generics.FilterParams.
 block-level on error undo, throw.
 
 class tests.DataAccessTest:
-def temp-table blaat.
-
-
 
     /* Test fixtures */
     var private DataAccess dataAccess.
