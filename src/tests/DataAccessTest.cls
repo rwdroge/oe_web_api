@@ -38,7 +38,8 @@ class tests.DataAccessTest:
         /* Create fresh instances for each test */
         dataAccess = new DataAccess().
         
-
+        /* Reset dataset handle for each test */
+        hTestDataset = ?.
     end method.
     
     /*------------------------------------------------------------------------------
@@ -50,6 +51,7 @@ class tests.DataAccessTest:
         /* Clean up resources */
         if valid-handle(hTestDataset) then
             delete object hTestDataset.
+            assign hTestDataset = ?.
         
         /* Clean up buffer handle if it exists */
         if valid-handle(hCustomerBuffer) then

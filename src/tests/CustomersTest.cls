@@ -38,6 +38,9 @@ class tests.CustomersTest:
         testJsonObject = new JsonObject().
         testFilter = new FilterParams("customer", "", "", "", "", output table-handle hQueryParams).
         
+        /* Reset dataset handle for each test */
+        hDataSet = ?.
+        
         /* Initialize test data */
         testJsonObject:Add("CustNum", 9999).
         testJsonObject:Add("Name", "Test Customer").
@@ -66,6 +69,7 @@ class tests.CustomersTest:
             
         if valid-handle(hDataSet) then
             delete object hDataSet.
+            assign hDataSet = ?.
     end method.
     
     /*------------------------------------------------------------------------------
