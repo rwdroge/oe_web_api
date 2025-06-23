@@ -46,7 +46,7 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
     method public void Create(input jsonObject as JsonObject, output dataset-handle hDataSet):
         dao = new DataAccess().
         dao:attachSource("ttitem", "itemnum", "item", "itemnum", "", ?, input-output dataset dsItem by-reference).
-        dataset dsItem:read-json('JsonObject', jsonObject).
+        dataset dsItem:read-json('JsonObject', jsonObject) no-error.
         dao:CommitChanges(piName, dataset dsItem by-reference).
         hDataSet = dataset dsItem:handle.
     
