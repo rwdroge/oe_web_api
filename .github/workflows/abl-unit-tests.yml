@@ -71,21 +71,14 @@ jobs:
             export DLC=/usr/dlc
             export JAVA_HOME=/opt/java/openjdk
             
-            # Create Gradle init scripts with proper plugin resolution
-            cat > init.gradle << 'EOL'
-            buildscript {
-              repositories {
-                gradlePluginPortal()
-              }
-              dependencies {
-                classpath 'com.progress.openedge:progress.openedge.abl-base:2.3.0'
-                classpath 'com.progress.openedge:progress.openedge.abl:2.3.0'
-              }
-            }
-            
-            apply plugin: 'progress.openedge.abl-base'
-            apply plugin: 'progress.openedge.abl'
+            # Skip using init.gradle and use the existing build.gradle
+            cat > gradle.properties << 'EOL'
+            dlcHome=/usr/dlc
+            DLC=/usr/dlc
             EOL
+            
+            # List the plugins directory to see what's available
+            ls -la /usr/dlc/gradle/plugins/
             
             # Create the database directory
             mkdir -p build/db
@@ -106,8 +99,8 @@ jobs:
             echo 'exec java -Dorg.gradle.appname=gradlew $JAVA_OPTS -classpath "/usr/dlc/gradle/wrapper-scripts/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"' >> gradlew
             chmod +x gradlew
             
-            # Run the tests
-            ./gradlew runUnitTests --init-script init.gradle --info
+            # Run the tests using the existing build.gradle
+            ./gradlew runUnitTests --info
       
       - name: Upload test results
         if: always()
