@@ -72,8 +72,8 @@ jobs:
             export JAVA_HOME=/opt/java/openjdk
             
             # Create Gradle init scripts
-            echo "apply plugin: 'progress.openedge.abl-base'" > init.gradle
-            echo "apply plugin: 'progress.openedge.abl-test'" >> init.gradle
+            echo "apply plugin: 'progress.openedge.abl.base'" > init.gradle
+            echo "apply plugin: 'progress.openedge.abl'" >> init.gradle
             
             # Create the database directory
             mkdir -p build/db
