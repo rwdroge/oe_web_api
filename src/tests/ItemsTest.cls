@@ -131,8 +131,9 @@ class tests.ItemsTest:
     method public void testCreate():
         /* Test Create method */
         do on error undo, throw:
-            itemsEntity:Create(testJsonObject, output dataset-handle hDataSet).
-            
+            itemsEntity:Create(testJsonObject, output dataset-handle hDataSet) no-error.
+            hDataSet:write-json('file', 'test.json').
+
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),
                 "Dataset handle should be valid after Create operation").
