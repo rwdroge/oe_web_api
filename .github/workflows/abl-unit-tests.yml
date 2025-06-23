@@ -81,7 +81,7 @@ jobs:
             # Copy the sports2020 database from DLC
             cp -r /usr/dlc/sports2020* build/db/
             
-            # Set up Gradle wrapper properly
+            # Set up Gradle wrapper properties
             mkdir -p gradle/wrapper
             echo 'distributionBase=GRADLE_USER_HOME' > gradle/wrapper/gradle-wrapper.properties
             echo 'distributionPath=wrapper/dists' >> gradle/wrapper/gradle-wrapper.properties
@@ -89,12 +89,9 @@ jobs:
             echo 'zipStoreBase=GRADLE_USER_HOME' >> gradle/wrapper/gradle-wrapper.properties
             echo 'zipStorePath=wrapper/dists' >> gradle/wrapper/gradle-wrapper.properties
             
-            # Download Gradle wrapper JAR
-            curl -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.2.1/gradle/wrapper/gradle-wrapper.jar
-            
-            # Create gradlew script
+            # Create gradlew script using the existing wrapper JAR
             echo '#!/bin/sh' > gradlew
-            echo 'exec java -Dorg.gradle.appname=gradlew $JAVA_OPTS -classpath "./gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"' >> gradlew
+            echo 'exec java -Dorg.gradle.appname=gradlew $JAVA_OPTS -classpath "/usr/dlc/gradle/wrapper-scripts/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"' >> gradlew
             chmod +x gradlew
             
             # Run the tests
