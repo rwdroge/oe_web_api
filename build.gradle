@@ -7,8 +7,8 @@
 
  
 plugins {
-	id('progress.openedge.abl-base') version '2.3.0'
-	id('base')
+	id("progress.openedge.abl-base") version "2.3.0",
+	id("progress.openedge.abl") version "2.3.0"
 }
 
 abl {
