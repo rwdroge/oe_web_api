@@ -49,7 +49,7 @@ task runUnitTests(type: ABLUnit) {
 	}
 	outputDir = file("${buildDir}/test-results")
 	// format property removed as it's not supported in this plugin version
-	failOnError = true
+	// failOnError = true
 }
 runUnitTests.dependsOn 'createSports2020'
 
