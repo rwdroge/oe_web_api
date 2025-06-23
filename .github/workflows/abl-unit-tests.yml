@@ -73,19 +73,19 @@ jobs:
             
             # Create Gradle init scripts with proper plugin resolution
             cat > init.gradle << 'EOL'
-buildscript {
-  repositories {
-    gradlePluginPortal()
-  }
-  dependencies {
-    classpath 'com.progress.openedge:progress.openedge.abl-base:2.3.0'
-    classpath 'com.progress.openedge:progress.openedge.abl:2.3.0'
-  }
-}
-
-apply plugin: 'progress.openedge.abl-base'
-apply plugin: 'progress.openedge.abl'
-EOL
+            buildscript {
+              repositories {
+                gradlePluginPortal()
+              }
+              dependencies {
+                classpath 'com.progress.openedge:progress.openedge.abl-base:2.3.0'
+                classpath 'com.progress.openedge:progress.openedge.abl:2.3.0'
+              }
+            }
+            
+            apply plugin: 'progress.openedge.abl-base'
+            apply plugin: 'progress.openedge.abl'
+            EOL
             
             # Create the database directory
             mkdir -p build/db
