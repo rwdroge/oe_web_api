@@ -38,12 +38,6 @@ class tests.DataAccessTest:
         /* Create fresh instances for each test */
         dataAccess = new DataAccess().
         
-        /* Create and initialize dataset with proper buffer */
-        create dataset hTestDataset.
-        create buffer hCustomerBuffer for table "Customer".
-        hTestDataset:add-buffer(hCustomerBuffer).
-        
-        /* Create query parameters table */
 
     end method.
     
