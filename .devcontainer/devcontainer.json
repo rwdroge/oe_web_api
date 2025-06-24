@@ -29,6 +29,7 @@
 			]
 		}
 	},
+	"postStartCommand": "code --install-extension RiversideSoftware.openedge-abl-lsp@prerelease",
 	"mounts": ["source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"],
 	"containerEnv": {
 		"PROPATH": "./src,./bin,${DLC}/tty,${DLC}/tty/OpenEdge.Core.pl,${DLC}/tty/netlib/OpenEdge.Net.pl,./src/OpenEdge.BusinessLogic.pl"

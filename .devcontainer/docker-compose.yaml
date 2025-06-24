@@ -32,6 +32,7 @@ services:
       - ../conf/as.pf:/app/config/as.pf
       - ../conf/openedge.properties:/app/pas/as/conf/openedge.properties
       - ../conf/otelconfig.json:/app/pas/as/openedge/otelconfig.json
+      - ./logs:/app/pas/as/logs
     ports:
       - ${PAS_PORT}:8810
       - ${PAS_HTTPS_PORT}:8811

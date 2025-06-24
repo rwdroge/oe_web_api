@@ -1,6 +1,6 @@
 # the Dockerfile for the actual devcontainer
 
-FROM docker.io/progressofficial/oe_compiler:12.8.7
+FROM docker.io/progressofficial/oe_compiler:12.8.8
 USER root
 
 RUN apt-get update && \
