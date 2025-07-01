@@ -56,7 +56,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
             this-object:TempTableName = pcTempTableName
             this-object:PrimaryKeyField = pcPrimaryKeyField
             this-object:DatabaseTable = pcDatabaseTable
-            this-object:DatasetHandle = phDatasetHandle
+            this-object:DatasetHandle = phDatasetHandle            
             this-object:Dao = new DataAccess()
             this-object:MetadataService = new MetadataService().
             
@@ -103,9 +103,14 @@ class data.BaseRepository abstract implements interfaces.IRepository:
      Returns: handle to dataset containing matching entities
     ------------------------------------------------------------------------------*/
     method public handle FindByFilter(input pFilter as generics.FilterParams):
-        var handle dshandle.
+        var handle dshandle = ?.
+        
+        /* Create a new dataset handle for each request */
         create dataset dshandle.
-        dshandle = this-object:DatasetHandle.
+        
+        /* Clone the structure from the template dataset */
+        dshandle:create-like(this-object:DatasetHandle).
+       
         /* Use data access object to fetch filtered data */
         this-object:Dao:attachSource(
             this-object:TempTableName,
@@ -115,9 +120,19 @@ class data.BaseRepository abstract implements interfaces.IRepository:
             pFilter:id1,
             pFilter,
             input-output dataset-handle dshandle by-reference).
-            
-        /* Return dataset handle */
+        
+        /* Return the new dataset handle - caller is responsible for cleanup */
         return dshandle.
+        
+        catch e as Progress.Lang.Error:
+            /* Clean up on error */
+            if valid-handle(dshandle) then do:
+                this-object:Dao:detachSource(input dataset-handle dshandle).
+                delete object dshandle no-error.
+            end.
+            undo, throw e.
+        end catch.
+       
     end method.
     
     /*------------------------------------------------------------------------------

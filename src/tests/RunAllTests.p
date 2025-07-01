@@ -20,7 +20,7 @@ DEFINE INPUT PARAMETER pTestResultsDir AS CHARACTER NO-UNDO.
 DEFINE VARIABLE testRunner AS TestRunner NO-UNDO.
 DEFINE VARIABLE testSuite AS TestSuite NO-UNDO.
 DEFINE VARIABLE testResult AS TestResult NO-UNDO.
-DEFINE VARIABLE resultWriter AS XMLResultWriter NO-UNDO.
+DEFINE VARIABLE resultWriter AS XMLResultWriter NO-UNDO. 
 DEFINE VARIABLE outputFile AS CHARACTER NO-UNDO.
 
 /* Create test suite and add all test classes */

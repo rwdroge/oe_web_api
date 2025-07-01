@@ -7,6 +7,8 @@
 .settings
 .gitignore
 .gitattributes
+*.log
+*.out
 
 
 

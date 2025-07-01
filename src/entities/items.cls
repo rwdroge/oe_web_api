@@ -42,6 +42,7 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
    
         method public void Read(input filter as generics.FilterParams, output dataset-handle hDataSet):
         /* Use repository to get items */
+        
         hDataSet = itemRepository:FindByFilter(filter).
     end method.
     
@@ -71,8 +72,6 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
         /* This method is kept for backward compatibility */
         dataset dsItem:handle = itemRepository:FindByFilter(filter).
     end method.
-    
-    {entities/inc/metadata.i &entity=item}
     
     /*------------------------------------------------------------------------------
             Purpose:  Update one or more records                                                                  

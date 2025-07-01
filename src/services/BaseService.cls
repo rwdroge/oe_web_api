@@ -65,7 +65,16 @@ class services.BaseService abstract implements interfaces.IService:
             joResult:Add("id", pcId).
         end.
         
+
+        
         return joResult.
+
+        finally:
+            /* Clean up dataset */
+            if valid-handle(hDataSet) then do:
+                delete object hDataSet no-error.
+            end.
+        end finally.
     end method.
     
     /*------------------------------------------------------------------------------
@@ -76,22 +85,43 @@ class services.BaseService abstract implements interfaces.IService:
     ------------------------------------------------------------------------------*/
     method public JsonObject GetByFilter(input pFilter as generics.FilterParams):
         /* Get entities from repository */
-        var handle hDataSet = this-object:Repository:FindByFilter(pFilter).
+        /* Initialize result */
+        var handle hDataSet = ?.
         
-        /* Convert to JSON */
         var JsonObject joResult = new JsonObject().
         
+        /* Get dataset from repository */
+        hDataSet = this-object:Repository:FindByFilter(pFilter).
+        
         /* Check if entities were found */
-        if valid-handle(hDataSet) and hDataSet:get-buffer-handle(1):available then do:
-            joResult:Read(hDataSet:get-buffer-handle(1):table-handle).
+        if valid-handle(hDataSet) then do:
+            /* Convert to JSON */
+            joResult:Read(hDataSet).
         end.
         else do:
             /* Return empty object if not found */
             joResult:Add("count", 0).
             joResult:Add("entityName", this-object:EntityName).
         end.
-        
+         
         return joResult.
+        
+        catch e as Progress.Lang.Error:
+            /* Handle service errors */
+            joResult = new JsonObject().
+            joResult:Add("error", "Error retrieving entity metadata").
+            joResult:Add("entity", entityName).
+            joResult:Add("details", e:GetMessage(1)).
+            return joResult.
+        end.
+        
+        finally:
+            /* Clean up dataset - make sure to detach data source before deleting */
+            if valid-handle(hDataSet) then do:
+                /* The repository should have already detached the data source */
+                delete object hDataSet no-error.
+            end.
+        end finally.
     end method.
     
     /*------------------------------------------------------------------------------
@@ -112,7 +142,6 @@ class services.BaseService abstract implements interfaces.IService:
             joError:Add("error", "Invalid fields in request").
             joError:Add("entityName", this-object:EntityName).
             joError:Add("invalidFields", cInvalidFields).
-            return joError.
         end.
         
         /* Begin transaction */
@@ -126,9 +155,16 @@ class services.BaseService abstract implements interfaces.IService:
                 joResult:Add("error", "Failed to create entity").
                 joResult:Add("entityName", this-object:EntityName).
             end.
+
             
             return joResult.
         end.
+        finally:
+            /* Clean up dataset */
+            if valid-handle(hDataSet) then do:
+                delete object hDataSet no-error.
+            end.
+        end finally.
     end method.
     
     /*------------------------------------------------------------------------------
@@ -150,6 +186,7 @@ class services.BaseService abstract implements interfaces.IService:
             joError:Add("error", "Invalid fields in request").
             joError:Add("entityName", this-object:EntityName).
             joError:Add("invalidFields", cInvalidFields).
+            
             return joError.
         end.
         
@@ -165,9 +202,16 @@ class services.BaseService abstract implements interfaces.IService:
                 joResult:Add("entityName", this-object:EntityName).
                 joResult:Add("id", pcId).
             end.
-            
             return joResult.
         end.
+        finally:
+            /* Clean up dataset */
+            if valid-handle(hDataSet) then do:
+                delete object hDataSet no-error.
+            end.
+        end finally.
+            
+
     end method.
     
     /*------------------------------------------------------------------------------
@@ -177,10 +221,12 @@ class services.BaseService abstract implements interfaces.IService:
      Returns: logical indicating success
     ------------------------------------------------------------------------------*/
     method public logical Delete(input pcId as character):
+        var logical lResult.
         /* Begin transaction */
         do transaction:
             /* Delete entity from repository */
-            return this-object:Repository:Delete(pcId).
+            lResult = this-object:Repository:Delete(pcId).
+            return lResult.
         end.
     end method.
     

@@ -2,14 +2,9 @@
   "version": "2.0",
   "serviceName": "",
   "handlers": [
-    { "uri": "/api/{apitype}/{entityname}/{id1}/{entityname2}/{id2}", "class": "GenericService", "enabled": true },
-    { "uri": "/api/{apitype}/{entityname}/{id1}/{entityname2}", "class": "GenericService", "enabled": true },
-    { "uri": "/api/{apitype}/{entityname}/{id1}", "class": "GenericService", "enabled": true },
-    { "uri": "/api/{apitype}/{entityname}", "class": "GenericService", "enabled": true },
-    
-    { "uri": "/api/v2/{entityname}/{id}/{entityname2}/{id2}", "class": "GenericServiceRefactored", "enabled": true },
-    { "uri": "/api/v2/{entityname}/{id}/{entityname2}", "class": "GenericServiceRefactored", "enabled": true },
-    { "uri": "/api/v2/{entityname}/{id}", "class": "GenericServiceRefactored", "enabled": true },
-    { "uri": "/api/v2/{entityname}", "class": "GenericServiceRefactored", "enabled": true }
+    { "uri": "/api/v2/{apitype}/{entityname}/{id}/{entityname2}/{id2}", "class": "GenericServiceRefactored", "enabled": true },
+    { "uri": "/api/v2/{apitype}/{entityname}/{id}/{entityname2}", "class": "GenericServiceRefactored", "enabled": true },
+    { "uri": "/api/v2/{apitype}/{entityname}/{id}", "class": "GenericServiceRefactored", "enabled": true },
+    { "uri": "/api/v2/{apitype}/{entityname}", "class": "GenericServiceRefactored", "enabled": true }
   ]
 }

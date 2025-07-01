@@ -47,22 +47,32 @@ class services.ItemService inherits BaseService:
         var JsonObject joItem = new JsonObject().
         var handle hBuffer = hDataSet:get-buffer-handle(1).
         /* Check if items were found */
-        if valid-handle(hDataSet) and hBuffer:available then do:
-            /* Process all records */
-            
-            hBuffer:find-first() no-error.
-            do while hBuffer:available:
-                joItem = new JsonObject().
-                joItem:Read(hBuffer).
-                jaItems:Add(joItem).
+        if valid-handle(hDataSet) then do:
+            hBuffer = hDataSet:get-buffer-handle(1).
+            if hBuffer:available then do:
+                
+                /* Process all records */
+                message "ITemService do I get a valid buffer?".
+                hBuffer:find-first() no-error.
+                do while hBuffer:available:
+                    joItem = new JsonObject().
+                    joItem:Read(hBuffer).
+                    jaItems:Add(joItem).
+                end.
+                
+                joResult:Add("category", pcCategory).
+                joResult:Add("count", jaItems:Length).
+                joResult:Add("items", jaItems).
             end.
-            
-            joResult:Add("category", pcCategory).
-            joResult:Add("count", jaItems:Length).
-            joResult:Add("items", jaItems).
+            else do:
+                /* Return empty result if not found */
+                joResult:Add("category", pcCategory).
+                joResult:Add("count", 0).
+                joResult:Add("items", jaItems).
+            end.
         end.
         else do:
-            /* Return empty result if not found */
+            /* Return empty result if dataset is invalid */
             joResult:Add("category", pcCategory).
             joResult:Add("count", 0).
             joResult:Add("items", jaItems).
@@ -71,6 +81,10 @@ class services.ItemService inherits BaseService:
         return joResult.
         
         finally:
+            /* Clean up dataset resources */
+            if valid-handle(hDataSet) then do:
+                delete object hDataSet no-error.
+            end.
             delete object jaItems no-error.
         end finally.
     end method.

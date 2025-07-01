@@ -35,7 +35,7 @@ class services.MetadataService:
         var character cNotListed = "".
         
         plValid = true.
-        
+
         /* Build list of all fields in the temp-table */
         do i = 1 to phTempTable:num-fields:
             cFieldList = right-trim(phTempTable:buffer-field(i):name + "," + cFieldList, ",").

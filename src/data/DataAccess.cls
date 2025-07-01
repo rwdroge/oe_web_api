@@ -68,6 +68,7 @@ class data.DataAccess:
         var character cWhere, cQuery, cOrderby, cId.
         cOrderBy = "".
         cId = ?.
+        message "first lets see if we get to data access".
         
         /* Extract filter parameters with error handling */
         assign
@@ -77,6 +78,7 @@ class data.DataAccess:
             cId = pFilter:rowid 
             pcKeyValue = pFilter:id1
             cOrderBy = pFilter:SortBy no-error.
+        
             
         /* Construct WHERE clause safely */
         if cWhere > "" then
@@ -319,7 +321,7 @@ class data.DataAccess:
                 
         iSeq = iSeq + 1.
             phDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
-            phDataSet:write-json('file', '/tmp/phDataSet.json').
+            
 
     end method.
     
@@ -369,7 +371,7 @@ class data.DataAccess:
         
         do iBuff = 1 to hDataSet:num-top-buffers:
             hTopBuff = hDataSet:get-top-buffer(iBuff).
-            hTopBuff:write-json('file', '/tmp/hTop.json').
+            
                 
             /* Skip the reposition children. */
             if hTopBuff:parent-relation ne ? then next.

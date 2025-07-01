@@ -73,7 +73,7 @@ class GenericServiceRefactored inherits WebHandler:
         var IService entityService = ?.
         
         /* JSON response objects */
-        var JsonObject joResponse = ?.
+        var JsonObject joResponse = new JsonObject().
         
         /* Process request based on API type */
         if apiType = "data" then do:
@@ -90,7 +90,6 @@ class GenericServiceRefactored inherits WebHandler:
                 response:StatusCode = 200.
                 body = joResponse:GetJsonText().
         end.
-        
         else if apiType = "meta" then do:
             /* Get service for entity */
             entityService = ServiceFactory:GetService(entityName).
@@ -102,7 +101,6 @@ class GenericServiceRefactored inherits WebHandler:
             response:StatusCode = 200.
             body = joResponse:GetJsonText().
 
-            
         end.    
         
         else do:
@@ -113,7 +111,7 @@ class GenericServiceRefactored inherits WebHandler:
             joResponse:Add("apiType", apiType).
             body = joResponse:GetJsonText().
         end.
-        
+                
         /* Set response */
         response:ContentType = "application/json".
         writer:write(body).
@@ -125,7 +123,7 @@ class GenericServiceRefactored inherits WebHandler:
             /* Handle service errors */
             response:StatusCode = 500.
             joResponse = new JsonObject().
-            joResponse:Add("error", "Error retrieving entity metadata").
+            joResponse:Add("error", "Error retrieving entity metadata from webhandler").
             joResponse:Add("entity", entityName).
             joResponse:Add("details", e:GetMessage(1)).
             body = joResponse:GetJsonText().
