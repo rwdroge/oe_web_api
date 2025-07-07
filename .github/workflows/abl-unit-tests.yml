@@ -1,0 +1,110 @@
+name: ABL Unit Tests
+
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ dev ]
+  workflow_dispatch:  # Allows manual triggering
+
+
+jobs:
+  checkout:
+    name: Checkout code
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.upload-artifact.outputs.artifact-name }}
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Get correct progress.cfg (to mount into the container) # using different response files for different containers
+      run: |
+        echo fetching progress.cfg from secret PROGRESS_CFG_128
+        mkdir -p ${{ github.workspace }}/license
+        echo "${{ secrets['PROGRESS_CFG_128'] }}" | base64 --decode > ${{ github.workspace }}/license/progress.cfg
+        ls ${{ github.workspace }}/license
+
+    - name: Upload progress.cfg as artifact
+      id: upload-artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: progress-cfg-artifact
+        path: ${{ github.workspace }}/license/progress.cfg
+        retention-days: 1
+
+    - name: Check env
+      run: env
+
+  
+  test:
+    name: Run ABL Unit Tests
+    needs: checkout
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Download progress.cfg artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: progress-cfg-artifact
+          path: ${{ github.workspace }}/license
+      
+      # We'll set up Gradle inside the container
+      
+      - name: Set up OpenEdge environment
+        run: |
+          echo "dlcHome=/usr/dlc" > gradle.properties
+      
+      - name: Run tests in container
+        uses: addnab/docker-run-action@v3
+        with:
+          image: progressofficial/oe_compiler:12.8.7
+          options: --user root -v ${{ github.workspace }}:/workspace -v ${{ github.workspace }}/license/progress.cfg:/usr/dlc/progress.cfg
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          run: |
+            cd /workspace
+            export DLC=/usr/dlc
+            export JAVA_HOME=/opt/java/openjdk
+            
+            # Skip using init.gradle and use the existing build.gradle
+            cat > gradle.properties << 'EOL'
+            dlcHome=/usr/dlc
+            DLC=/usr/dlc
+            EOL
+            
+            # List the plugins directory to see what's available
+            ls -la /usr/dlc/gradle/plugins/
+            
+            # Create the database directory
+            mkdir -p build/db
+            
+            # Copy the sports2020 database from DLC
+            cp -r /usr/dlc/sports2020* build/db/
+            
+            # Set up Gradle wrapper properties
+            mkdir -p gradle/wrapper
+            echo 'distributionBase=GRADLE_USER_HOME' > gradle/wrapper/gradle-wrapper.properties
+            echo 'distributionPath=wrapper/dists' >> gradle/wrapper/gradle-wrapper.properties
+            echo 'distributionUrl=https\://services.gradle.org/distributions/gradle-8.2.1-bin.zip' >> gradle/wrapper/gradle-wrapper.properties
+            echo 'zipStoreBase=GRADLE_USER_HOME' >> gradle/wrapper/gradle-wrapper.properties
+            echo 'zipStorePath=wrapper/dists' >> gradle/wrapper/gradle-wrapper.properties
+            
+            # Create gradlew script using the existing wrapper JAR
+            echo '#!/bin/sh' > gradlew
+            echo 'exec java -Dorg.gradle.appname=gradlew $JAVA_OPTS -classpath "/usr/dlc/gradle/wrapper-scripts/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"' >> gradlew
+            chmod +x gradlew
+            
+            # Run the tests using the existing build.gradle
+            ./gradlew runUnitTests --info
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/test-results

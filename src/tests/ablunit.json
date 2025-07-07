@@ -45,6 +45,62 @@
                 "testNoDomainPart",
                 "testBoundaryCases"
             ]
+        },
+        {
+            "test": "CustomersTest.cls",
+            "cases": [
+                "testRead",
+                "testReadWithFilter",
+                "testReadWithSorting",
+                "testCreate",
+                "testUpdate",
+                "testDelete",
+                "testGetCustomers",
+                "testUpdateCustomer",
+                "testDeleteCustomer"
+            ]
+        },
+        {
+            "test": "OrdersTest.cls",
+            "cases": [
+                "testRead",
+                "testReadWithFilter",
+                "testReadWithSorting",
+                "testCreate",
+                "testUpdate",
+                "testDelete",
+                "testGetOrders",
+                "testUpdateorders",
+                "testDeleteorder"
+            ]
+        },
+        {
+            "test": "ItemsTest.cls",
+            "cases": [
+                "testRead",
+                "testReadWithFilter",
+                "testReadWithSorting",
+                "testCreate",
+                "testUpdate",
+                "testDelete",
+                "testGetItems",
+                "testUpdateitems",
+                "testDeleteitem"
+            ]
+        },
+        {
+            "test": "SuppliersTest.cls",
+            "cases": [
+                "testRead",
+                "testReadWithFilter",
+                "testReadWithSorting",
+                "testCreate",
+                "testUpdate",
+                "testDelete",
+                "testGetSuppliers",
+                "testUpdateSuppliers",
+                "testDeleteSupplier"
+            ]
         }
     ]
 }

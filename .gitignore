@@ -7,6 +7,10 @@
 .settings
 .gitignore
 .gitattributes
+*.log
+*.out
+.devcontainer/windsurf/*
+.devcontainer/logs/*
 
 
 

@@ -7,12 +7,11 @@
 
  
 plugins {
-	id('progress.openedge.abl-base') version '2.3.0'
-	id('base')
+	id("progress.openedge.abl-base") version "2.3.0"	
 }
 
 abl {
-	propath("${dlcHome}/src","${dlcHome}/tty","${dlcHome}/tty/netlib/OpenEdge.Net.pl","${dlcHome}/src/OpenEdge.BusinessLogic.pl")
+	propath("${dlcHome}/src","${dlcHome}/tty","${dlcHome}/tty/netlib/OpenEdge.Net.pl","${dlcHome}/tty/OpenEdge.BusinessLogic.pl","${dlcHome}/tty/ablunit.pl")
 }
 
 task createSports2020(type: CreateDB){
@@ -22,8 +21,8 @@ task createSports2020(type: CreateDB){
 }
 
 task compileCode(type: ABLCompile){
-	source('AppServer')
-	propath("AppServer")
+	source('src')
+	propath("src", "${dlcHome}/tty", "${dlcHome}/tty/netlib/OpenEdge.Net.pl", "${dlcHome}/tty/OpenEdge.BusinessLogic.pl")
 	include('**/*.cls')
 	include('**/*.p')
 	include('**/*.w')
@@ -37,3 +36,22 @@ task compileCode(type: ABLCompile){
 }
 compileCode.dependsOn 'createSports2020'
 
+task runUnitTests(type: ABLUnit) {
+	source('src/tests')
+	include('**/*Test.cls')
+	propath("src", "${dlcHome}/tty", "${dlcHome}/tty/netlib/OpenEdge.Net.pl", "${dlcHome}/tty/OpenEdge.BusinessLogic.pl", "${dlcHome}/tty/ablunit.pl")
+	dbConnection {
+		dbName = "${buildDir}/db/sports2020/sports2020"
+		connectionParameters = "-1"
+	}
+	avmOptions {
+		tty.enabled = true
+	}
+	outputDir = file("${buildDir}/test-results")
+	// format property removed as it's not supported in this plugin version
+	// failOnError = true
+}
+runUnitTests.dependsOn 'createSports2020'
+
+// The 'test' task is not defined in this project
+// If you want to use the standard Gradle test task, you need to apply the 'java' plugin

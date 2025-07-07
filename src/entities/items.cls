@@ -4,7 +4,7 @@
     Syntax      : 
     Author(s)   : rdroge
     Created     : Thu Dec 13 10:02:58 CET 2018
-    Notes       : 
+    Notes       : Updated to use repository pattern
   ----------------------------------------------------------------------*/
 
 
@@ -17,8 +17,8 @@ block-level on error undo, throw.
 
 class entities.items inherits BusinessEntity implements interfaces.CRUD:
     /*------------------------------------------------------------------------------
-            Purpose:                                                                      
-            Notes:                                                                        
+            Purpose: Entity class for items using repository pattern                                                                     
+            Notes: Refactored to use ItemRepository for data access                                                                       
     ------------------------------------------------------------------------------*/
     
     {"entities/inc/items.i"}
@@ -27,77 +27,85 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
     define public property piName as character no-undo initial "itemnum" get. set.
     define public property dbName as character no-undo initial "item" get. set.
     
-    var integer iSeq.
-    var DataAccess dao.
+    /* Repository for data access operations */
+    var data.ItemRepository itemRepository.
     /*------------------------------------------------------------------------------
-            Purpose:                                                                      
-            Notes:                                                                        
+            Purpose: Initialize the items entity                                                                      
+            Notes: Creates repository instance                                                                        
     ------------------------------------------------------------------------------*/
     constructor public items():
         super (dataset dsItem:HANDLE).
         
+        /* Initialize repository */
+        itemRepository = new data.ItemRepository().
     end constructor.
    
         method public void Read(input filter as generics.FilterParams, output dataset-handle hDataSet):
-        this-object:GetItems(filter, output dataset dsItem by-reference).
-        hDataSet = dataset dsItem:handle.    
+        /* Use repository to get items */
+        
+        hDataSet = itemRepository:FindByFilter(filter).
     end method.
     
     method public void Create(input jsonObject as JsonObject, output dataset-handle hDataSet):
-        dao = new DataAccess().
-        dao:attachSource("ttitem", "itemnum", "item", "itemnum", "", ?, input-output dataset dsItem by-reference).
-        dataset dsItem:read-json('JsonObject', jsonObject).
-        dao:CommitChanges(piName, dataset dsItem by-reference).
-        hDataSet = dataset dsItem:handle.
-    
+        /* Use repository to create item */
+        hDataSet = itemRepository:Save(jsonObject).
     end method.
     
     method public void update(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
-        this-object:updateItems(filter, input-output dataset dsItem by-reference).
-        hDataSet = dataset dsItem:handle.
+        /* Use repository to update item */
+        hDataSet = itemRepository:Update(filter:id1, jsonObject).
     end method.
     
     method public void Delete(input filter as generics.FilterParams, output dataset-handle hDataSet):
-        dao = new DataAccess().
-        dao:attachSource("ttitem", "itemnum", "item", "itemnum", filter:id1, filter, input-output dataset dsItem by-reference).
-        this-object:Deleteitem(input-output dataset dsItem by-reference).
-        hDataSet = dataset dsItem:handle.
-        dao:detachSource(dataset dsItem by-reference).
-    
+        /* Use repository to delete item */
+        var logical lSuccess = itemRepository:Delete(filter:id1).
+        
+        /* Return dataset for consistency with interface */
+        hDataSet = itemRepository:FindById(filter:id1).
     end method.
         
     /*------------------------------------------------------------------------------
             Purpose:  Get one or more records, based on a filter string                                                                     
-            Notes:                                                                        
+            Notes:  Now uses repository pattern                                                                      
     ------------------------------------------------------------------------------*/
     method private void GetItems( input filter as generics.FilterParams, output DATASET dsItem ):
-        dao = new DataAccess().
-        dao:attachSource(this-object:ttName, this-object:piName, this-object:dbName, this-object:piName, filter:id1, filter, input-output dataset dsItem by-reference).
-        dao:detachSource(dataset dsItem by-reference).    
-
+        /* This method is kept for backward compatibility */
+        dataset dsItem:handle = itemRepository:FindByFilter(filter).
     end method.
-    
-    {entities/inc/metadata.i &entity=item}
     
     /*------------------------------------------------------------------------------
             Purpose:  Update one or more records                                                                  
-            Notes:                                                                        
+            Notes:  Now uses repository pattern                                                                      
     ------------------------------------------------------------------------------*/
-    method public void Updateitems(input filter as generics.FilterParams, input-output DATASET dsItem):            
-        dao = new DataAccess().
-        dao:CommitChanges(piName, input-output dataset dsItem by-reference).
-              
+    method public void Updateitems(input filter as generics.FilterParams, input-output DATASET dsItem):
+        /* Convert dataset to JSON for repository update */
+        var JsonObject updateJson = new JsonObject().
+        updateJson:Read(dataset dsItem:get-buffer-handle(1):table-handle).
+        
+        /* Use repository to update */
+        dataset dsItem:handle = itemRepository:Update(filter:id1, updateJson).
+        
+        finally:
+            delete object updateJson no-error.
+        end finally.
     end method.
     
     /*------------------------------------------------------------------------------
             Purpose:    Delete a record                                                               
-            Notes:                                                                        
+            Notes:  Now uses repository pattern                                                                      
     ------------------------------------------------------------------------------*/
-    method public void Deleteitem(input-output DATASET dsItem):                    
+    method public void Deleteitem(input-output DATASET dsItem):
+        /* Get ID from dataset */
+        var character itemId = dataset dsItem:get-buffer-handle(1):buffer-field("itemnum"):buffer-value().
+        
+        /* Use repository to delete */
+        var logical lSuccess = itemRepository:Delete(itemId).
     end method.     
 
+    /* CheckFieldList, CheckValueList, and CreateEntityModel methods are included from metadata.i */
+    
     destructor public items():
-        delete object dao.
+        delete object itemRepository no-error.
         delete ttitem no-error.
     end destructor.
     

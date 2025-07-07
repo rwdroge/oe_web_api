@@ -8,6 +8,8 @@ services:
     volumes:
       - ../..:/workspaces:cached
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
+      - ./windsurf/.windsurf:/home/openedge/.windsurf
+      - ./windsurf/.codeium:/home/openedge/.codeium
     ports:
       - ${DEBUG_PORT}:3099
     command: sleep infinity
@@ -16,7 +18,7 @@ services:
     image: ${DB_IMAGE}
     user: openedge
     volumes:
-      - ../src/schema:/app/schema
+    #  - ../src/schema/sports2020.df:/app/schema/sports2020.df
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
     ports:
       - 10000-10010:10000-10010
@@ -32,6 +34,8 @@ services:
       - ../conf/as.pf:/app/config/as.pf
       - ../conf/openedge.properties:/app/pas/as/conf/openedge.properties
       - ../conf/otelconfig.json:/app/pas/as/openedge/otelconfig.json
+      - ./logs:/app/pas/as/logs
+
     ports:
       - ${PAS_PORT}:8810
       - ${PAS_HTTPS_PORT}:8811
