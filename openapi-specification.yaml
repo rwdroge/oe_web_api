@@ -1,0 +1,546 @@
+openapi: 3.0.3
+info:
+  title: GenericServiceRefactored API
+  description: |
+    API documentation for the GenericServiceRefactored API, providing CRUD operations for entities.
+    This API follows RESTful principles and uses a Service Layer pattern for business logic.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: /api/v1
+    description: Base API path
+
+paths:
+  /{apitype}/{entityname}:
+    get:
+      summary: Get all entities or metadata
+      description: |
+        Retrieves all records of the specified entity type or entity metadata.
+        The apitype parameter determines whether to return data or metadata.
+      parameters:
+        - $ref: '#/components/parameters/ApiType'
+        - $ref: '#/components/parameters/EntityName'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/SortBy'
+        - name: filter
+          in: query
+          description: Filter criteria in the format field=value
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/EntityCollection'
+                  - $ref: '#/components/schemas/EntityMetadata'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create a new entity
+      description: Creates a new entity record with the provided data
+      parameters:
+        - $ref: '#/components/parameters/ApiType'
+        - $ref: '#/components/parameters/EntityName'
+      requestBody:
+        description: Entity data to create
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntityRequest'
+      responses:
+        '201':
+          description: Entity created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /{apitype}/{entityname}/{id}:
+    get:
+      summary: Get entity by ID
+      description: Retrieves a specific entity by its ID
+      parameters:
+        - $ref: '#/components/parameters/ApiType'
+        - $ref: '#/components/parameters/EntityName'
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update an entity
+      description: Updates an existing entity with the provided data
+      parameters:
+        - $ref: '#/components/parameters/ApiType'
+        - $ref: '#/components/parameters/EntityName'
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        description: Updated entity data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntityRequest'
+      responses:
+        '200':
+          description: Entity updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete an entity
+      description: Deletes an entity by its ID
+      parameters:
+        - $ref: '#/components/parameters/ApiType'
+        - $ref: '#/components/parameters/EntityName'
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Entity deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Entity deleted successfully
+                  entity:
+                    type: string
+                    example: item
+                  id:
+                    type: string
+                    example: '101'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # Entity-specific endpoints
+  /data/items/category/{category}:
+    get:
+      summary: Get items by category
+      description: Retrieves all items belonging to a specific category
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Category name
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  category:
+                    type: string
+                    example: Electronics
+                  count:
+                    type: integer
+                    example: 5
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /data/items/{id}/discount:
+    post:
+      summary: Apply discount to item
+      description: Applies a percentage discount to an item's price
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Item ID
+      requestBody:
+        description: Discount information
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                discountPercent:
+                  type: number
+                  format: decimal
+                  minimum: 0
+                  maximum: 100
+                  example: 15.5
+              required:
+                - discountPercent
+      responses:
+        '200':
+          description: Discount applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  parameters:
+    ApiType:
+      name: apitype
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [data, meta]
+      description: Type of API request (data or metadata)
+    
+    EntityName:
+      name: entityname
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [items, customers, orders, suppliers]
+      description: Name of the entity
+    
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Entity identifier
+    
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 100
+      description: Maximum number of records to return
+    
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Number of records to skip
+    
+    SortBy:
+      name: sort_by
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Field to sort by (prefix with - for descending order)
+  
+  schemas:
+    # Generic schemas
+    EntityRequest:
+      type: object
+      description: Generic entity request structure
+      additionalProperties: true
+    
+    EntityResponse:
+      type: object
+      description: Generic entity response structure
+      additionalProperties: true
+    
+    EntityCollection:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 10
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: true
+    
+    EntityMetadata:
+      type: object
+      properties:
+        name:
+          type: string
+          example: item
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: itemnum
+              type:
+                type: string
+                example: integer
+              label:
+                type: string
+                example: Item Number
+              required:
+                type: boolean
+                example: true
+      additionalProperties: true
+    
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Entity not found
+        entity:
+          type: string
+          example: item
+        details:
+          type: string
+          example: The requested entity could not be found
+      required:
+        - error
+    
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Invalid fields in request
+        entityName:
+          type: string
+          example: item
+        invalidFields:
+          type: string
+          example: price,quantity
+      required:
+        - error
+        - invalidFields
+    
+    # Entity-specific schemas
+    Item:
+      type: object
+      properties:
+        itemnum:
+          type: integer
+          example: 101
+        itemname:
+          type: string
+          example: Laptop
+        price:
+          type: object
+          properties:
+            value:
+              type: number
+              format: decimal
+              example: 999.99
+        category:
+          type: string
+          example: Electronics
+        instock:
+          type: boolean
+          example: true
+        quantity:
+          type: integer
+          example: 50
+        discountApplied:
+          type: number
+          format: decimal
+          example: 10
+      required:
+        - itemnum
+        - itemname
+        - price
+    
+    Customer:
+      type: object
+      properties:
+        custnum:
+          type: integer
+          example: 1001
+        name:
+          type: string
+          example: John Doe
+        address:
+          type: string
+          example: 123 Main St
+        city:
+          type: string
+          example: Springfield
+        state:
+          type: string
+          example: IL
+        country:
+          type: string
+          example: USA
+        phone:
+          type: string
+          example: 555-123-4567
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+      required:
+        - custnum
+        - name
+    
+    Order:
+      type: object
+      properties:
+        ordernum:
+          type: integer
+          example: 5001
+        custnum:
+          type: integer
+          example: 1001
+        orderdate:
+          type: string
+          format: date
+          example: '2025-06-24'
+        shipdate:
+          type: string
+          format: date
+          example: '2025-06-28'
+        status:
+          type: string
+          enum: [new, processing, shipped, delivered, cancelled]
+          example: processing
+        total:
+          type: number
+          format: decimal
+          example: 1299.99
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              itemnum:
+                type: integer
+                example: 101
+              quantity:
+                type: integer
+                example: 2
+              price:
+                type: number
+                format: decimal
+                example: 999.99
+      required:
+        - ordernum
+        - custnum
+        - orderdate
+        - status
+    
+    Supplier:
+      type: object
+      properties:
+        suppnum:
+          type: integer
+          example: 201
+        name:
+          type: string
+          example: ABC Supplies
+        address:
+          type: string
+          example: 456 Business Ave
+        city:
+          type: string
+          example: Chicago
+        state:
+          type: string
+          example: IL
+        country:
+          type: string
+          example: USA
+        phone:
+          type: string
+          example: 555-987-6543
+        email:
+          type: string
+          format: email
+          example: contact@abcsupplies.com
+        active:
+          type: boolean
+          example: true
+      required:
+        - suppnum
+        - name
+  
+  responses:
+    BadRequest:
+      description: Bad request - invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    ValidationError:
+      description: Validation error - invalid data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+    
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
