@@ -1,6 +1,6 @@
-# Extending the GenericServiceRefactored API
+# Extending the GenericService API
 
-This guide provides step-by-step instructions on how to extend the GenericServiceRefactored API with new entities.
+This guide provides step-by-step instructions on how to extend the GenericService API with new entities.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ This guide provides step-by-step instructions on how to extend the GenericServic
 
 ## Overview
 
-The GenericServiceRefactored API follows a layered architecture pattern that makes it easy to extend with new entities. The architecture consists of:
+The GenericService API follows a layered architecture pattern that makes it easy to extend with new entities. The architecture consists of:
 
 1. **Entity Layer**: Defines the data structure and properties
 2. **Repository Layer**: Handles data access and persistence
@@ -31,7 +31,7 @@ This guide will walk you through adding a new entity to the API.
 
 The API uses the following components:
 
-- `GenericServiceRefactored.cls`: The main API handler that processes HTTP requests
+- `GenericService.cls`: The main API handler that processes HTTP requests
 - `IService` interface: Defines the contract for service classes
 - `ServiceFactory`: Creates and manages service instances
 - `BaseRepository`: Provides common data access functionality
@@ -361,16 +361,16 @@ If your entity requires custom endpoints beyond the standard CRUD operations, yo
 
 1. Add the custom method to your repository class
 2. Add the corresponding method to your service class
-3. Update the `GenericServiceRefactored.cls` to handle the custom endpoint
+3. Update the `GenericService.cls` to handle the custom endpoint
 
 Example for adding a custom endpoint to get products by category:
 
 1. First, add the method to the repository (already done in the example above)
 2. Then, add the method to the service (already done in the example above)
-3. Update `GenericServiceRefactored.cls` to handle the custom endpoint:
+3. Update `GenericService.cls` to handle the custom endpoint:
 
 ```abl
-/* Add this to the HandleGet method in GenericServiceRefactored.cls */
+/* Add this to the HandleGet method in GenericService.cls */
 if entityName = "products" and poRequest:GetPathSegment(3) = "category" then do:
     var character categoryIdStr = poRequest:GetPathSegment(4).
     var integer categoryId = integer(categoryIdStr).
@@ -441,4 +441,4 @@ When extending the API with new entities, follow these best practices:
 6. **Security**: Consider security implications and implement appropriate measures
 7. **Performance**: Optimize database queries and consider pagination for large datasets
 
-By following this guide, you can easily extend the GenericServiceRefactored API with new entities while maintaining the architecture and design patterns of the existing codebase.
+By following this guide, you can easily extend the GenericService API with new entities while maintaining the architecture and design patterns of the existing codebase.

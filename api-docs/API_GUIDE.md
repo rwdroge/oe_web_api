@@ -1,8 +1,8 @@
-# GenericServiceRefactored API Guide
+# GenericService API Guide
 
 ## Overview
 
-The GenericServiceRefactored API provides a RESTful interface for performing CRUD (Create, Read, Update, Delete) operations on various entities in the system. The API follows a service layer pattern, separating business logic from data access concerns.
+The GenericService API provides a RESTful interface for performing CRUD (Create, Read, Update, Delete) operations on various entities in the system. The API follows a service layer pattern, separating business logic from data access concerns.
 
 ## Base URL
 

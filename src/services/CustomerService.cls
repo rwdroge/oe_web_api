@@ -45,11 +45,10 @@ class services.CustomerService inherits BaseService:
         var JsonObject joResult = new JsonObject().
         var JsonArray jaCustomers = new JsonArray().
         var JsonObject joCustomer = new JsonObject().
-        var handle hBuffer = ?.
+        var handle hBuffer = hDataSet:get-buffer-handle(1).
         
         /* Check if customers were found */
         if valid-handle(hDataSet) then do:
-            hBuffer = hDataSet:get-buffer-handle(1).
             if hBuffer:available then do:
                 
                 /* Process all records */
@@ -107,7 +106,7 @@ class services.CustomerService inherits BaseService:
         var JsonObject joResult = new JsonObject().
         var JsonArray jaCustomers = new JsonArray().
         var JsonObject joCustomer = new JsonObject().
-        var handle hBuffer = ?.
+        var handle hBuffer = hDataSet:get-buffer-handle(1).
         
         /* Check if customers were found */
         if valid-handle(hDataSet) then do:
@@ -183,9 +182,7 @@ class services.CustomerService inherits BaseService:
         /* Save updated customer */
         return this-object:Update(pcId, joCustomer).
         
-        finally:
-            delete object joError no-error.
-        end finally.
+
     end method.
     
     /*------------------------------------------------------------------------------

@@ -91,7 +91,7 @@ class entities.suppliers inherits BusinessEntity implements interfaces.CRUD:
         dataset dsSupplier:handle = supplierRepository:FindByFilter(filter).
     end method.
     
-    {entities/inc/metadata.i &entity=supplier}
+    /* CheckFieldList, CheckValueList, and CreateEntityModel methods are included from metadata.i */
     
     /*------------------------------------------------------------------------------
             Purpose:  Update one or more records                                                                  

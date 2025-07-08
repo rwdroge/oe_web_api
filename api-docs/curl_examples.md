@@ -1,6 +1,6 @@
-# GenericServiceRefactored API - cURL Examples
+# GenericService API - cURL Examples
 
-This document provides cURL command examples for testing the GenericServiceRefactored API endpoints from the command line.
+This document provides cURL command examples for testing the GenericService API endpoints from the command line.
 
 ## Base URL
 

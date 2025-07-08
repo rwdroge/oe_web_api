@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "7e3d6a9e-5f8d-4a2c-9b5d-8c4f1a2e3b4d",
-		"name": "GenericServiceRefactored API",
-		"description": "A collection for testing the GenericServiceRefactored API endpoints",
+		"name": "GenericService API",
+		"description": "A collection for testing the GenericService API endpoints",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [

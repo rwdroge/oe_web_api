@@ -98,7 +98,7 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
         var character itemId = dataset dsItem:get-buffer-handle(1):buffer-field("itemnum"):buffer-value().
         
         /* Use repository to delete */
-        var logical lSuccess = itemRepository:Delete(itemId).
+        itemRepository:Delete(itemId).
     end method.     
 
     /* CheckFieldList, CheckValueList, and CreateEntityModel methods are included from metadata.i */

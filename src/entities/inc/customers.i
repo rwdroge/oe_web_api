@@ -38,7 +38,7 @@ field Comments as character label "Comments"
 field Fax as character label "Fax"
 field EmailAddress as character label "Email"
 field id as character
-field seq as integer initial ?
+field seq as integer
 index seq is primary unique seq
 index Comments  Comments  ascending 
 index CountryPost  Country  ascending  PostalCode  ascending 

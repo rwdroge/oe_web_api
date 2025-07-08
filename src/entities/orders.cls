@@ -72,7 +72,7 @@ class entities.orders inherits BusinessEntity implements interfaces.CRUD:
         dataset dsOrder:handle = orderRepository:FindByFilter(filter).
     end method.
     
-    {entities/inc/metadata.i &entity=order}
+    /* CheckFieldList, CheckValueList, and CreateEntityModel methods are included from metadata.i */
     
     /*------------------------------------------------------------------------------
             Purpose:  Update one or more records                                                                  

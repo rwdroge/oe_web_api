@@ -72,7 +72,7 @@ class entities.customers inherits BusinessEntity implements interfaces.CRUD:
         dataset dsCustomer:handle = customerRepository:FindByFilter(filter).
     end method.
     
-    {entities/inc/metadata.i &entity=customer}
+    /* CheckFieldList, CheckValueList, and CreateEntityModel methods are included from metadata.i */
     
     /*------------------------------------------------------------------------------
             Purpose:  Update one or more records                                                                  
