@@ -3,22 +3,20 @@
     Syntax      : 
     Author(s)   : rdroge
     Created     : Thu Dec 13 12:49:18 CET 2018
-    Notes       : 
+    Notes       : Updated to use repository pattern
   ----------------------------------------------------------------------*/
 
-
 using Progress.Lang.*.
+using OpenEdge.BusinessLogic.BusinessEntity.
 using Progress.Json.ObjectModel.*.
 using data.*.
-using OpenEdge.BusinessLogic.*.
 
- 
 block-level on error undo, throw.
 
-class entities.orders inherits OpenEdge.BusinessLogic.BusinessEntity implements interfaces.CRUD:
+class entities.orders inherits BusinessEntity implements interfaces.CRUD:
     /*------------------------------------------------------------------------------
-            Purpose:                                                                      
-            Notes:                                                                        
+            Purpose: Entity class for orders using repository pattern                                                                     
+            Notes: Refactored to use OrderRepository for data access                                                                       
     ------------------------------------------------------------------------------*/
     
     {"entities/inc/orders.i"}
@@ -27,98 +25,90 @@ class entities.orders inherits OpenEdge.BusinessLogic.BusinessEntity implements 
     define public property piName as character no-undo initial "ordernum" get. set.
     define public property dbName as character no-undo initial "order" get. set.
     
-    var integer iSeq.
-    var DataAccess daO.
+    /* Repository for data access operations */
+    var data.OrderRepository orderRepository.
     
     /*------------------------------------------------------------------------------
-            Purpose:                                                                      
-            Notes:                                                                        
+            Purpose: Initialize the orders entity                                                                      
+            Notes: Creates repository instance                                                                        
     ------------------------------------------------------------------------------*/
     constructor public orders():
         super (dataset dsOrder:HANDLE).
+        
+        /* Initialize repository */
+        orderRepository = new data.OrderRepository().
     end constructor.
     
     method public void Read(input filter as generics.FilterParams, output dataset-handle hDataSet):
-        this-object:GetOrders(filter, output dataset dsOrder by-reference).
-        hDataSet = dataset dsOrder:handle.    
+        /* Use repository to get orders */
+        message " i am here".
+        hDataSet = orderRepository:FindByFilter(filter).
     end method.
     
     method public void Create(input jsonObject as JsonObject, output dataset-handle hDataSet):
-        dao = new data.DataAccess().
-        dao:attachSource("ttorder", "ordernum", "order", "ordernum", "", ?, input-output dataset dsOrder by-reference).
-        dataset dsOrder:get-buffer-handle (1):table-handle:tracking-changes = true.
-        dataset dsOrder:read-json('JsonObject', jsonObject).
-        dataset dsOrder:get-buffer-handle (1):table-handle:tracking-changes = false.
-        
-        dao:CommitChanges(piName, dataset dsOrder by-reference).
-        hDataSet = dataset dsOrder:handle.
-    
+        /* Use repository to create order */
+        hDataSet = orderRepository:Save(jsonObject).
     end method.
     
     method public void Update(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
-        define variable hChanges as handle.
-        dao = new data.DataAccess().
-        dao:attachSource("ttorder", "ordernum", "order", "ordernum", filter:id1, filter, input-output dataset dsOrder by-reference).
-        //dataset dsOrder:write-json('file', '/usr/wrk/emeapas/work/dsorder_before.json', true, ?, ?,?,true ).      
-        create dataset hChanges.
-        hChanges:create-like(dataset dsOrder:handle).
-        hChanges:read-json('JsonObject', jsonObject).
-        
-        hChanges:get-changes(dataset dsOrder:handle).
-        //hChanges:write-json('file', '/usr/wrk/emeapas/work/dsorder_before.json', true, ?, ?,?,true ).
-        hChanges:merge-changes(dataset dsOrder:handle).
-        //dataset dsOrder:get-buffer-handle (1):table-handle:tracking-changes = false.
-        //hChanges:write-json('file', '/usr/wrk/emeapas/work/dsorder_after.json', true, ?, ?,?,true ).
-        //this-object:Updateorders(filter, input-output dataset dsOrder by-reference).
-        dao:CommitChanges(piName, input-output dataset dsOrder by-reference).
-        hDataSet = dataset dsOrder:handle.
-    
+        /* Use repository to update order */
+        hDataSet = orderRepository:Update(filter:id1, jsonObject).
     end method.
     
     method public void Delete(input filter as generics.FilterParams, output dataset-handle hDataSet):
+        /* Use repository to delete order */
+        var logical lSuccess = orderRepository:Delete(filter:id1).
         
-        dao = new data.DataAccess().
-        dao:attachSource("ttorder", "ordernum", "order", "ordernum", filter:id1, filter, input-output dataset dsOrder by-reference).
-        this-object:Deleteorder(input-output dataset dsOrder by-reference).
-        hDataSet = dataset dsOrder:handle.
-        dao:detachSource(dataset dsOrder by-reference).
-    
+        /* Return dataset for consistency with interface */
+        hDataSet = orderRepository:FindById(filter:id1).
     end method.
         
     /*------------------------------------------------------------------------------
             Purpose:  Get one or more records, based on a filter string                                                                     
-            Notes:                                                                        
+            Notes:  Now uses repository pattern                                                                      
     ------------------------------------------------------------------------------*/
-    method private void GetOrders( input filter as generics.FilterParams, output DATASET dsOrder ):
-        
-        daO = new data.DataAccess().
-        daO:attachSource(this-object:ttName, this-object:piName, this-object:dbName, this-object:piName, filter:id1, filter, input-output dataset dsOrder by-reference).
-        daO:detachSource(dataset dsOrder by-reference).    
-            
+    method private void GetOrders(input filter as generics.FilterParams, output DATASET dsOrder):
+        /* This method is kept for backward compatibility */
+        dataset dsOrder:handle = orderRepository:FindByFilter(filter).
     end method.
     
     {entities/inc/metadata.i &entity=order}
     
     /*------------------------------------------------------------------------------
             Purpose:  Update one or more records                                                                  
-            Notes:                                                                        
+            Notes:  Now uses repository pattern                                                                      
     ------------------------------------------------------------------------------*/
-    method public void Updateorders(input filter as generics.FilterParams, input-output DATASET dsOrder):            
-    
-        dao = new data.DataAccess().
-        dao:attachSource("ttorder", "ordernum", "order", "ordernum", filter:id1, filter, input-output dataset dsOrder by-reference).
-        dao:CommitChanges(piName, input-output dataset dsOrder by-reference).
-              
+    method public void UpdateOrders(input filter as generics.FilterParams, input-output DATASET dsOrder):
+        /* Convert dataset to JSON for repository update */
+        var JsonObject updateJson = new JsonObject().
+        updateJson:Read(dataset dsOrder:get-buffer-handle(1):table-handle).
+        
+        /* Use repository to update */
+        dataset dsOrder:handle = orderRepository:Update(filter:id1, updateJson).
+        
+        finally:
+            delete object updateJson no-error.
+        end finally.
     end method.
     
     /*------------------------------------------------------------------------------
             Purpose:    Delete a record                                                               
-            Notes:                                                                        
+            Notes:  Now uses repository pattern                                                                      
     ------------------------------------------------------------------------------*/
-    method public void Deleteorder(input-output DATASET dsOrder):                    
-    
+    method public void DeleteOrder(input-output DATASET dsOrder):
+        /* Get ID from dataset */
+        var character orderId = dataset dsOrder:get-buffer-handle(1):buffer-field("ordernum"):buffer-value().
         
+        /* Use repository to delete */
+        orderRepository:Delete(orderId).
     end method.
-      
+    
+    /*------------------------------------------------------------------------------
+            Purpose: Clean up resources when object is destroyed
+    ------------------------------------------------------------------------------*/
+    destructor public orders():
+        delete object orderRepository no-error.
+        delete ttorder no-error.
+    end destructor.
     
 end class.

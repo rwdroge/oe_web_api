@@ -1,194 +1,114 @@
  
  /*------------------------------------------------------------------------
- Syntax      : 
+    File        : customers 
+    Syntax      : 
     Author(s)   : rdroge
     Created     : Thu Dec 13 12:49:18 CET 2018
-    File        : customers
-    Notes       : 
+    Notes       : Updated to use repository pattern
   ----------------------------------------------------------------------*/
- 
+
 using Progress.Lang.*.
+using OpenEdge.BusinessLogic.BusinessEntity.
 using Progress.Json.ObjectModel.*.
 using data.*.
-using OpenEdge.BusinessLogic.*.
- 
+
 block-level on error undo, throw.
 
-class entities.customers inherits OpenEdge.BusinessLogic.BusinessEntity implements interfaces.CRUD:
+class entities.customers inherits BusinessEntity implements interfaces.CRUD:
     /*------------------------------------------------------------------------------
-     Purpose: Customer entity class for managing customer data
-     Notes: Implements CRUD operations for customer records using DataAccess layer
+            Purpose: Entity class for customers using repository pattern                                                                     
+            Notes: Refactored to use CustomerRepository for data access                                                                       
     ------------------------------------------------------------------------------*/
     
-    /* Include customer temp-table definition */
     {"entities/inc/customers.i"}
-  
-    /* Public properties */
-    define public property ttName  as character no-undo initial "ttcustomer" get. set.
-    define public property idField as character no-undo initial "custnum"    get. set.
-    define public property dbTable as character no-undo initial "customer"   get. set.
+     
+    define public property ttName as character no-undo initial "ttcustomer" get. set. 
+    define public property piName as character no-undo initial "custnum" get. set.
+    define public property dbName as character no-undo initial "customer" get. set.
     
-    /* Private members */
-    var private integer iSeq.
-    var private DataAccess oDao.
+    /* Repository for data access operations */
+    var data.CustomerRepository customerRepository.
     
     /*------------------------------------------------------------------------------
-     Purpose: Initialize a new instance of the customers class
-     Notes: Sets up the customer dataset and initializes base class
+            Purpose: Initialize the customers entity                                                                      
+            Notes: Creates repository instance                                                                        
     ------------------------------------------------------------------------------*/
     constructor public customers():
-        super(dataset dsCustomer:handle).
+        super (dataset dsCustomer:HANDLE).
+        
+        /* Initialize repository */
+        customerRepository = new data.CustomerRepository().
     end constructor.
-    
-    /*------------------------------------------------------------------------------
-     Purpose: Read customer records based on filter criteria
-     Parameters:
-       input  filter  - Filter parameters for customer query
-       output hDataSet - Handle to the resulting dataset
-    ------------------------------------------------------------------------------*/
-    method public void read(input filter as generics.FilterParams, output dataset-handle hDataSet):
-        this-object:getCustomers(filter, output dataset dsCustomer by-reference).
-        hDataSet = dataset dsCustomer:handle.
+   
+    method public void Read(input filter as generics.FilterParams, output dataset-handle hDataSet):
+        /* Use repository to get customers */
+        hDataSet = customerRepository:FindByFilter(filter).
     end method.
     
-    /*------------------------------------------------------------------------------
-     Purpose: Create new customer record from JSON data
-     Parameters:
-       input  jsonObject - JSON data containing customer information
-       output hDataSet   - Handle to the resulting dataset
-    ------------------------------------------------------------------------------*/
-    method public void create(input jsonObject as JsonObject, output dataset-handle hDataSet):
-        var handle hBuffer.
-        
-        
-            assign oDao = new DataAccess().
-            oDao:attachSource(ttName, idField, dbTable, idField, "", ?, 
-                            input-output dataset dsCustomer by-reference).
-            
-            hBuffer = dataset dsCustomer:get-buffer-handle(1).
-            hBuffer:table-handle:tracking-changes = true.
-            dataset dsCustomer:read-json('JsonObject', jsonObject).
-            hBuffer:table-handle:tracking-changes = false.
-            
-            oDao:commitChanges(idField, dataset dsCustomer by-reference).
-            hDataSet = dataset dsCustomer:handle.
-        
+    method public void Create(input jsonObject as JsonObject, output dataset-handle hDataSet):
+        /* Use repository to create customer */
+        hDataSet = customerRepository:Save(jsonObject).
+    end method. 
+    
+    method public void Update(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
+        /* Use repository to update customer */
+        hDataSet = customerRepository:Update(filter:id1, jsonObject).
     end method.
     
-    /*------------------------------------------------------------------------------
-     Purpose: Update existing customer record
-     Parameters:
-       input  filter     - Filter to identify customer record
-       input  jsonObject - JSON data containing updated information
-       output hDataSet   - Handle to the resulting dataset
-    ------------------------------------------------------------------------------*/
-    method public void update(input filter as generics.FilterParams, 
-                            input jsonObject as JsonObject, 
-                            output dataset-handle hDataSet):
-        this-object:updateCustomer(filter, input-output dataset dsCustomer by-reference).
-        hDataSet = dataset dsCustomer:handle.
+    method public void Delete(input filter as generics.FilterParams, output dataset-handle hDataSet):
+        /* Use repository to delete customer */
+        var logical lSuccess = customerRepository:Delete(filter:id1).
         
-    end method.
-    
-    /*------------------------------------------------------------------------------
-     Purpose: Delete customer record
-     Parameters:
-       input  filter   - Filter to identify customer record
-       output hDataSet - Handle to the resulting dataset
-    ------------------------------------------------------------------------------*/
-    method public void delete(input filter as generics.FilterParams, 
-                            output dataset-handle hDataSet):
-        
-            assign oDao = new DataAccess().
-            oDao:attachSource(ttName, idField, dbTable, idField, 
-                            filter:id1, filter, input-output dataset dsCustomer by-reference).
-            this-object:deleteCustomer(input-output dataset dsCustomer by-reference).
-        
-            hDataSet = dataset dsCustomer:handle.
-        
-        finally:
-            if valid-object(oDao) then
-                oDao:detachSource(dataset dsCustomer by-reference).
-        end finally.
+        /* Return dataset for consistency with interface */
+        hDataSet = customerRepository:FindById(filter:id1).
     end method.
         
     /*------------------------------------------------------------------------------
             Purpose:  Get one or more records, based on a filter string                                                                     
-            Notes:                                                                        
+            Notes:  Now uses repository pattern                                                                      
     ------------------------------------------------------------------------------*/
-    /*------------------------------------------------------------------------------
-     Purpose: Get one or more customer records based on filter criteria
-     Parameters:
-       input  filter     - Filter parameters for customer query
-       output dsCustomer - Customer dataset to populate
-    ------------------------------------------------------------------------------*/
-    method private void getCustomers(input filter as generics.FilterParams,
-                                   output dataset dsCustomer):
-        
-            assign oDao = new DataAccess().
-            oDao:attachSource(ttName, idField, dbTable, idField,
-                            filter:id1, filter, input-output dataset dsCustomer by-reference).
-        finally:
-            if valid-object(oDao) then
-                oDao:detachSource(dataset dsCustomer by-reference).
-        end finally.
-    end method. 
+    method private void GetCustomers(input filter as generics.FilterParams, output DATASET dsCustomer):
+        /* This method is kept for backward compatibility */
+        dataset dsCustomer:handle = customerRepository:FindByFilter(filter).
+    end method.
     
     {entities/inc/metadata.i &entity=customer}
     
     /*------------------------------------------------------------------------------
             Purpose:  Update one or more records                                                                  
-            Notes:                                                                        
+            Notes:  Now uses repository pattern                                                                      
     ------------------------------------------------------------------------------*/
-    /*------------------------------------------------------------------------------
-     Purpose: Update one or more customer records
-     Parameters:
-       input        filter     - Filter to identify customer records
-       input-output dsCustomer - Customer dataset with updates
-    ------------------------------------------------------------------------------*/
-    method public void updateCustomer(input filter as generics.FilterParams,
-                                    input-output dataset dsCustomer):
+    method public void UpdateCustomer(input filter as generics.FilterParams, input-output DATASET dsCustomer):
+        /* Convert dataset to JSON for repository update */
+        var JsonObject updateJson = new JsonObject().
+        updateJson:Read(dataset dsCustomer:get-buffer-handle(1):table-handle).
         
-            assign oDao = new DataAccess().
-            oDao:attachSource(ttName, idField, dbTable, idField,
-                            filter:id1, filter, input-output dataset dsCustomer by-reference).
-            oDao:commitChanges(idField, input-output dataset dsCustomer by-reference).
+        /* Use repository to update */
+        dataset dsCustomer:handle = customerRepository:Update(filter:id1, updateJson).
         
         finally:
-            if valid-object(oDao) then
-                oDao:detachSource(dataset dsCustomer by-reference).
+            delete object updateJson no-error.
         end finally.
     end method.
     
     /*------------------------------------------------------------------------------
             Purpose:    Delete a record                                                               
-            Notes:                                                                        
+            Notes:  Now uses repository pattern                                                                      
     ------------------------------------------------------------------------------*/
-    /*------------------------------------------------------------------------------
-     Purpose: Delete customer record
-     Parameters:
-       input-output dsCustomer - Customer dataset with record to delete
-    ------------------------------------------------------------------------------*/
-    method public void deleteCustomer(input-output dataset dsCustomer):
-        var handle hBuffer.
+    method public void DeleteCustomer(input-output DATASET dsCustomer):
+        /* Get ID from dataset */
+        var character customerId = dataset dsCustomer:get-buffer-handle(1):buffer-field("custnum"):buffer-value().
         
-        
-            hBuffer = dataset dsCustomer:get-buffer-handle(1).
-            if hBuffer:available then
-                hBuffer:buffer-delete().
-        
+        /* Use repository to delete */
+        customerRepository:Delete(customerId).
     end method.
-  
+    
     /*------------------------------------------------------------------------------
-     Purpose: Clean up resources when object is destroyed
+            Purpose: Clean up resources when object is destroyed
     ------------------------------------------------------------------------------*/
     destructor public customers():
-        
-        if valid-object(oDao) then do:
-            delete object oDao no-error.
-            
-        end.
-        
-    end destructor. 
-      
+        delete object customerRepository no-error.
+        delete ttcustomer no-error.
+    end destructor.
+    
 end class.

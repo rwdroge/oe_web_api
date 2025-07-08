@@ -42,7 +42,6 @@ class entities.items inherits BusinessEntity implements interfaces.CRUD:
    
         method public void Read(input filter as generics.FilterParams, output dataset-handle hDataSet):
         /* Use repository to get items */
-        
         hDataSet = itemRepository:FindByFilter(filter).
     end method.
     

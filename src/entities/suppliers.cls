@@ -3,9 +3,8 @@
     Syntax      : 
     Author(s)   : rdroge
     Created     : Mon Jun 16 11:40:26 CEST 2025
-    Notes       : 
+    Notes       : Updated to use repository pattern
   ----------------------------------------------------------------------*/
-
 
 using Progress.Lang.*.
 using OpenEdge.BusinessLogic.BusinessEntity.
@@ -17,17 +16,13 @@ block-level on error undo, throw.
 class entities.suppliers inherits BusinessEntity implements interfaces.CRUD:
     /*------------------------------------------------------------------------------
             Purpose: Supplier entity class for managing supplier data
-            Notes: Implements CRUD operations for supplier records using DataAccess layer                                                                   
+            Notes: Implements CRUD operations for supplier records using repository pattern                                                                   
     ------------------------------------------------------------------------------*/
     
     {"entities/inc/suppliers.i"}
      
-    define public property ttName as character no-undo initial "ttsupplier" get. set. 
-    define public property piName as character no-undo initial "supplieridnum" get. set.
-    define public property dbName as character no-undo initial "supplier" get. set.
-    
-    var private integer iSeq.
-    var private DataAccess dao.
+    /* Repository for data access operations */
+    var data.SupplierRepository supplierRepository.
     
     /*------------------------------------------------------------------------------
             Purpose: Initialize a new instance of the suppliers class
@@ -35,7 +30,8 @@ class entities.suppliers inherits BusinessEntity implements interfaces.CRUD:
     ------------------------------------------------------------------------------*/
     constructor public suppliers():
         super (dataset dsSupplier:HANDLE).
-        
+        /* Initialize repository */
+        supplierRepository = new data.SupplierRepository().
     end constructor.
    
     /*------------------------------------------------------------------------------
@@ -45,8 +41,8 @@ class entities.suppliers inherits BusinessEntity implements interfaces.CRUD:
               output hDataSet - Handle to the resulting dataset                                                                    
     ------------------------------------------------------------------------------*/
     method public void Read(input filter as generics.FilterParams, output dataset-handle hDataSet):
-        this-object:GetSuppliers(filter, output dataset dsSupplier by-reference).
-        hDataSet = dataset dsSupplier:handle.    
+        /* Use repository to get suppliers */
+        hDataSet = supplierRepository:FindByFilter(filter).
     end method.
     
     /*------------------------------------------------------------------------------
@@ -56,16 +52,8 @@ class entities.suppliers inherits BusinessEntity implements interfaces.CRUD:
               output hDataSet   - Handle to the resulting dataset                                                                 
     ------------------------------------------------------------------------------*/
     method public void Create(input jsonObject as JsonObject, output dataset-handle hDataSet):
-        
-        assign dao = new DataAccess().
-        dao:attachSource("ttsupplier", "supplieridnum", "supplier", "supplieridnum", "", ?, input-output dataset dsSupplier by-reference).
-        dataset dsSupplier:get-buffer-handle(1):table-handle:tracking-changes = true.
-        dataset dsSupplier:read-json('JsonObject', jsonObject).
-        dataset dsSupplier:get-buffer-handle(1):table-handle:tracking-changes = false.
-        
-        dao:CommitChanges(piName, dataset dsSupplier by-reference).
-        hDataSet = dataset dsSupplier:handle.
-    
+        /* Use repository to create supplier */
+        hDataSet = supplierRepository:Save(jsonObject).
     end method.
     
     /*------------------------------------------------------------------------------
@@ -76,21 +64,8 @@ class entities.suppliers inherits BusinessEntity implements interfaces.CRUD:
               output hDataSet   - Handle to the resulting dataset                                                                  
     ------------------------------------------------------------------------------*/
     method public void Update(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
-        define variable hChanges as handle.
-        
-        assign dao = new DataAccess().
-        dao:attachSource("ttsupplier", "supplieridnum", "supplier", "supplieridnum", filter:id1, filter, input-output dataset dsSupplier by-reference).
-        
-        create dataset hChanges.
-        hChanges:create-like(dataset dsSupplier:handle).
-        hChanges:read-json('JsonObject', jsonObject).
-        
-        hChanges:get-changes(dataset dsSupplier:handle).
-        hChanges:merge-changes(dataset dsSupplier:handle).
-        
-        dao:CommitChanges(piName, input-output dataset dsSupplier by-reference).
-        hDataSet = dataset dsSupplier:handle.
-    
+        /* Use repository to update supplier */
+        hDataSet = supplierRepository:Update(filter:id1, jsonObject).
     end method.
     
     /*------------------------------------------------------------------------------
@@ -100,79 +75,59 @@ class entities.suppliers inherits BusinessEntity implements interfaces.CRUD:
               output hDataSet - Handle to the resulting dataset                                                                
     ------------------------------------------------------------------------------*/
     method public void Delete(input filter as generics.FilterParams, output dataset-handle hDataSet):
+        /* Use repository to delete supplier */
+        var logical lSuccess = supplierRepository:Delete(filter:id1).
         
-        assign dao = new DataAccess().
-        dao:attachSource("ttsupplier", "supplieridnum", "supplier", "supplieridnum", filter:id1, filter, input-output dataset dsSupplier by-reference).
-        this-object:DeleteSupplier(input-output dataset dsSupplier by-reference).
-        hDataSet = dataset dsSupplier:handle.
-        
-        finally:
-            if valid-object(dao) then
-                dao:detachSource(dataset dsSupplier by-reference).
-        end finally.
-    
+        /* Return dataset for consistency with interface */
+        hDataSet = supplierRepository:FindById(filter:id1).
     end method.
         
     /*------------------------------------------------------------------------------
-            Purpose: Get one or more supplier records based on filter criteria
-            Parameters:
-              input  filter      - Filter parameters for supplier query
-              output dsSupplier - Supplier dataset to populate                                                                     
+            Purpose:  Get one or more records, based on a filter string                                                                     
+            Notes:  Now uses repository pattern                                                                      
     ------------------------------------------------------------------------------*/
     method private void GetSuppliers(input filter as generics.FilterParams, output DATASET dsSupplier):
-        
-        assign dao = new DataAccess().
-        dao:attachSource(this-object:ttName, this-object:piName, this-object:dbName, this-object:piName, filter:id1, filter, input-output dataset dsSupplier by-reference).
-        
-        finally:
-            if valid-object(dao) then
-                dao:detachSource(dataset dsSupplier by-reference).
-        end finally.
-            
+        /* This method is kept for backward compatibility */
+        dataset dsSupplier:handle = supplierRepository:FindByFilter(filter).
     end method.
     
     {entities/inc/metadata.i &entity=supplier}
     
     /*------------------------------------------------------------------------------
-            Purpose: Update one or more supplier records
-            Parameters:
-              input        filter      - Filter to identify supplier records
-              input-output dsSupplier - Supplier dataset with updates                                                                  
+            Purpose:  Update one or more records                                                                  
+            Notes:  Now uses repository pattern                                                                      
     ------------------------------------------------------------------------------*/
-    method public void UpdateSuppliers(input filter as generics.FilterParams, input-output DATASET dsSupplier):            
-    
-        assign dao = new DataAccess().
-        dao:attachSource("ttsupplier", "supplieridnum", "supplier", "supplieridnum", filter:id1, filter, input-output dataset dsSupplier by-reference).
-        dao:CommitChanges(piName, input-output dataset dsSupplier by-reference).
+    method public void UpdateSupplier(input filter as generics.FilterParams, input-output DATASET dsSupplier):
+        /* Convert dataset to JSON for repository update */
+        var JsonObject updateJson = new JsonObject().
+        updateJson:Read(dataset dsSupplier:get-buffer-handle(1):table-handle).
+        
+        /* Use repository to update */
+        dataset dsSupplier:handle = supplierRepository:Update(filter:id1, updateJson).
         
         finally:
-            if valid-object(dao) then
-                dao:detachSource(dataset dsSupplier by-reference).
+            delete object updateJson no-error.
         end finally.
-              
     end method.
     
     /*------------------------------------------------------------------------------
-            Purpose: Delete supplier record
-            Parameters:
-              input-output dsSupplier - Supplier dataset with record to delete                                                               
+            Purpose:    Delete a record                                                               
+            Notes:  Now uses repository pattern                                                                      
     ------------------------------------------------------------------------------*/
     method public void DeleteSupplier(input-output DATASET dsSupplier):
-        var handle hBuffer.
+        /* Get ID from dataset */
+        var character supplierId = dataset dsSupplier:get-buffer-handle(1):buffer-field("supplieridnum"):buffer-value().
         
-        hBuffer = dataset dsSupplier:get-buffer-handle(1).
-        if hBuffer:available then
-            hBuffer:buffer-delete().
-    
+        /* Use repository to delete */
+        supplierRepository:Delete(supplierId).
     end method.
     
     /*------------------------------------------------------------------------------
             Purpose: Clean up resources when object is destroyed
     ------------------------------------------------------------------------------*/
     destructor public suppliers():
-        if valid-object(dao) then do:
-            delete object dao no-error.
-        end.
+        delete object supplierRepository no-error.
+        delete ttsupplier no-error.
     end destructor.
-      
+    
 end class.
