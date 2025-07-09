@@ -68,5 +68,11 @@ interface interfaces.IService:
      Returns: logical indicating if all fields are valid
     ------------------------------------------------------------------------------*/
     method public logical ValidateFields(input pcFieldList as character, output pcInvalidFields as character).
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Get the name of the entity managed by this service
+     Returns: character containing the entity name
+    ------------------------------------------------------------------------------*/
+    method public character GetEntityName().
 
 end interface.

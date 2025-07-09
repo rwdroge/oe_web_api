@@ -1,8 +1,8 @@
 /*------------------------------------------------------------------------
-    File        : CustomersTest
-    Purpose     : Unit tests for customers entity class
+    File        : OrdersTest
+    Purpose     : Unit tests for orders entity class
     Syntax      : 
-    Description : ABLUnit test cases for customers entity functionality
+    Description : ABLUnit test cases for orders entity functionality
     Author(s)   : rdroge
     Created     : 2025-06-16
     Notes       : 
@@ -10,18 +10,18 @@
 
 using Progress.Lang.*.
 using OpenEdge.Core.Assert.
-using entities.customers.
+using entities.orders.
 using data.DataAccess.
 using generics.FilterParams.
 using Progress.Json.ObjectModel.*.
 
 block-level on error undo, throw.
 
-class tests.CustomersTest:
+class tests.entities.OrdersTest:
 
     /* Test fixtures */
-    var private customers customersEntity.
-    var private handle hDsCustomer.
+    var private orders ordersEntity.
+    var private handle hDsOrder.
     var private JsonObject testJsonObject.
     var private FilterParams testFilter.
     var private handle hQueryParams.
@@ -34,21 +34,20 @@ class tests.CustomersTest:
     @Setup.
     method public void setUp():
         /* Create fresh instances for each test */
-        customersEntity = new customers().
+        ordersEntity = new orders().
         testJsonObject = new JsonObject().
-        testFilter = new FilterParams("customer", "", "", "", "", output table-handle hQueryParams).
+        testFilter = new FilterParams("order", "", "", "", "", output table-handle hQueryParams).
         
         /* Reset dataset handle for each test */
         hDataSet = ?.
         
         /* Initialize test data */
-        testJsonObject:Add("CustNum", 9999).
-        testJsonObject:Add("Name", "Test Customer").
-        testJsonObject:Add("Address", "123 Test Street").
-        testJsonObject:Add("City", "Test City").
-        testJsonObject:Add("State", "TS").
-        testJsonObject:Add("Country", "USA").
-        testJsonObject:Add("Phone", "555-1234").
+        testJsonObject:Add("OrderNum", 99999).
+        testJsonObject:Add("CustNum", 1000).
+        testJsonObject:Add("OrderDate", TODAY).
+        testJsonObject:Add("ShipDate", TODAY + 7).
+        testJsonObject:Add("Carrier", "Test Carrier").
+        testJsonObject:Add("OrderStatus", "Ordered").
     end method.
     
     /*------------------------------------------------------------------------------
@@ -58,8 +57,8 @@ class tests.CustomersTest:
     @TearDown.
     method public void tearDown():
         /* Clean up resources */
-        if valid-object(customersEntity) then
-            delete object customersEntity.
+        if valid-object(ordersEntity) then
+            delete object ordersEntity.
             
         if valid-object(testJsonObject) then
             delete object testJsonObject.
@@ -73,34 +72,34 @@ class tests.CustomersTest:
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Test read method with basic parameters
-     Notes: Verifies customer read functionality
+     Purpose: Test Read method with basic parameters
+     Notes: Verifies order read functionality
     ------------------------------------------------------------------------------*/
     @Test.
     method public void testRead():
         /* Set up test filter */
         testFilter:TopRecs = 5.
         
-        /* Test read method */
-        customersEntity:Read(testFilter, output dataset-handle hDataSet).
+        /* Test Read method */
+        ordersEntity:Read(testFilter, output dataset-handle hDataSet).
         
         /* Verify dataset handle is valid */
         Assert:IsTrue(valid-handle(hDataSet),
-            "Dataset handle should be valid after read operation").
+            "Dataset handle should be valid after Read operation").
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Test read method with filtering
+     Purpose: Test Read method with filtering
      Notes: Verifies filter parameter handling
     ------------------------------------------------------------------------------*/
     @Test.
     method public void testReadWithFilter():
         /* Set up test filter with where clause */
-        testFilter:Where = "CustNum > 1000".
+        testFilter:Where = "OrderNum > 10000".
         testFilter:TopRecs = 5.
         
-        /* Test read method with filter */
-        customersEntity:Read(testFilter, output dataset-handle hDataSet).
+        /* Test Read method with filter */
+        ordersEntity:Read(testFilter, output dataset-handle hDataSet).
         
         /* Verify dataset handle */
         Assert:IsTrue(valid-handle(hDataSet),
@@ -108,17 +107,17 @@ class tests.CustomersTest:
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Test read method with sorting
+     Purpose: Test Read method with sorting
      Notes: Verifies sort parameter handling
     ------------------------------------------------------------------------------*/
     @Test.
     method public void testReadWithSorting():
         /* Set up test filter with sorting */
-        testFilter:SortBy = "Name".
+        testFilter:SortBy = "OrderDate DESC".
         testFilter:TopRecs = 5.
         
-        /* Test read method with sorting */
-        customersEntity:Read(testFilter, output dataset-handle hDataSet).
+        /* Test Read method with sorting */
+        ordersEntity:Read(testFilter, output dataset-handle hDataSet).
         
         /* Verify dataset handle */
         Assert:IsTrue(valid-handle(hDataSet),
@@ -126,18 +125,18 @@ class tests.CustomersTest:
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Test create method
-     Notes: Verifies customer creation functionality
+     Purpose: Test Create method
+     Notes: Verifies order creation functionality
     ------------------------------------------------------------------------------*/
     @Test.
     method public void testCreate():
-        /* Test create method */
+        /* Test Create method */
         do on error undo, throw:
-            customersEntity:Create(testJsonObject, output dataset-handle hDataSet).
+            ordersEntity:Create(testJsonObject, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),
-                "Dataset handle should be valid after create operation").
+                "Dataset handle should be valid after Create operation").
                 
             catch e as Progress.Lang.Error:
                 /* If database is read-only, this is expected */
@@ -149,21 +148,21 @@ class tests.CustomersTest:
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Test update method
-     Notes: Verifies customer update functionality
+     Purpose: Test Update method
+     Notes: Verifies order update functionality
     ------------------------------------------------------------------------------*/
     @Test.
     method public void testUpdate():
         /* Set up test filter */
-        testFilter:id1 = "1000". /* Assuming customer 1000 exists */
+        testFilter:id1 = "10000". /* Assuming order 10000 exists */
         
-        /* Test update method */
+        /* Test Update method */
         do on error undo, throw:
-            customersEntity:Update(testFilter, testJsonObject, output dataset-handle hDataSet).
+            ordersEntity:Update(testFilter, testJsonObject, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),
-                "Dataset handle should be valid after update operation").
+                "Dataset handle should be valid after Update operation").
                 
             catch e as Progress.Lang.Error:
                 /* If database is read-only, this is expected */
@@ -175,21 +174,21 @@ class tests.CustomersTest:
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Test delete method
-     Notes: Verifies customer deletion functionality
+     Purpose: Test Delete method
+     Notes: Verifies order deletion functionality
     ------------------------------------------------------------------------------*/
     @Test.
     method public void testDelete():
         /* Set up test filter */
-        testFilter:id1 = "9999". /* Use a test record ID that's safe to delete */
+        testFilter:id1 = "99999". /* Use a test record ID that's safe to delete */
         
-        /* Test delete method */
+        /* Test Delete method */
         do on error undo, throw:
-            customersEntity:Delete(testFilter, output dataset-handle hDataSet).
+            ordersEntity:Delete(testFilter, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),
-                "Dataset handle should be valid after delete operation").
+                "Dataset handle should be valid after Delete operation").
                 
             catch e as Progress.Lang.Error:
                 /* If database is read-only, this is expected */
@@ -201,38 +200,38 @@ class tests.CustomersTest:
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Test getCustomers method
-     Notes: Tests the private method via reflection
+     Purpose: Test GetOrders method
+     Notes: Tests the private method via the Read method
     ------------------------------------------------------------------------------*/
     @Test.
-    method public void testGetCustomers():
+    method public void testGetOrders():
         /* Set up test filter */
         testFilter:TopRecs = 5.
         
-        /* Test read method which calls getCustomers internally */
-        customersEntity:Read(testFilter, output dataset-handle hDataSet).
+        /* Test Read method which calls GetOrders internally */
+        ordersEntity:Read(testFilter, output dataset-handle hDataSet).
         
         /* Verify dataset handle is valid */
         Assert:IsTrue(valid-handle(hDataSet),
-            "Dataset handle should be valid after getCustomers operation").
+            "Dataset handle should be valid after GetOrders operation").
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Test updateCustomer method
-     Notes: Tests the updateCustomer method
+     Purpose: Test Updateorders method
+     Notes: Tests the Updateorders method
     ------------------------------------------------------------------------------*/
     @Test.
-    method public void testUpdateCustomer():
+    method public void testUpdateorders():
         /* Set up test filter */
-        testFilter:id1 = "1000". /* Assuming customer 1000 exists */
+        testFilter:id1 = "10000". /* Assuming order 10000 exists */
         
-        /* Test update method which calls updateCustomer internally */
+        /* Test Update method which calls Updateorders internally */
         do on error undo, throw:
-            customersEntity:Update(testFilter, testJsonObject, output dataset-handle hDataSet).
+            ordersEntity:Update(testFilter, testJsonObject, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),
-                "Dataset handle should be valid after updateCustomer operation").
+                "Dataset handle should be valid after Updateorders operation").
                 
             catch e as Progress.Lang.Error:
                 /* If database is read-only, this is expected */
@@ -244,21 +243,21 @@ class tests.CustomersTest:
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Test deleteCustomer method
-     Notes: Tests the deleteCustomer method
+     Purpose: Test Deleteorder method
+     Notes: Tests the Deleteorder method
     ------------------------------------------------------------------------------*/
     @Test.
-    method public void testDeleteCustomer():
+    method public void testDeleteorder():
         /* Set up test filter */
-        testFilter:id1 = "9999". /* Use a test record ID that's safe to delete */
+        testFilter:id1 = "99999". /* Use a test record ID that's safe to delete */
         
-        /* Test delete method which calls deleteCustomer internally */
+        /* Test Delete method which calls Deleteorder internally */
         do on error undo, throw:
-            customersEntity:Delete(testFilter, output dataset-handle hDataSet).
+            ordersEntity:Delete(testFilter, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),
-                "Dataset handle should be valid after deleteCustomer operation").
+                "Dataset handle should be valid after Deleteorder operation").
                 
             catch e as Progress.Lang.Error:
                 /* If database is read-only, this is expected */

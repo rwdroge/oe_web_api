@@ -302,6 +302,14 @@ class services.BaseService abstract implements interfaces.IService:
     end method.
     
     /*------------------------------------------------------------------------------
+     Purpose: Get the name of the entity managed by this service
+     Returns: character containing the entity name
+    ------------------------------------------------------------------------------*/
+    method public character GetEntityName():
+        return this-object:EntityName.
+    end method.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Clean up resources
     ------------------------------------------------------------------------------*/
     destructor public BaseService():

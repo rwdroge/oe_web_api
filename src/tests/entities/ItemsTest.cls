@@ -17,7 +17,7 @@ using Progress.Json.ObjectModel.*.
 
 block-level on error undo, throw.
 
-class tests.ItemsTest:
+class tests.entities.ItemsTest:
 
     /* Test fixtures */
     var private items itemsEntity.

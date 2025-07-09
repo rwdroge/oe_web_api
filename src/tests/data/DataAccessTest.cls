@@ -15,7 +15,7 @@ using generics.FilterParams.
 
 block-level on error undo, throw.
 
-class tests.DataAccessTest:
+class tests.data.DataAccessTest:
 
     /* Test fixtures */
     var private DataAccess dataAccess.

@@ -25,13 +25,35 @@ DEFINE VARIABLE outputFile AS CHARACTER NO-UNDO.
 
 /* Create test suite and add all test classes */
 testSuite = NEW TestSuite("OE Web API Tests").
-testSuite:AddTest(NEW tests.CustomersTest()).
-testSuite:AddTest(NEW tests.DataAccessTest()).
-testSuite:AddTest(NEW tests.EmailValidatorTest()).
-testSuite:AddTest(NEW tests.ItemsTest()).
-testSuite:AddTest(NEW tests.OrderValidationTest()).
-testSuite:AddTest(NEW tests.OrdersTest()).
-testSuite:AddTest(NEW tests.SuppliersTest()).
+
+/* Entity tests */
+testSuite:AddTest(NEW tests.entities.CustomersTest()).
+testSuite:AddTest(NEW tests.entities.ItemsTest()).
+testSuite:AddTest(NEW tests.entities.OrdersTest()).
+testSuite:AddTest(NEW tests.entities.SuppliersTest()).
+
+/* Core tests */
+testSuite:AddTest(NEW tests.core.ApplicationBootstrapTest()).
+testSuite:AddTest(NEW tests.core.CacheManagerTest()).
+testSuite:AddTest(NEW tests.core.DependencyContainerTest()).
+testSuite:AddTest(NEW tests.core.LoggerTest()).
+testSuite:AddTest(NEW tests.core.ValidatorTest()).
+
+/* Data tests */
+testSuite:AddTest(NEW tests.data.DataAccessTest()).
+
+/* Service tests */
+testSuite:AddTest(NEW tests.services.BaseServiceTest()).
+testSuite:AddTest(NEW tests.services.MetadataServiceTest()).
+
+/* Validation tests */
+testSuite:AddTest(NEW tests.validations.EmailValidatorTest()).
+testSuite:AddTest(NEW tests.validations.OrderValidationTest()).
+
+/* Web handler tests */
+testSuite:AddTest(NEW tests.webhandlers.ServiceFactoryTest()).
+testSuite:AddTest(NEW tests.webhandlers.XmlHandlerTest()).
+testSuite:AddTest(NEW tests.GenericServiceTest()).
 
 /* Create test runner */
 testRunner = NEW TestRunner().
