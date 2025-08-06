@@ -1,10 +1,11 @@
 openapi: 3.0.3
 info:
-  title: GenericServiceRefactored API
+  title: Generic API
   description: |
-    API documentation for the GenericServiceRefactored API, providing CRUD operations for entities.
-    This API follows RESTful principles and uses a Service Layer pattern for business logic.
-  version: 1.0.0
+    API documentation for the Generic API, providing CRUD operations for all entities.
+    This API follows RESTful principles and uses a unified Service Layer pattern for business logic.
+    All entities now use the GenericService implementation for standardized operations.
+  version: 1.1.0
   contact:
     name: API Support
     email: support@example.com
@@ -155,11 +156,11 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  # Entity-specific endpoints
+  # Entity-specific endpoints - all using GenericService
   /data/items/category/{category}:
     get:
       summary: Get items by category
-      description: Retrieves all items belonging to a specific category
+      description: Retrieves all items belonging to a specific category using the GenericService
       parameters:
         - name: category
           in: path
@@ -189,11 +190,45 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+          
+  /data/customers/country/{country}:
+    get:
+      summary: Get customers by country
+      description: Retrieves all customers from a specific country using the GenericService
+      parameters:
+        - name: country
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Country name
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  country:
+                    type: string
+                    example: USA
+                  count:
+                    type: integer
+                    example: 10
+                  customers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /data/items/{id}/discount:
     post:
       summary: Apply discount to item
-      description: Applies a percentage discount to an item's price
+      description: Applies a percentage discount to an item's price using the GenericService
       parameters:
         - name: id
           in: path
@@ -230,6 +265,46 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+          
+  /data/customers/{id}/creditlimit:
+    post:
+      summary: Update customer credit limit
+      description: Updates a customer's credit limit using the GenericService
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Customer ID
+      requestBody:
+        description: Credit limit information
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                creditLimit:
+                  type: number
+                  format: decimal
+                  minimum: 0
+                  example: 5000.00
+              required:
+                - creditLimit
+      responses:
+        '200':
+          description: Credit limit updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
 components:
   parameters:
@@ -248,8 +323,8 @@ components:
       required: true
       schema:
         type: string
-        enum: [items, customers, orders, suppliers]
-      description: Name of the entity
+        enum: [items, customers, orders, suppliers, metadata]
+      description: Name of the entity (all entities now use the GenericService)
     
     Id:
       name: id
@@ -288,19 +363,20 @@ components:
       description: Field to sort by (prefix with - for descending order)
   
   schemas:
-    # Generic schemas
+    # Generic schemas - used by the GenericService for all entities
     EntityRequest:
       type: object
-      description: Generic entity request structure
+      description: Generic entity request structure used by all entities through the GenericService
       additionalProperties: true
     
     EntityResponse:
       type: object
-      description: Generic entity response structure
+      description: Generic entity response structure used by all entities through the GenericService
       additionalProperties: true
     
     EntityCollection:
       type: object
+      description: Collection of entities returned by the GenericService
       properties:
         count:
           type: integer
@@ -314,6 +390,7 @@ components:
     
     EntityMetadata:
       type: object
+      description: Metadata for entities provided by the GenericService
       properties:
         name:
           type: string

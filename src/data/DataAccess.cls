@@ -68,7 +68,6 @@ class data.DataAccess:
         var character cWhere, cQuery, cOrderby, cId.
         cOrderBy = "".
         cId = ?.
-        message "first lets see if we get to data access".
         
         /* Extract filter parameters with error handling */
         assign
@@ -290,6 +289,9 @@ class data.DataAccess:
             
             
         end. /* DO iEntry = 1 TO NUM-ENTRIES */
+        catch e as Progress.Lang.Error:
+            undo, throw e.
+        end.
         
         finally:
             /* Clean up all handles */

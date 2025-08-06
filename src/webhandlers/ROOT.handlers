@@ -2,9 +2,15 @@
   "version": "2.0",
   "serviceName": "",
   "handlers": [
-    { "uri": "/api/v2/{apitype}/{entityname}/{id}/{entityname2}/{id2}", "class": "GenericService", "enabled": true },
-    { "uri": "/api/v2/{apitype}/{entityname}/{id}/{entityname2}", "class": "GenericService", "enabled": true },
-    { "uri": "/api/v2/{apitype}/{entityname}/{id}", "class": "GenericService", "enabled": true },
-    { "uri": "/api/v2/{apitype}/{entityname}", "class": "GenericService", "enabled": true }
+    { "uri": "/api/v1/{apitype}/{entityname}/{id}/{entityname2}/{id2}", "class": "GenericService", "enabled": true },
+    { "uri": "/api/v1/{apitype}/{entityname}/{id}/{entityname2}", "class": "GenericService", "enabled": true },
+    { "uri": "/api/v1/{apitype}/{entityname}/{id}", "class": "GenericService", "enabled": true },
+    { "uri": "/api/v1/{apitype}/{entityname}", "class": "GenericService", "enabled": true },
+    { "uri": "/api/mcp/v1/{resource}", "class": "mcp.MCPHandler", "enabled": true },
+    { "uri": "/api/mcp/v1", "class": "mcp.MCPHandler", "enabled": true },
+    { "uri": "/api/windsurf/mcp/v1/{resource}", "class": "mcp.WindsurfMCPHandler", "enabled": false },
+    { "uri": "/api/windsurf/mcp/v1", "class": "mcp.WindsurfMCPHandler", "enabled": false },
+    { "uri": "/api/windsurf/mcp/v1/tools/{tool}", "class": "mcp.WindsurfMCPToolHandler", "enabled": true },
+    { "uri": "/api/windsurf/mcp/v1/tools", "class": "mcp.WindsurfMCPToolHandler", "enabled": true }
   ]
 }

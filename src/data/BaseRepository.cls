@@ -88,9 +88,12 @@ class data.BaseRepository abstract implements interfaces.IRepository:
             filter, input-output dataset-handle dshandle by-reference).
             
         this-object:DatasetHandle = dshandle.
+        
         /* Return dataset handle */
         return this-object:DatasetHandle:handle.
-        
+        catch e as Progress.Lang.Error:
+            undo, throw e.
+        end.
         finally:
             delete object filter no-error.
         end finally.
@@ -122,6 +125,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
             input-output dataset-handle dshandle by-reference).
         
         /* Return the new dataset handle - caller is responsible for cleanup */
+        
         return dshandle.
         
         catch e as Progress.Lang.Error:
@@ -259,6 +263,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
     method public longchar GetMetadata():
         var longchar lcModel = "".
         var handle hBuffer = ?.
+        message " what the fuck".
         
         /* Get the first buffer from the dataset */
         hBuffer = this-object:DatasetHandle:get-buffer-handle(1).

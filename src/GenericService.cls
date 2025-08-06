@@ -114,6 +114,7 @@ class GenericService inherits WebHandler:
                 
         /* Set response */
         response:ContentType = "application/json".
+        response:ContentLength = length(joResponse:GetJsonText()).
         writer:write(body).
         writer:flush().
         writer:close().
