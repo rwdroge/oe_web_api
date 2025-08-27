@@ -10,6 +10,7 @@
 
 using Progress.Lang.*.
 using OpenEdge.Core.Assert.
+using OpenEdge.Core.*.
 using core.CacheManager.
 
 block-level on error undo, throw.
@@ -174,10 +175,10 @@ class tests.core.CacheManagerTest:
         objValue = new Progress.Lang.Object().
         
         /* Store values in cache */
-        cacheManager:Set("stringKey", stringValue, 3600).
-        cacheManager:Set("integerKey", intValue, 3600).
-        cacheManager:Set("logicalKey", logicalValue, 3600).
-        cacheManager:Set("dateKey", dateValue, 3600).
+        cacheManager:Set("stringKey", new OpenEdge.Core.String(stringValue), 3600).
+        cacheManager:Set("integerKey", new OpenEdge.Core.Integer(intValue), 3600).
+        cacheManager:Set("logicalKey", new OpenEdge.Core.LogicalValue(logicalValue), 3600).
+        cacheManager:Set("dateKey", new OpenEdge.Core.DateHolder(dateValue), 3600).
         cacheManager:Set("objectKey", objValue, 3600).
         
         /* Verify they're in the cache */
@@ -188,11 +189,21 @@ class tests.core.CacheManagerTest:
         Assert:IsTrue(cacheManager:Contains("objectKey"), "Object key should be in cache after Set").
         
         /* Get and verify values */
-        Assert:AreEqual(cacheManager:Get("stringKey"), stringValue, "String value should be retrieved correctly").
-        Assert:AreEqual(cacheManager:Get("integerKey"), intValue, "Integer value should be retrieved correctly").
-        Assert:AreEqual(cacheManager:Get("logicalKey"), logicalValue, "Logical value should be retrieved correctly").
-        Assert:AreEqual(cacheManager:Get("dateKey"), dateValue, "Date value should be retrieved correctly").
-        Assert:AreEqual(cacheManager:Get("objectKey"), objValue, "Object value should be retrieved correctly").
+        define variable retrievedString as OpenEdge.Core.String no-undo.
+        define variable retrievedInteger as OpenEdge.Core.Integer no-undo.
+        define variable retrievedLogical as OpenEdge.Core.LogicalValue no-undo.
+        define variable retrievedDate as OpenEdge.Core.DateHolder no-undo.
+        
+        retrievedString = cast(cacheManager:Get("stringKey"), OpenEdge.Core.String).
+        retrievedInteger = cast(cacheManager:Get("integerKey"), OpenEdge.Core.Integer).
+        retrievedLogical = cast(cacheManager:Get("logicalKey"), OpenEdge.Core.LogicalValue).
+        retrievedDate = cast(cacheManager:Get("dateKey"), OpenEdge.Core.DateHolder).
+        
+        Assert:Equals(retrievedString:Value, stringValue).
+        Assert:Equals(retrievedInteger:Value, intValue).
+        Assert:Equals(retrievedLogical:Value, logicalValue).
+        Assert:Equals(retrievedDate:Value, dateValue).
+        Assert:Equals(cacheManager:Get("objectKey"), objValue).
     end method.
     
     /*------------------------------------------------------------------------------

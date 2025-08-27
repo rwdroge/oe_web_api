@@ -134,8 +134,10 @@ class services.MetadataService:
         output plcModel as longchar):
         
         var integer i = 0.
-        var JsonObject joModel = new JsonObject().
+        VAR Progress.Json.ObjectModel.JsonObject joModel.
         var character cDataType = "".
+        
+        joModel = new Progress.Json.ObjectModel.JsonObject().
         
         /* Build JSON model from temp-table fields */
         do i = 1 to phTempTable:num-fields:
@@ -159,6 +161,99 @@ class services.MetadataService:
         finally:
             delete object joModel no-error.
         end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Get metadata for all available entities
+     Returns: JsonArray containing metadata for all entity classes
+     Notes: Returns information about customers, items, orders, suppliers, and customersorders entities
+    ------------------------------------------------------------------------------*/
+    method public Progress.Json.ObjectModel.JsonArray GetAllEntitiesMetadata():
+        
+        VAR Progress.Json.ObjectModel.JsonArray jaEntities.
+        VAR Progress.Json.ObjectModel.JsonObject joEntity.
+        VAR handle hTempTable.
+        VAR longchar lcModel.
+        
+        jaEntities = new Progress.Json.ObjectModel.JsonArray().
+        
+        /* Create metadata for customers entity */
+        create temp-table hTempTable.
+        hTempTable:add-new-field("CustNum", "integer").
+        hTempTable:add-new-field("Name", "character").
+        hTempTable:add-new-field("Country", "character").
+        hTempTable:add-new-field("CreditLimit", "decimal").
+        hTempTable:temp-table-prepare("ttCustomers").
+        
+        this-object:createEntityModel(hTempTable, output lcModel).
+        joEntity = new Progress.Json.ObjectModel.JsonObject().
+        joEntity:add("name", "customers").
+        joEntity:add("fields", Progress.Json.ObjectModel.JsonObject:parse(lcModel)).
+        jaEntities:add(joEntity).
+        delete object hTempTable no-error.
+        
+        /* Create metadata for items entity */
+        create temp-table hTempTable.
+        hTempTable:add-new-field("ItemNum", "integer").
+        hTempTable:add-new-field("ItemName", "character").
+        hTempTable:add-new-field("Price", "decimal").
+        hTempTable:add-new-field("OnHand", "integer").
+        hTempTable:temp-table-prepare("ttItems").
+        
+        this-object:createEntityModel(hTempTable, output lcModel).
+        joEntity = new Progress.Json.ObjectModel.JsonObject().
+        joEntity:add("name", "items").
+        joEntity:add("fields", Progress.Json.ObjectModel.JsonObject:parse(lcModel)).
+        jaEntities:add(joEntity).
+        delete object hTempTable no-error.
+        
+        /* Create metadata for orders entity */
+        create temp-table hTempTable.
+        hTempTable:add-new-field("OrderNum", "integer").
+        hTempTable:add-new-field("CustNum", "integer").
+        hTempTable:add-new-field("OrderDate", "date").
+        hTempTable:add-new-field("ShipDate", "date").
+        hTempTable:temp-table-prepare("ttOrders").
+        
+        this-object:createEntityModel(hTempTable, output lcModel).
+        joEntity = new Progress.Json.ObjectModel.JsonObject().
+        joEntity:add("name", "orders").
+        joEntity:add("fields", Progress.Json.ObjectModel.JsonObject:parse(lcModel)).
+        jaEntities:add(joEntity).
+        delete object hTempTable no-error.
+        
+        /* Create metadata for suppliers entity */
+        create temp-table hTempTable.
+        hTempTable:add-new-field("SupplierNum", "integer").
+        hTempTable:add-new-field("SupplierName", "character").
+        hTempTable:add-new-field("Country", "character").
+        hTempTable:add-new-field("ContactName", "character").
+        hTempTable:temp-table-prepare("ttSuppliers").
+        
+        this-object:createEntityModel(hTempTable, output lcModel).
+        joEntity = new Progress.Json.ObjectModel.JsonObject().
+        joEntity:add("name", "suppliers").
+        joEntity:add("fields", Progress.Json.ObjectModel.JsonObject:parse(lcModel)).
+        jaEntities:add(joEntity).
+        delete object hTempTable no-error.
+        
+        /* Create metadata for customersorders joined entity */
+        create temp-table hTempTable.
+        hTempTable:add-new-field("CustNum", "integer").
+        hTempTable:add-new-field("Name", "character").
+        hTempTable:add-new-field("OrderNum", "integer").
+        hTempTable:add-new-field("OrderDate", "date").
+        hTempTable:temp-table-prepare("ttCustomersOrders").
+        
+        this-object:createEntityModel(hTempTable, output lcModel).
+        joEntity = new Progress.Json.ObjectModel.JsonObject().
+        joEntity:add("name", "customersorders").
+        joEntity:add("fields", Progress.Json.ObjectModel.JsonObject:parse(lcModel)).
+        jaEntities:add(joEntity).
+        delete object hTempTable no-error.
+        
+        return jaEntities.
+        
     end method.
     
 end class.

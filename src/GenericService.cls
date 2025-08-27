@@ -15,6 +15,7 @@
 
 using Progress.Json.ObjectModel.*.
 using generics.FilterParams.
+using generics.ErrorResponseParams.
 using Progress.Lang.*.
 using OpenEdge.Net.*.
 using OpenEdge.Net.HTTP.*.
@@ -379,33 +380,70 @@ class GenericService inherits WebHandler:
     /*------------------------------------------------------------------------------
      Purpose: Creates a standardized error response
      Parameters:
-       input piStatusCode as integer   - HTTP status code
-       input pcError as character      - Error message
-       input pcEntity as character     - Entity name
-       input pcDetails as character    - Optional error details
-       input pcId as character         - Optional entity ID
+       input poErrorParams as ErrorResponseParams - Error response parameters
      Returns: JsonObject - Error response object
     ------------------------------------------------------------------------------*/
-    method private JsonObject CreateErrorResponse(
-        input piStatusCode as integer,
-        input pcError as character,
-        input pcEntity as character,
-        input pcDetails as character,
-        input pcId as character):
+    method private JsonObject CreateErrorResponse(input poErrorParams as ErrorResponseParams):
         
         var JsonObject joError = new JsonObject().
-        joError:Add("error", pcError).
-        joError:Add("entity", pcEntity).
+        joError:Add("error", poErrorParams:ErrorMessage).
         
-        if pcDetails > "" then
-            joError:Add("details", pcDetails).
+        if poErrorParams:HasEntityContext() then
+            joError:Add("entity", poErrorParams:EntityName).
             
-        if pcId > "" then
-            joError:Add("id", pcId).
+        if poErrorParams:HasDetails() then
+            joError:Add("details", poErrorParams:Details).
+            
+        if poErrorParams:HasId() then
+            joError:Add("id", poErrorParams:Id).
             
         return joError.
     end method.
     
+    /*------------------------------------------------------------------------------
+     Purpose: Public wrapper for HandleGet - for testing purposes only
+     Parameters:
+       input poRequest as OpenEdge.Web.IWebRequest - The incoming web request
+     Returns: integer - HTTP status code
+     Notes: This method exists solely to enable unit testing of HandleGet logic
+    ------------------------------------------------------------------------------*/
+    method public integer TestHandleGet(input poRequest as OpenEdge.Web.IWebRequest):
+        return this-object:HandleGet(poRequest).
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Public wrapper for HandlePost - for testing purposes only
+     Parameters:
+       input poRequest as OpenEdge.Web.IWebRequest - The incoming web request
+     Returns: integer - HTTP status code
+     Notes: This method exists solely to enable unit testing of HandlePost logic
+    ------------------------------------------------------------------------------*/
+    method public integer TestHandlePost(input poRequest as OpenEdge.Web.IWebRequest):
+        return this-object:HandlePost(poRequest).
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Public wrapper for HandlePut - for testing purposes only
+     Parameters:
+       input poRequest as OpenEdge.Web.IWebRequest - The incoming web request
+     Returns: integer - HTTP status code
+     Notes: This method exists solely to enable unit testing of HandlePut logic
+    ------------------------------------------------------------------------------*/
+    method public integer TestHandlePut(input poRequest as OpenEdge.Web.IWebRequest):
+        return this-object:HandlePut(poRequest).
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Public wrapper for HandleDelete - for testing purposes only
+     Parameters:
+       input poRequest as OpenEdge.Web.IWebRequest - The incoming web request
+     Returns: integer - HTTP status code
+     Notes: This method exists solely to enable unit testing of HandleDelete logic
+    ------------------------------------------------------------------------------*/
+    method public integer TestHandleDelete(input poRequest as OpenEdge.Web.IWebRequest):
+        return this-object:HandleDelete(poRequest).
+    end method.
+
     destructor public GenericService():
         /* No resources to clean up */
     end destructor.
@@ -418,11 +456,16 @@ class GenericService inherits WebHandler:
      Notes: Required implementation of abstract method from WebHandler
     ------------------------------------------------------------------------------*/
     method override protected integer HandleNotAllowedMethod(input poRequest as OpenEdge.Web.IWebRequest):
-        var JsonObject joError = createErrorResponse(405, "Method not allowed", poRequest:GetPathParameter("entityname"), "The HTTP method used is not supported for this resource", "").
-        
-        /* Create and set response with error details */
+        /* Declare all variables at the beginning of the method */
+        var ErrorResponseParams errorParams = new ErrorResponseParams(405, "Method not allowed").
+        var JsonObject joError.
         var WebResponse response = new WebResponse().
         var WebResponseWriter writer = new WebResponseWriter(response).
+        
+        /* Set error parameters */
+        errorParams:SetEntityContext(poRequest:GetPathParameter("entityname"), "").
+        errorParams:Details = "The HTTP method used is not supported for this resource".
+        joError = createErrorResponse(errorParams).
         
         response:StatusCode = 405. /* Method Not Allowed */
         response:ContentType = "application/json".

@@ -44,7 +44,22 @@ services:
     depends_on:
       - sports2020-db
 
-  # jaeger:
+  #mcp_server:
+    #build: .
+   # image: ${MCP_IMAGE}
+   # ports:
+   #   - "8000:8000"
+   # volumes:
+   #   - ./data:/app/data
+   ## environment:
+   #   - PORT=8000
+   #   - API_BASE_URL=http://localhost:8810/web
+   #   - API_PATH=/api/v1
+   # restart: unless-stopped
+   # depends_on: 
+   #   - sports2020-pas
+
+# jaeger:
   #  image: jaegertracing/all-in-one:1.35
   #  container_name: jaeger
   #  environment:

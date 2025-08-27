@@ -26,8 +26,8 @@ CLASS tests.services.BaseServiceTest INHERITS BaseService:
         END CONSTRUCTOR.
 
     
-    DEFINE PRIVATE VARIABLE mockRepository AS tests.services.MockRepository NO-UNDO.
-    DEFINE PRIVATE VARIABLE testService AS tests.services.BaseServiceTest NO-UNDO.
+    var private tests.services.MockRepository mockRepository.
+    var private tests.services.BaseServiceTest testService.
     
     /*------------------------------------------------------------------------------
      Purpose: Set up test environment before each test
@@ -46,7 +46,7 @@ CLASS tests.services.BaseServiceTest INHERITS BaseService:
     @Test.
     METHOD PUBLIC VOID TestGetById():
         /* Call GetById method */
-        DEFINE VARIABLE result AS Progress.Json.ObjectModel.JsonObject NO-UNDO.
+        var Progress.Json.ObjectModel.JsonObject result.
         result = testService:GetById("123").
         
         /* Verify result */
@@ -60,13 +60,16 @@ CLASS tests.services.BaseServiceTest INHERITS BaseService:
     ------------------------------------------------------------------------------*/
     @Test.
     METHOD PUBLIC VOID TestGetAll():
+        var generics.FilterParams filterParams.
+        var handle hQueryParams.
+        var Progress.Json.ObjectModel.JsonObject resultObj.
+        var Progress.Json.ObjectModel.JsonArray dataArray.
+        var Progress.Json.ObjectModel.JsonObject firstItem.
+        
         /* Create filter parameters */
-        DEFINE VARIABLE filterParams AS generics.FilterParams NO-UNDO.
-        define variable hQueryParams AS handle NO-UNDO.
         filterParams = NEW generics.FilterParams("items", "", "", "", "", output table-handle hQueryParams).
         
         /* Call GetByFilter method */
-        DEFINE VARIABLE resultObj AS Progress.Json.ObjectModel.JsonObject NO-UNDO.
         resultObj = testService:GetByFilter(filterParams).
         
         /* Verify result */
@@ -74,14 +77,13 @@ CLASS tests.services.BaseServiceTest INHERITS BaseService:
         
         /* Extract data array from result if it exists */
         IF resultObj:Has("data") THEN DO:
-            DEFINE VARIABLE dataArray AS Progress.Json.ObjectModel.JsonArray NO-UNDO.
+            
             dataArray = resultObj:GetJsonArray("data").
             
             Assert:NotNull(dataArray, "Result should contain a data array").
             Assert:IsTrue(dataArray:Length >= 1, "Data array should contain at least one item").
             
             IF dataArray:Length >= 1 THEN DO:
-                DEFINE VARIABLE firstItem AS Progress.Json.ObjectModel.JsonObject NO-UNDO.
                 firstItem = dataArray:GetJsonObject(1).
                 Assert:NotNull(firstItem, "First item should not be null").
                 IF firstItem:Has("id") THEN
@@ -96,13 +98,14 @@ CLASS tests.services.BaseServiceTest INHERITS BaseService:
     ------------------------------------------------------------------------------*/
     @Test.
     METHOD PUBLIC VOID TestCreate():
+        var Progress.Json.ObjectModel.JsonObject data.
+        var Progress.Json.ObjectModel.JsonObject result.
+        
         /* Create test data */
-        DEFINE VARIABLE data AS Progress.Json.ObjectModel.JsonObject NO-UNDO.
         data = NEW Progress.Json.ObjectModel.JsonObject().
         data:Add("name", "New Test Item").
         
         /* Call Create method */
-        DEFINE VARIABLE result AS Progress.Json.ObjectModel.JsonObject NO-UNDO.
         result = testService:Create(data).
         
         /* Verify result */
@@ -117,13 +120,14 @@ CLASS tests.services.BaseServiceTest INHERITS BaseService:
     ------------------------------------------------------------------------------*/
     @Test.
     METHOD PUBLIC VOID TestUpdate():
+        var Progress.Json.ObjectModel.JsonObject data.
+        var Progress.Json.ObjectModel.JsonObject result.
+        
         /* Create update data */
-        DEFINE VARIABLE data AS Progress.Json.ObjectModel.JsonObject NO-UNDO.
         data = NEW Progress.Json.ObjectModel.JsonObject().
         data:Add("name", "Updated Test Item").
         
         /* Call Update method */
-        DEFINE VARIABLE result AS Progress.Json.ObjectModel.JsonObject NO-UNDO.
         result = testService:Update("123", data).
         
         /* Verify result */
@@ -138,8 +142,9 @@ CLASS tests.services.BaseServiceTest INHERITS BaseService:
     ------------------------------------------------------------------------------*/
     @Test.
     METHOD PUBLIC VOID TestDelete():
+        var logical result.
+        
         /* Call Delete method */
-        DEFINE VARIABLE result AS LOGICAL NO-UNDO.
         result = testService:Delete("123").
         
         /* Verify result */
