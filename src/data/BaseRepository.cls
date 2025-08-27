@@ -11,6 +11,7 @@
 using Progress.Lang.*.
 using interfaces.IRepository.
 using generics.FilterParams.
+using generics.DataSourceAttachParams.
 using Progress.Json.ObjectModel.*.
 using data.DataAccess.
 using services.MetadataService.
@@ -72,20 +73,24 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         /* Create filter for primary key lookup */
         var generics.FilterParams filter.
         var handle dshandle.
+        VAR DataSourceAttachParams attachParams.
         create dataset dshandle.
         dshandle = this-object:DatasetHandle.
         empty temp-table ttQueryParams.
         filter = new generics.FilterParams(
             this-object:DatabaseTable, ?, ?, pcId, ?, output table ttQueryParams).
+        
             
         /* Use data access object to fetch data */
-        this-object:Dao:attachSource(
+        attachParams = NEW DataSourceAttachParams(
             this-object:TempTableName,
             this-object:PrimaryKeyField,
             this-object:DatabaseTable,
             this-object:PrimaryKeyField,
             pcId,
-            filter, input-output dataset-handle dshandle by-reference).
+            filter,
+            dshandle).
+        this-object:Dao:attachSource(attachParams).
             
         this-object:DatasetHandle = dshandle.
         
@@ -107,6 +112,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
     ------------------------------------------------------------------------------*/
     method public handle FindByFilter(input pFilter as generics.FilterParams):
         var handle dshandle = ?.
+        VAR DataSourceAttachParams attachParams.
         
         /* Create a new dataset handle for each request */
         create dataset dshandle.
@@ -115,14 +121,15 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         dshandle:create-like(this-object:DatasetHandle).
        
         /* Use data access object to fetch filtered data */
-        this-object:Dao:attachSource(
+        attachParams = NEW DataSourceAttachParams(
             this-object:TempTableName,
             this-object:PrimaryKeyField,
             this-object:DatabaseTable,
             this-object:PrimaryKeyField,
             pFilter:id1,
             pFilter,
-            input-output dataset-handle dshandle by-reference).
+            dshandle).
+        this-object:Dao:attachSource(attachParams).
         
         /* Return the new dataset handle - caller is responsible for cleanup */
         
@@ -147,17 +154,19 @@ class data.BaseRepository abstract implements interfaces.IRepository:
     ------------------------------------------------------------------------------*/
     method public handle Save(input poEntity as JsonObject):
         var handle dshandle.
+        VAR DataSourceAttachParams attachParams.
         create dataset dshandle.
         dshandle = this-object:DatasetHandle.
         /* Attach data source for the new entity */
-        this-object:Dao:attachSource(   this-object:TempTableName,
-                                        this-object:PrimaryKeyField,
-                                        this-object:DatabaseTable,
-                                        this-object:PrimaryKeyField,
-                                        "",
-                                        ?,
-                                        input-output dataset-handle dshandle by-reference
-                                    ).
+        attachParams = NEW DataSourceAttachParams(
+            this-object:TempTableName,
+            this-object:PrimaryKeyField,
+            this-object:DatabaseTable,
+            this-object:PrimaryKeyField,
+            "",
+            ?,
+            dshandle).
+        this-object:Dao:attachSource(attachParams).
             
         /* Convert JSON to dataset */
         dshandle:read-json('JsonObject', poEntity).
@@ -179,6 +188,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
     ------------------------------------------------------------------------------*/
     method public handle Update(input pcId as character, input poEntity as JsonObject):
         var handle dshandle.
+        VAR DataSourceAttachParams attachParams.
         
         /* Create filter for primary key lookup */
         var generics.FilterParams filter = new generics.FilterParams(
@@ -187,15 +197,15 @@ class data.BaseRepository abstract implements interfaces.IRepository:
             create dataset dshandle.
             dshandle = this-object:DatasetHandle.    
         /* Attach data source for the entity */
-        this-object:Dao:attachSource(   
+        attachParams = NEW DataSourceAttachParams(
             this-object:TempTableName,
             this-object:PrimaryKeyField,
             this-object:DatabaseTable,
             this-object:PrimaryKeyField,
             pcId,
             filter,
-            input-output dataset-handle dshandle by-reference
-        ).
+            dshandle).
+        this-object:Dao:attachSource(attachParams).
             
         /* Apply updates from JSON */
         dshandle:read-json('JsonObject', poEntity).
@@ -223,17 +233,19 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         var generics.FilterParams filter = new generics.FilterParams(
             this-object:DatabaseTable, ?, ?, pcId, ?, output table ttQueryParams).
             var handle dshandle.
+            VAR DataSourceAttachParams attachParams.
             create dataset dshandle.
             dshandle = this-object:DatasetHandle.    
         /* Attach data source for the entity */
-        this-object:Dao:attachSource(
+        attachParams = NEW DataSourceAttachParams(
             this-object:TempTableName,
             this-object:PrimaryKeyField,
             this-object:DatabaseTable,
             this-object:PrimaryKeyField,
             pcId,
             filter,
-            input-output dataset-handle dshandle by-reference).
+            dshandle).
+        this-object:Dao:attachSource(attachParams).
             
         /* Delete the entity */
         if dshandle:get-buffer-handle(1):available then do:

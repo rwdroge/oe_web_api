@@ -14,6 +14,7 @@
 
 using Progress.Lang.*.
 using generics.FilterParams.
+using generics.DataSourceAttachParams.
 
 block-level on error undo, throw.
 
@@ -33,26 +34,13 @@ class data.DataAccess:
     /*------------------------------------------------------------------------------
      Purpose: Attaches a data source to a dataset with filtering and sorting
      Parameters:
-       input pcBuffers      - Buffer names for the dataset
-       input pcFields       - Fields to include in the query
-       input pcSources      - Data source names
-       input pcSourceKeys   - Key fields for the data sources
-       input pcKeyValue     - Value for key field filtering
-       input pFilter        - Filter parameters (sorting, paging, where clause)
-       input-output phDataSet - Handle to the target dataset
+       input params - DataSourceAttachParams object containing all attachment parameters
      Notes:
        - Supports dynamic where clause construction
        - Implements skip/top for pagination
        - Handles sorting through order by clause
     ------------------------------------------------------------------------------*/
-    method public void attachSource(
-        input pcBuffers as character,
-        input pcFields as character,
-        input pcSources as character,
-        input pcSourceKeys as character,
-        input pcKeyValue as character,
-        input pFilter as FilterParams,
-        input-output dataset-handle phDataSet):
+    method public void attachSource(input params as DataSourceAttachParams):
         
         /* Handle variables */
         var handle hDataSource, hBuffer, hQuery, qh.
@@ -65,18 +53,25 @@ class data.DataAccess:
         var logical lUseReposition.
         
         /* Character variables */
-        var character cWhere, cQuery, cOrderby, cId.
+        var character cWhere, cQuery, cOrderby, cId, pcKeyValue.
         cOrderBy = "".
         cId = ?.
         
+        /* Validate input parameters */
+        if params = ? then
+            undo, throw new Progress.Lang.AppError("DataSourceAttachParams cannot be unknown value").
+        
+        if not params:IsValid() then
+            undo, throw new Progress.Lang.AppError("Invalid DataSourceAttachParams: required fields are missing").
+        
         /* Extract filter parameters with error handling */
         assign
-            iMaxRows = pFilter:TopRecs 
-            iSkipRows = pFilter:SkipRecs 
-            cWhere = pFilter:Where 
-            cId = pFilter:rowid 
-            pcKeyValue = pFilter:id1
-            cOrderBy = pFilter:SortBy no-error.
+            iMaxRows = (if params:Filter <> ? then params:Filter:TopRecs else ?)
+            iSkipRows = (if params:Filter <> ? then params:Filter:SkipRecs else ?)
+            cWhere = (if params:Filter <> ? then params:Filter:Where else "")
+            cId = (if params:Filter <> ? then params:Filter:rowid else ?)
+            pcKeyValue = (if params:Filter <> ? then params:Filter:id1 else params:KeyValue)
+            cOrderBy = (if params:Filter <> ? then params:Filter:SortBy else "") no-error.
         
             
         /* Construct WHERE clause safely */
@@ -102,7 +97,7 @@ class data.DataAccess:
         lUseReposition = iSkipRows > 0.
         
         /* Process each data source */
-        do iEntry = 1 to num-entries(pcSources):
+        do iEntry = 1 to num-entries(params:Sources):
             /* Create and attach data source */
             create data-source hDataSource no-error.
             if error-status:error then 
@@ -111,17 +106,17 @@ class data.DataAccess:
                     "Error creating data source: " + error-status:get-message(1)).
             end.
             
-            create buffer hBuffer for table entry(iEntry, pcSources) no-error.
+            create buffer hBuffer for table entry(iEntry, params:Sources) no-error.
             if error-status:error then 
             do:
                 delete object hDataSource no-error.
                 undo, throw new Progress.Lang.AppError(
-                    "Error creating buffer for " + entry(iEntry, pcSources) + ": " + 
+                    "Error creating buffer for " + entry(iEntry, params:Sources) + ": " + 
                     error-status:get-message(1)).
             end.
             
             /* Add buffer to data source */
-            hDataSource:add-source-buffer(hBuffer, entry(iEntry,pcSourceKeys)) no-error.
+            hDataSource:add-source-buffer(hBuffer, entry(iEntry,params:SourceKeys)) no-error.
             if error-status:error then 
             do:
                 delete object hDataSource no-error.
@@ -131,7 +126,7 @@ class data.DataAccess:
             end.
             
             /* Attach data source to dataset buffer */
-            phDataSet:get-buffer-handle(iEntry):attach-data-source(hDataSource) no-error.
+            params:dsDataSet:get-buffer-handle(iEntry):attach-data-source(hDataSource) no-error.
             if error-status:error then 
             do:
                 delete object hDataSource no-error.
@@ -141,7 +136,7 @@ class data.DataAccess:
             end.
             
             /* Apply filtering if provided */
-            if pFilter <> ? then
+            if params:Filter <> ? then
             do:
                 if (iEntry = 1 and pcKeyValue = "") then
                 do:
@@ -154,7 +149,7 @@ class data.DataAccess:
                                 "Error creating query: " + error-status:get-message(1)).
                                 
                         qh:set-buffers(hBuffer).
-                        qh:query-prepare("preselect each " + entry(1, pcSources) + cWhere) no-error.
+                        qh:query-prepare("preselect each " + entry(1, params:Sources) + cWhere) no-error.
                         if error-status:error then
                             undo, throw new Progress.Lang.AppError(
                                 "Error preparing query: " + error-status:get-message(1)).
@@ -165,11 +160,11 @@ class data.DataAccess:
                                 "Error opening query: " + error-status:get-message(1)).
                                 
                         iNumRecs = qh:num-results.
-                        phDataSet:get-buffer-handle(1):batch-size = iMaxRows.
+                        params:dsDataSet:get-buffer-handle(1):batch-size = iMaxRows.
                     end.
                     else do:
                         /* Set batch size based on ID presence */
-                        phDataSet:get-buffer-handle(iEntry):batch-size = 
+                        params:dsDataSet:get-buffer-handle(iEntry):batch-size = 
                             (if cId > "" then 1 else 0).
                     end.
                     
@@ -231,25 +226,25 @@ class data.DataAccess:
                             if hBuffer:available then
                             do:
                                 /* Create and copy buffer */
-                                phDataSet:get-buffer-handle(1):buffer-create no-error.
+                                params:dsDataSet:get-buffer-handle(1):buffer-create no-error.
                                 if error-status:error then
                                     undo, throw new Progress.Lang.AppError(
                                         "Error creating buffer: " + error-status:get-message(1)).
                                         
-                                phDataSet:get-buffer-handle(1):buffer-copy(hBuffer) no-error.
+                                params:dsDataSet:get-buffer-handle(1):buffer-copy(hBuffer) no-error.
                                 if error-status:error then
                                     undo, throw new Progress.Lang.AppError(
                                         "Error copying buffer: " + error-status:get-message(1)).
                                 
                                 /* Set id and sequence fields */
-                                phDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = 
+                                params:dsDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = 
                                     string(hBuffer:rowid) no-error.
                                 if error-status:error then
                                     undo, throw new Progress.Lang.AppError(
                                         "Error setting id field: " + error-status:get-message(1)).
                                 
                                 iSeq = iSeq + 1.
-                                phDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = 
+                                params:dsDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = 
                                     string(iSeq) no-error.
                                 if error-status:error then
                                     undo, throw new Progress.Lang.AppError(
@@ -263,25 +258,25 @@ class data.DataAccess:
                     do:
                         if cId > "" then hDataSource:restart-rowid(1)
                             = to-rowid ((cId)).
-                        phDataSet:get-buffer-handle(iEntry):set-callback ("after-row-fill", "addIdField").
-                        phDataSet:fill().
+                        params:dsDataSet:get-buffer-handle(iEntry):set-callback ("after-row-fill", "addIdField").
+                        params:dsDataSet:fill().
                         
                     end.
                 end. /* do if iEntry = 1 */
                 else do:
                     create query hQuery.
                     hQuery:add-buffer(hBuffer).
-                    hQuery:query-prepare("for each " + entry(1, pcSources) +
-                        " where " + entry(1, pcSourceKeys) + " = " + pcKeyValue).
+                    hQuery:query-prepare("for each " + entry(1, params:Sources) +
+                        " where " + entry(1, params:SourceKeys) + " = " + pcKeyValue).
                     hDataSource:query = hQuery.
                     hQuery:query-open.
                     hQuery:get-next() no-error.
                     if hBuffer:available then do:
-                        phDataSet:get-buffer-handle(1):buffer-create().
-                        phDataSet:get-buffer-handle(1):buffer-copy(hBuffer).
-                        phDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = string(hBuffer:rowid).
+                        params:dsDataSet:get-buffer-handle(1):buffer-create().
+                        params:dsDataSet:get-buffer-handle(1):buffer-copy(hBuffer).
+                        params:dsDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = string(hBuffer:rowid).
                         iSeq = iSeq + 1.
-                        phDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
+                        params:dsDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
                     end.
                     delete object hQuery.
                 end. 

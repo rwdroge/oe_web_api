@@ -12,6 +12,7 @@ using Progress.Lang.*.
 using OpenEdge.Core.Assert.
 using data.DataAccess.
 using generics.FilterParams.
+using generics.DataSourceAttachParams.
 
 block-level on error undo, throw.
 
@@ -69,6 +70,7 @@ class tests.data.DataAccessTest:
     method public void testBasicAttachSource():
         /* Test variables */
         var FilterParams filter.
+        var DataSourceAttachParams attachParams.
         
         /* Create test filter */
         filter = new FilterParams(
@@ -82,15 +84,17 @@ class tests.data.DataAccessTest:
         filter:TopRecs = 10.
         
         /* Test attachSource with minimal parameters */
-        dataAccess:attachSource(
-            "customer",           /* pcBuffers */
-            "CustNum,Name",      /* pcFields */
-            "Customer",          /* pcSources */
-            "CustNum",          /* pcSourceKeys */
-            "",                  /* pcKeyValue */
-            filter,             /* pFilter */
-            input-output dataset-handle hTestDataset        /* phDataSet */
+        attachParams = new DataSourceAttachParams(
+            "customer",           /* buffers */
+            "CustNum,Name",      /* dsFields */
+            "Customer",          /* sources */
+            "CustNum",          /* sourceKeys */
+            "",                  /* keyValue */
+            filter,             /* filter */
+            hTestDataset        /* dsDataSet */
         ).
+        
+        dataAccess:attachSource(attachParams).
         
         /* Verify dataset handle is valid */
         Assert:IsTrue(valid-handle(hTestDataset),
@@ -105,6 +109,7 @@ class tests.data.DataAccessTest:
     method public void testAttachSourceWithFilter():
         /* Test variables */
         var FilterParams filter.
+        var DataSourceAttachParams attachParams.
         
         /* Create test filter with where clause */
         filter = new FilterParams(
@@ -119,15 +124,17 @@ class tests.data.DataAccessTest:
         filter:TopRecs = 5.
         
         /* Test attachSource with filter */
-        dataAccess:attachSource(
+        attachParams = new DataSourceAttachParams(
             "customer",
             "CustNum,Name",
             "Customer",
             "CustNum",
             "",
             filter,
-            input-output dataset-handle hTestDataset
+            hTestDataset
         ).
+        
+        dataAccess:attachSource(attachParams).
         
         /* Verify dataset handle */
         Assert:IsTrue(valid-handle(hTestDataset),
@@ -142,7 +149,8 @@ class tests.data.DataAccessTest:
     method public void testAttachSourceWithSorting():
         /* Test variables */
         var FilterParams filter.
-        
+        var DataSourceAttachParams attachParams.
+
         /* Create test filter with sorting */
         filter = new FilterParams(
             "customer",     /* pcentity */
@@ -155,15 +163,17 @@ class tests.data.DataAccessTest:
         filter:SortBy = "Name".
         
         /* Test attachSource with sorting */
-        dataAccess:attachSource(
+        attachParams = new DataSourceAttachParams(
             "customer",
             "CustNum,Name",
             "Customer",
             "CustNum",
             "",
             filter,
-            input-output dataset-handle hTestDataset
+            hTestDataset
         ).
+        
+        dataAccess:attachSource(attachParams).
         
         /* Verify dataset handle */
         Assert:IsTrue(valid-handle(hTestDataset),
@@ -178,6 +188,7 @@ class tests.data.DataAccessTest:
     method public void testAttachSourceWithPagination():
         /* Test variables */
         var FilterParams filter.
+        var DataSourceAttachParams attachParams.
         
         /* Create test filter with pagination */
         filter = new FilterParams(
@@ -192,15 +203,17 @@ class tests.data.DataAccessTest:
         filter:TopRecs = 10.
         
         /* Test attachSource with pagination */
-        dataAccess:attachSource(
+        attachParams = new DataSourceAttachParams(
             "customer",
             "CustNum,Name",
             "Customer",
             "CustNum",
             "",
             filter,
-            input-output dataset-handle hTestDataset
+            hTestDataset
         ).
+        
+        dataAccess:attachSource(attachParams).
         
         /* Verify dataset handle */
         Assert:IsTrue(valid-handle(hTestDataset),
@@ -216,6 +229,7 @@ class tests.data.DataAccessTest:
         /* Test variables */
         var FilterParams filter.
         var logical lCaughtError = false.
+        var DataSourceAttachParams attachParams.
         
         /* Create test filter */
         filter = new FilterParams(
@@ -230,15 +244,17 @@ class tests.data.DataAccessTest:
         /* Test with invalid buffer name */
         do on error undo, 
             throw:
-                dataAccess:attachSource(
+                attachParams = new DataSourceAttachParams(
                     "invalid_buffer",  /* Invalid buffer name */
                     "Field1",
                     "Customer",
                     "CustNum",
                     "",
                     filter,
-                    input-output dataset-handle hTestDataset
+                    hTestDataset
                 ).
+                
+                dataAccess:attachSource(attachParams).
             catch e as Progress.Lang.Error:
                 lCaughtError = true.
             end.
