@@ -11,6 +11,8 @@
 using Progress.Lang.*.
 using Progress.Json.ObjectModel.*.
 using errors.ApiError.
+using generics.ValidationRangeParams.
+using generics.ValidationPatternParams.
 
 block-level on error undo, throw.
 
@@ -202,69 +204,63 @@ class core.Validator:
     /*------------------------------------------------------------------------------
      Purpose: Validate field range
      Parameters:
-       input poJson - JSON object to validate
-       input pcField - Field name
-       input pdMin - Minimum value
-       input pdMax - Maximum value
+       input params - ValidationRangeParams containing validation parameters
      Notes: Adds validation error if field value is outside range
     ------------------------------------------------------------------------------*/
-    method public void ValidateRange(
-        input poJson as JsonObject,
-        input pcField as character,
-        input pdMin as decimal,
-        input pdMax as decimal):
+    method public void ValidateRange(input params as ValidationRangeParams):
         
         define variable dValue as decimal no-undo.
         
+        /* Validate parameters */
+        if not params:IsValid() then
+            return.
+        
         /* Skip if field doesn't exist or is null */
-        if not poJson:Has(pcField) or poJson:IsNull(pcField) then
+        if not params:JsonObject:Has(params:FieldName) or params:JsonObject:IsNull(params:FieldName) then
             return.
             
         /* Check if field is a number */
-        if poJson:GetType(pcField) <> JsonDataType:NUMBER then
+        if params:JsonObject:GetType(params:FieldName) <> JsonDataType:NUMBER then
             return.
             
         /* Get field value */
-        dValue = poJson:GetDecimal(pcField).
+        dValue = params:JsonObject:GetDecimal(params:FieldName).
         
         /* Check range */
-        if dValue < pdMin or dValue > pdMax then
-            this-object:AddError(pcField, 
-                "Field value must be between " + string(pdMin) + 
-                " and " + string(pdMax)).
+        if dValue < params:MinValue or dValue > params:MaxValue then
+            this-object:AddError(params:FieldName, 
+                "Field value must be between " + string(params:MinValue) + 
+                " and " + string(params:MaxValue)).
     end method.
     
     /*------------------------------------------------------------------------------
      Purpose: Validate field pattern
      Parameters:
-       input poJson - JSON object to validate
-       input pcField - Field name
-       input pcPattern - Regular expression pattern
-       input pcMessage - Error message
+       input params - ValidationPatternParams containing validation parameters
      Notes: Adds validation error if field value doesn't match pattern
     ------------------------------------------------------------------------------*/
-    method public void ValidatePattern(
-        input poJson as JsonObject,
-        input pcField as character,
-        input pcPattern as character,
-        input pcMessage as character):
+    method public void ValidatePattern(input params as ValidationPatternParams):
         
         define variable cValue as character no-undo.
         
+        /* Validate parameters */
+        if not params:IsValid() then
+            return.
+        
         /* Skip if field doesn't exist or is null */
-        if not poJson:Has(pcField) or poJson:IsNull(pcField) then
+        if not params:JsonObject:Has(params:FieldName) or params:JsonObject:IsNull(params:FieldName) then
             return.
             
         /* Check if field is a string */
-        if poJson:GetType(pcField) <> JsonDataType:STRING then
+        if params:JsonObject:GetType(params:FieldName) <> JsonDataType:STRING then
             return.
             
         /* Get field value */
-        cValue = poJson:GetCharacter(pcField).
+        cValue = params:JsonObject:GetCharacter(params:FieldName).
         
         /* Check pattern */
-        if not cValue matches pcPattern then
-            this-object:AddError(pcField, pcMessage).
+        if not cValue matches params:Pattern then
+            this-object:AddError(params:FieldName, params:ErrorMessage).
     end method.
     
     /*------------------------------------------------------------------------------

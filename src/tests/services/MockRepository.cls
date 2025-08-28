@@ -11,6 +11,7 @@
 using Progress.Lang.*.
 using interfaces.IRepository.
 using generics.FilterParams.
+using generics.QueryParams.
 
 block-level on error undo, throw.
 
@@ -54,14 +55,18 @@ class tests.services.MockRepository implements IRepository:
         return jsonObj.
     end method.
     
-    method public Progress.Json.ObjectModel.JsonArray GetAll(input filter as character, input sort as character, input limit as integer, input offset as integer):
+    method public Progress.Json.ObjectModel.JsonArray GetAll(input queryParams as QueryParams):
         define variable jsonArray as Progress.Json.ObjectModel.JsonArray no-undo.
         define variable jsonObj as Progress.Json.ObjectModel.JsonObject no-undo.
         define variable i as integer no-undo.
+        define variable maxItems as integer no-undo.
         
         jsonArray = new Progress.Json.ObjectModel.JsonArray().
         
-        do i = 1 to 5:
+        /* Use limit from queryParams if specified, otherwise default to 5 */
+        maxItems = if queryParams:Limit > 0 then queryParams:Limit else 5.
+        
+        do i = 1 to maxItems:
             jsonObj = new Progress.Json.ObjectModel.JsonObject().
             jsonObj:Add("id", string(i)).
             jsonObj:Add("name", "Mock Item " + string(i)).

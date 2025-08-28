@@ -10,78 +10,80 @@
 
 using Progress.Lang.*.
 using Progress.Json.ObjectModel.*.
-
-block-level on error undo, throw.
-
+using generics.FieldListValidationparams.
+using generics.ValueListValidationparams.
+ 
+block-level on error undo, throw. 
+ 
 class services.MetadataService:
-    
+     
     /*------------------------------------------------------------------------------
      Purpose: Check if a field list is valid for a given temp-table
      Parameters:
-       input phTempTable - Handle to the temp-table
-       input pcFieldList - Comma-separated list of fields to check
-       output pcInvalidFields - Comma-separated list of invalid fields
-       output plValid - Logical indicating if all fields are valid
-     Notes: Validates that all fields in pcFieldList exist in the temp-table
+       input-output pparams - FieldListValidationpparams containing validation parameters
+     Notes: Validates that all fields in pparams.FieldList exist in the temp-table
     ------------------------------------------------------------------------------*/
-    method public void checkFieldList(
-        input phTempTable as handle,
-        input pcFieldList as character,
-        output pcInvalidFields as character,
-        output plValid as logical):
+    method public void checkFieldList(input-output pparams as FieldListValidationparams):
         
         var character cFieldList = "".
         var integer i = 0.
         var character cNotListed = "".
         
-        plValid = true.
+        /* Validate input parameters */
+        if not pparams:HasValidInputs() then do:
+            pparams:IsValid = false.
+            pparams:InvalidFields = "Invalid input parameters".
+            return.
+        end.
+        
+        pparams:IsValid = true.
 
         /* Build list of all fields in the temp-table */
-        do i = 1 to phTempTable:num-fields:
-            cFieldList = right-trim(phTempTable:buffer-field(i):name + "," + cFieldList, ",").
+        do i = 1 to pparams:hTempTableHandle:num-fields:
+            cFieldList = right-trim(pparams:hTempTableHandle:buffer-field(i):name + "," + cFieldList, ",").
         end.
         
         /* Check each requested field against the field list */
-        do i = 1 to num-entries(pcFieldList, ","):
-            if lookup(entry(i, pcFieldList), cFieldList) = 0 then do:
-                cNotListed = left-trim(cNotListed + "," + entry(i, pcFieldList), ",").
+        do i = 1 to num-entries(pparams:cFieldList, ","):
+            if lookup(entry(i, pparams:cFieldList), cFieldList) = 0 then do:
+                cNotListed = left-trim(cNotListed + "," + entry(i, pparams:cFieldList), ",").
             end.
         end.
         
         if cNotListed > "" then
-            plValid = false.
+            pparams:IsValid = false.
             
-        pcInvalidFields = cNotListed.
+        pparams:InvalidFields = cNotListed.
     end method.
     
     /*------------------------------------------------------------------------------
      Purpose: Check if values in query parameters match field data types
      Parameters:
-       input phTempTable - Handle to the temp-table
-       input phQueryParams - Handle to the query parameters table
-       output pcInvalidPairs - Comma-separated list of invalid field/value pairs
-       output plValid - Logical indicating if all values are valid
+       input-output pparams - ValueListValidationpparams containing validation parameters
      Notes: Validates that values in query parameters match field data types
     ------------------------------------------------------------------------------*/
-    method public void checkValueList(
-        input phTempTable as handle,
-        input table-handle phQueryParams,
-        output pcKeyValuePair as character,
-        output plValid as logical):
+    method public void checkValueList(input-output pparams as ValueListValidationparams):
         
         var character cDataType = "".
         var character cFieldName = "".
         var character cValue = "".
         var handle hQuery = ?.
-        var handle bQueryParams = ?.
+        var handle bQueryparams = ?.
         
-        plValid = true.
+        /* Validate input parameters */
+        if not pparams:HasValidInputs() then do:
+            pparams:IsValid = false.
+            pparams:InvalidPairs = "Invalid input parameters".
+            return.
+        end.
         
-        bQueryParams = phQueryParams:default-buffer-handle.
+        pparams:IsValid = true.
+        
+        bQueryparams = pparams:QueryparamsHandle:default-buffer-handle.
         
         create query hQuery.
-        hQuery:set-buffers(bQueryParams).
-        hQuery:query-prepare("for each " + phQueryParams:name).
+        hQuery:set-buffers(bQueryparams).
+        hQuery:query-prepare("for each " + pparams:QueryparamsHandle:name).
         hQuery:query-open.
         
         /* Go through all query string parameters and check their values for incorrect datatypes */
@@ -89,16 +91,16 @@ class services.MetadataService:
             hQuery:get-next().
             if hQuery:query-off-end then leave.
             
-            if bQueryParams:available then do:
-                cFieldName = bQueryParams:buffer-field("fieldname"):buffer-value().
-                cValue = bQueryParams:buffer-field("fieldvalue"):buffer-value().
+            if bQueryparams:available then do:
+                cFieldName = bQueryparams:buffer-field("fieldname"):buffer-value().
+                cValue = bQueryparams:buffer-field("fieldvalue"):buffer-value().
                 
                 /* Get the data type of the field */
-                assign cDataType = phTempTable:buffer-field(cFieldName):data-type no-error.
+                assign cDataType = pparams:TempTableHandle:buffer-field(cFieldName):data-type no-error.
                 
                 if error-status:error then do:
-                    pcKeyValuePair = pcKeyValuePair + cFieldName + "/unknown/unknown/,".
-                    plValid = false.
+                    pparams:InvalidPairs = pparams:InvalidPairs + cFieldName + "/unknown/unknown/,".
+                    pparams:IsValid = false.
                     next.
                 end.
                 
@@ -111,8 +113,8 @@ class services.MetadataService:
                 end case.
                 
                 if error-status:error then do:
-                    pcKeyValuePair = pcKeyValuePair + cFieldName + "/" + cValue + "/" + cDataType + "/,".
-                    plValid = false.
+                    pparams:InvalidPairs = pparams:InvalidPairs + cFieldName + "/" + cValue + "/" + cDataType + "/,".
+                    pparams:IsValid = false.
                 end.
             end.
         end.
@@ -162,6 +164,8 @@ class services.MetadataService:
             delete object joModel no-error.
         end finally.
     end method.
+
+    
     
     /*------------------------------------------------------------------------------
      Purpose: Get metadata for all available entities
@@ -174,8 +178,10 @@ class services.MetadataService:
         VAR Progress.Json.ObjectModel.JsonObject joEntity.
         VAR handle hTempTable.
         VAR longchar lcModel.
+        VAR Progress.Json.ObjectModel.ObjectModelParser parser.
         
         jaEntities = new Progress.Json.ObjectModel.JsonArray().
+        parser = new Progress.Json.ObjectModel.ObjectModelParser().
         
         /* Create metadata for customers entity */
         create temp-table hTempTable.
@@ -188,7 +194,7 @@ class services.MetadataService:
         this-object:createEntityModel(hTempTable, output lcModel).
         joEntity = new Progress.Json.ObjectModel.JsonObject().
         joEntity:add("name", "customers").
-        joEntity:add("fields", Progress.Json.ObjectModel.JsonObject:parse(lcModel)).
+        joEntity:add("fields", cast(parser:Parse(lcModel), Progress.Json.ObjectModel.JsonObject)).
         jaEntities:add(joEntity).
         delete object hTempTable no-error.
         
@@ -202,8 +208,8 @@ class services.MetadataService:
         
         this-object:createEntityModel(hTempTable, output lcModel).
         joEntity = new Progress.Json.ObjectModel.JsonObject().
-        joEntity:add("name", "items").
-        joEntity:add("fields", Progress.Json.ObjectModel.JsonObject:parse(lcModel)).
+        joEntity:add("name", "items"). 
+        joEntity:add("fields", cast(parser:Parse(lcModel), Progress.Json.ObjectModel.JsonObject)).
         jaEntities:add(joEntity).
         delete object hTempTable no-error.
         
@@ -218,7 +224,7 @@ class services.MetadataService:
         this-object:createEntityModel(hTempTable, output lcModel).
         joEntity = new Progress.Json.ObjectModel.JsonObject().
         joEntity:add("name", "orders").
-        joEntity:add("fields", Progress.Json.ObjectModel.JsonObject:parse(lcModel)).
+        joEntity:add("fields", cast(parser:Parse(lcModel), Progress.Json.ObjectModel.JsonObject)).
         jaEntities:add(joEntity).
         delete object hTempTable no-error.
         
@@ -233,8 +239,8 @@ class services.MetadataService:
         this-object:createEntityModel(hTempTable, output lcModel).
         joEntity = new Progress.Json.ObjectModel.JsonObject().
         joEntity:add("name", "suppliers").
-        joEntity:add("fields", Progress.Json.ObjectModel.JsonObject:parse(lcModel)).
-        jaEntities:add(joEntity).
+        joEntity:add("fields", cast(parser:Parse(lcModel), Progress.Json.ObjectModel.JsonObject)).
+        jaEntities:add(joEntity). 
         delete object hTempTable no-error.
         
         /* Create metadata for customersorders joined entity */
@@ -248,12 +254,12 @@ class services.MetadataService:
         this-object:createEntityModel(hTempTable, output lcModel).
         joEntity = new Progress.Json.ObjectModel.JsonObject().
         joEntity:add("name", "customersorders").
-        joEntity:add("fields", Progress.Json.ObjectModel.JsonObject:parse(lcModel)).
+        joEntity:add("fields", cast(parser:Parse(lcModel), Progress.Json.ObjectModel.JsonObject)).
         jaEntities:add(joEntity).
         delete object hTempTable no-error.
         
         return jaEntities.
         
-    end method.
+    end method. 
     
 end class.
