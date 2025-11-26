@@ -347,28 +347,27 @@ class data.DataAccess:
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Process a single data source entry
+     Purpose: Create and attach data source to dataset buffer
      Parameters:
        input params - DataSourceAttachParams
-       input context - Query context
        input iEntry - Entry index
-     Notes: Manages data source and buffer handles internally
+       output hDataSource - Created data source handle
+       output hBuffer - Created buffer handle
     ------------------------------------------------------------------------------*/
-    method private void ProcessDataSourceEntry(
+    method private void AttachDataSource(
         input params as DataSourceAttachParams,
-        input context as QueryContext,
-        input iEntry as integer):
+        input iEntry as integer,
+        output hDataSource as handle,
+        output hBuffer as handle):
         
-        var ProcessingContext procContext.
-        var handle hDataSource, hBuffer.
-        
-        /* Create and attach data source */
+        /* Create data source and buffer */
         DataAccessHelper:CreateDataSourceBuffer(
             entry(iEntry, params:Sources),
             entry(iEntry, params:SourceKeys),
             output hDataSource,
             output hBuffer).
         
+        /* Attach to dataset buffer */
         params:dsDataSet:get-buffer-handle(iEntry):attach-data-source(hDataSource) no-error.
         if error-status:error then 
         do:
@@ -377,22 +376,61 @@ class data.DataAccess:
             undo, throw new Progress.Lang.AppError(
                 "Error attaching data source: " + error-status:get-message(1)).
         end.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Apply filtering to data source entry
+     Parameters:
+       input params - DataSourceAttachParams
+       input context - Query context
+       input iEntry - Entry index
+       input hDataSource - Data source handle
+       input hBuffer - Buffer handle
+    ------------------------------------------------------------------------------*/
+    method private void ApplyEntryFilter(
+        input params as DataSourceAttachParams,
+        input context as QueryContext,
+        input iEntry as integer,
+        input hDataSource as handle,
+        input hBuffer as handle):
+        
+        var ProcessingContext procContext.
+        
+        if (iEntry = 1 and context:KeyValue = "") then
+        do:
+            /* Primary records - use processing context */
+            procContext = new ProcessingContext(params, context, iEntry).
+            procContext:DataSource = hDataSource.
+            procContext:Buffer = hBuffer.
+            this-object:ProcessPrimaryRecords(procContext).
+            delete object procContext no-error.
+        end.
+        else
+            /* Child records */
+            this-object:ProcessChildRecords(hBuffer, params, context).
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Process a single data source entry
+     Parameters:
+       input params - DataSourceAttachParams
+       input context - Query context
+       input iEntry - Entry index
+     Notes: Orchestrates data source attachment and filtering
+    ------------------------------------------------------------------------------*/
+    method private void ProcessDataSourceEntry(
+        input params as DataSourceAttachParams,
+        input context as QueryContext,
+        input iEntry as integer):
+        
+        var handle hDataSource, hBuffer.
+        
+        /* Create and attach data source */
+        this-object:AttachDataSource(params, iEntry, output hDataSource, output hBuffer).
         
         /* Apply filtering if provided */
         if params:Filter <> ? then
-        do:
-            if (iEntry = 1 and context:KeyValue = "") then
-            do:
-                /* Create context with simplified constructor */
-                procContext = new ProcessingContext(params, context, iEntry).
-                procContext:DataSource = hDataSource.
-                procContext:Buffer = hBuffer.
-                this-object:ProcessPrimaryRecords(procContext).
-                delete object procContext no-error.
-            end.
-            else
-                this-object:ProcessChildRecords(hBuffer, params, context).
-        end.
+            this-object:ApplyEntryFilter(params, context, iEntry, hDataSource, hBuffer).
         
         finally:
             delete object hDataSource no-error.
