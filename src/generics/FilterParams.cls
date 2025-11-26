@@ -58,6 +58,7 @@ class generics.FilterParams:
     /*------------------------------------------------------------------------------
      Purpose: Constructor with all parameters
      Notes: Initializes filter with entity names, IDs, and query string
+           Delegates to simpler constructor and adds entity2 and id2
     ------------------------------------------------------------------------------*/
     constructor public FilterParams(
         input pcentity as character,
@@ -67,17 +68,14 @@ class generics.FilterParams:
         input pcid2 as character,
         output table ttQueryParams):
         
-        super().
+        /* Delegate to simpler constructor */
+        this-object(pcentity, pcquerystring, pcid1, output table ttQueryParams).
         
-        /* Initialize entity names and IDs */
-        this-object:InitializeBasicParams(pcentity, pcentity2, pcid1, pcid2).
-        
-        /* Build query string if provided */
-        if pcqueryString > "" then 
-        do:
-            this-object:filtered = true.
-            this-object:BuildQueryString(pcquerystring, table ttQueryParams).
-        end.
+        /* Add additional parameters */
+        if pcentity2 > "" then
+            this-object:entityName2 = pcentity2.
+        if pcid2 > "" then
+            this-object:id2 = pcid2.
     end constructor.
     
     /*------------------------------------------------------------------------------

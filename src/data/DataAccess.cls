@@ -16,6 +16,7 @@ using Progress.Lang.*.
 using generics.FilterParams.
 using generics.DataSourceAttachParams.
 using generics.QueryContext.
+using generics.ProcessingContext.
 using Progress.Profiler.MemoryProfiler.
 using data.DataAccessHelper.
 
@@ -150,46 +151,35 @@ class data.DataAccess:
     /*------------------------------------------------------------------------------
      Purpose: Process primary records with filtering and pagination
      Parameters:
-       input hDataSource - Data source handle
-       input hBuffer - Buffer handle
-       input params - DataSourceAttachParams
-       input context - Query context
-       input iEntry - Entry index
+       input procContext - ProcessingContext containing all processing parameters
     ------------------------------------------------------------------------------*/
-    method private void ProcessPrimaryRecords(
-        input hDataSource as handle,
-        input hBuffer as handle,
-        input params as DataSourceAttachParams,
-        input context as QueryContext,
-        input iEntry as integer):
-        
-        var handle hQuery, qh.
-        var integer iNumRecs.
+    method private void ProcessPrimaryRecords(input procContext as ProcessingContext):
         var character cWhere.
         
         /* Configure batch size */
-        if context:MaxRows <> ? and context:MaxRows > 0 then
+        if procContext:Context:MaxRows <> ? and procContext:Context:MaxRows > 0 then
         do:
-            this-object:ConfigureBatchSize(hBuffer, params, context, entry(1, params:Sources)).
-            params:dsDataSet:get-buffer-handle(1):batch-size = context:MaxRows.
+            this-object:ConfigureBatchSize(procContext:Buffer, procContext:Params, 
+                procContext:Context, entry(1, procContext:Params:Sources)).
+            procContext:Params:dsDataSet:get-buffer-handle(1):batch-size = procContext:Context:MaxRows.
         end.
         else
-            params:dsDataSet:get-buffer-handle(iEntry):batch-size = 
-                (if context:RowId > "" then 1 else 0).
+            procContext:Params:dsDataSet:get-buffer-handle(procContext:EntryIndex):batch-size = 
+                (if procContext:Context:RowId > "" then 1 else 0).
         
         /* Build complete WHERE clause */
-        cWhere = if context:Where > "" then 
-                    (context:Where + " " + context:OrderBy)
+        cWhere = if procContext:Context:Where > "" then 
+                    (procContext:Context:Where + " " + procContext:Context:OrderBy)
                  else 
-                    context:OrderBy.
+                    procContext:Context:OrderBy.
         
-        hDataSource:fill-where-string = cWhere.
+        procContext:DataSource:fill-where-string = cWhere.
         
         /* Execute query with or without pagination */
-        if context:UseReposition then
-            this-object:ExecuteWithPagination(hDataSource, hBuffer, params, context).
+        if procContext:Context:UseReposition then
+            this-object:ExecuteWithPagination(procContext).
         else
-            this-object:ExecuteWithoutPagination(hDataSource, params, context, iEntry).
+            this-object:ExecuteWithoutPagination(procContext).
     end method.
     
     /*------------------------------------------------------------------------------
@@ -238,20 +228,12 @@ class data.DataAccess:
     /*------------------------------------------------------------------------------
      Purpose: Execute query with pagination (reposition)
      Parameters:
-       input hDataSource - Data source handle
-       input hBuffer - Buffer handle
-       input params - DataSourceAttachParams
-       input context - Query context
+       input procContext - ProcessingContext containing all processing parameters
     ------------------------------------------------------------------------------*/
-    method private void ExecuteWithPagination(
-        input hDataSource as handle,
-        input hBuffer as handle,
-        input params as DataSourceAttachParams,
-        input context as QueryContext):
-        
+    method private void ExecuteWithPagination(input procContext as ProcessingContext):
         var handle hQuery.
         
-        hQuery = hDataSource:query no-error.
+        hQuery = procContext:DataSource:query no-error.
         if error-status:error then
             undo, throw new Progress.Lang.AppError(
                 "Error getting query handle: " + error-status:get-message(1)).
@@ -263,7 +245,8 @@ class data.DataAccess:
                 "Error opening query: " + error-status:get-message(1)).
         
         this-object:ProcessRecordsWithPagination(
-            hQuery, hBuffer, params:dsDataSet:get-buffer-handle(1), context).
+            hQuery, procContext:Buffer, 
+            procContext:Params:dsDataSet:get-buffer-handle(1), procContext:Context).
         
         MemoryProfiler:TakeSnapshot("attach_qopen_after").
     end method.
@@ -271,23 +254,15 @@ class data.DataAccess:
     /*------------------------------------------------------------------------------
      Purpose: Execute query without pagination (standard fill)
      Parameters:
-       input hDataSource - Data source handle
-       input params - DataSourceAttachParams
-       input context - Query context
-       input iEntry - Entry index
+       input procContext - ProcessingContext containing all processing parameters
     ------------------------------------------------------------------------------*/
-    method private void ExecuteWithoutPagination(
-        input hDataSource as handle,
-        input params as DataSourceAttachParams,
-        input context as QueryContext,
-        input iEntry as integer):
-        
-        if context:RowId > "" then
-            hDataSource:restart-rowid(1) = to-rowid(context:RowId).
+    method private void ExecuteWithoutPagination(input procContext as ProcessingContext):
+        if procContext:Context:RowId > "" then
+            procContext:DataSource:restart-rowid(1) = to-rowid(procContext:Context:RowId).
             
-        params:dsDataSet:get-buffer-handle(iEntry):set-callback("after-row-fill", "addIdField").
+        procContext:Params:dsDataSet:get-buffer-handle(procContext:EntryIndex):set-callback("after-row-fill", "addIdField").
         MemoryProfiler:TakeSnapshot("attach_fill_before").
-        params:dsDataSet:fill().
+        procContext:Params:dsDataSet:fill().
         MemoryProfiler:TakeSnapshot("attach_fill_after").
     end method.
     
@@ -358,6 +333,68 @@ class data.DataAccess:
         return context.
     end method.
     
+    /*------------------------------------------------------------------------------
+     Purpose: Validate DataSourceAttachParams
+     Parameters:
+       input params - DataSourceAttachParams to validate
+    ------------------------------------------------------------------------------*/
+    method private void ValidateAttachParams(input params as DataSourceAttachParams):
+        if params = ? then
+            undo, throw new Progress.Lang.AppError("DataSourceAttachParams cannot be unknown value").
+        
+        if not params:IsValid() then
+            undo, throw new Progress.Lang.AppError("Invalid DataSourceAttachParams: required fields are missing").
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Process a single data source entry
+     Parameters:
+       input params - DataSourceAttachParams
+       input context - Query context
+       input iEntry - Entry index
+       input-output hDataSource - Data source handle
+       input-output hBuffer - Buffer handle
+    ------------------------------------------------------------------------------*/
+    method private void ProcessDataSourceEntry(
+        input params as DataSourceAttachParams,
+        input context as QueryContext,
+        input iEntry as integer,
+        input-output hDataSource as handle,
+        input-output hBuffer as handle):
+        
+        var ProcessingContext procContext.
+        
+        /* Create and attach data source */
+        DataAccessHelper:CreateDataSourceBuffer(
+            entry(iEntry, params:Sources),
+            entry(iEntry, params:SourceKeys),
+            output hDataSource,
+            output hBuffer).
+        
+        params:dsDataSet:get-buffer-handle(iEntry):attach-data-source(hDataSource) no-error.
+        if error-status:error then 
+        do:
+            delete object hDataSource no-error.
+            delete object hBuffer no-error.
+            undo, throw new Progress.Lang.AppError(
+                "Error attaching data source: " + error-status:get-message(1)).
+        end.
+        
+        /* Apply filtering if provided */
+        if params:Filter <> ? then
+        do:
+            if (iEntry = 1 and context:KeyValue = "") then
+            do:
+                procContext = new ProcessingContext(
+                    hDataSource, hBuffer, params, context, iEntry).
+                this-object:ProcessPrimaryRecords(procContext).
+                delete object procContext no-error.
+            end.
+            else
+                this-object:ProcessChildRecords(hBuffer, params, context).
+        end.
+    end method.
+    
     method public void attachSource(input params as DataSourceAttachParams):
         var handle hDataSource, hBuffer.
         var integer iEntry.
@@ -366,41 +403,15 @@ class data.DataAccess:
         MemoryProfiler:TakeSnapshot("attach_begin").
         
         /* Validate input parameters */
-        if params = ? then
-            undo, throw new Progress.Lang.AppError("DataSourceAttachParams cannot be unknown value").
-        
-        if not params:IsValid() then
-            undo, throw new Progress.Lang.AppError("Invalid DataSourceAttachParams: required fields are missing").
+        this-object:ValidateAttachParams(params).
         
         /* Prepare query context */
         context = this-object:PrepareQueryContext(params).
         
         /* Process each data source */
         do iEntry = 1 to num-entries(params:Sources):
-            /* Create and attach data source */
-            DataAccessHelper:CreateDataSourceBuffer(
-                entry(iEntry, params:Sources),
-                entry(iEntry, params:SourceKeys),
-                output hDataSource,
-                output hBuffer).
-            
-            params:dsDataSet:get-buffer-handle(iEntry):attach-data-source(hDataSource) no-error.
-            if error-status:error then 
-            do:
-                delete object hDataSource no-error.
-                delete object hBuffer no-error.
-                undo, throw new Progress.Lang.AppError(
-                    "Error attaching data source: " + error-status:get-message(1)).
-            end.
-            
-            /* Apply filtering if provided */
-            if params:Filter <> ? then
-            do:
-                if (iEntry = 1 and context:KeyValue = "") then
-                    this-object:ProcessPrimaryRecords(hDataSource, hBuffer, params, context, iEntry).
-                else
-                    this-object:ProcessChildRecords(hBuffer, params, context).
-            end.
+            this-object:ProcessDataSourceEntry(params, context, iEntry, 
+                input-output hDataSource, input-output hBuffer).
         end.
         
         catch e as Progress.Lang.Error:
