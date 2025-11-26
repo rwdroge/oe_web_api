@@ -352,17 +352,15 @@ class data.DataAccess:
        input params - DataSourceAttachParams
        input context - Query context
        input iEntry - Entry index
-       input-output hDataSource - Data source handle
-       input-output hBuffer - Buffer handle
+     Notes: Manages data source and buffer handles internally
     ------------------------------------------------------------------------------*/
     method private void ProcessDataSourceEntry(
         input params as DataSourceAttachParams,
         input context as QueryContext,
-        input iEntry as integer,
-        input-output hDataSource as handle,
-        input-output hBuffer as handle):
+        input iEntry as integer):
         
         var ProcessingContext procContext.
+        var handle hDataSource, hBuffer.
         
         /* Create and attach data source */
         DataAccessHelper:CreateDataSourceBuffer(
@@ -395,10 +393,14 @@ class data.DataAccess:
             else
                 this-object:ProcessChildRecords(hBuffer, params, context).
         end.
+        
+        finally:
+            delete object hDataSource no-error.
+            delete object hBuffer no-error.
+        end finally.
     end method.
     
     method public void attachSource(input params as DataSourceAttachParams):
-        var handle hDataSource, hBuffer.
         var integer iEntry.
         var QueryContext context.
         
@@ -412,16 +414,13 @@ class data.DataAccess:
         
         /* Process each data source */
         do iEntry = 1 to num-entries(params:Sources):
-            this-object:ProcessDataSourceEntry(params, context, iEntry, 
-                input-output hDataSource, input-output hBuffer).
+            this-object:ProcessDataSourceEntry(params, context, iEntry).
         end.
         
         catch e as Progress.Lang.Error:
             undo, throw e.
         end.
         finally:
-            delete object hBuffer no-error.
-            delete object hDataSource no-error.
             delete object context no-error.
         end.
     end method.

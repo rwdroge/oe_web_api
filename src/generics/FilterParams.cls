@@ -35,6 +35,7 @@ class generics.FilterParams:
     /*------------------------------------------------------------------------------
      Purpose: Simplified constructor with entity, query string, and ID
      Notes: Common use case - reduces parameter count from 6 to 4
+           Recommended constructor for most use cases
     ------------------------------------------------------------------------------*/
     constructor public FilterParams(
         input pcentity as character,
