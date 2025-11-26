@@ -57,8 +57,10 @@ class generics.FilterParams:
     
     /*------------------------------------------------------------------------------
      Purpose: Constructor with all parameters
-     Notes: Initializes filter with entity names, IDs, and query string
+     Notes: DEPRECATED - Use simpler 4-parameter constructor with property setters
+           This constructor is maintained for backward compatibility only
            Delegates to simpler constructor and adds entity2 and id2
+     @deprecated Use FilterParams(entity, querystring, id1, table) and set properties
     ------------------------------------------------------------------------------*/
     constructor public FilterParams(
         input pcentity as character,
@@ -72,9 +74,9 @@ class generics.FilterParams:
         this-object(pcentity, pcquerystring, pcid1, output table ttQueryParams).
         
         /* Add additional parameters */
-        if pcentity2 > "" then
+        if pcentity2 > "" and pcentity2 <> ? then
             this-object:entityName2 = pcentity2.
-        if pcid2 > "" then
+        if pcid2 > "" and pcid2 <> ? then
             this-object:id2 = pcid2.
     end constructor.
     

@@ -2,10 +2,10 @@
     File        : ProcessingContext
     Purpose     : Encapsulates data processing context to reduce parameter passing
     Syntax      : 
-    Description : Parameter object pattern to simplify ProcessPrimaryRecords signature
+    Description : Parameter object with builder pattern for simplified construction
     Author(s)   : Cascade AI
     Created     : 2025-11-26
-    Notes       : Groups related processing parameters together
+    Notes       : Uses fluent interface for flexible construction
   ----------------------------------------------------------------------*/
 
 using generics.DataSourceAttachParams.
@@ -27,17 +27,22 @@ class generics.ProcessingContext:
     define public property EntryIndex as integer no-undo get. set.
     
     /*------------------------------------------------------------------------------
-     Purpose: Constructor with all parameters
+     Purpose: Default constructor for builder pattern
+     Notes: Use setter methods to configure the context
+    ------------------------------------------------------------------------------*/
+    constructor public ProcessingContext():
+        super().
+    end constructor.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Simplified constructor with core parameters
      Parameters:
-       input hDataSource - Data source handle
-       input hBuffer - Buffer handle
        input params - DataSourceAttachParams
        input context - Query context
        input iEntry - Entry index
+     Notes: Handles and other properties set via setters
     ------------------------------------------------------------------------------*/
     constructor public ProcessingContext(
-        input hDataSource as handle,
-        input hBuffer as handle,
         input params as DataSourceAttachParams,
         input context as QueryContext,
         input iEntry as integer):
@@ -45,8 +50,6 @@ class generics.ProcessingContext:
         super().
         
         assign
-            this-object:DataSource = hDataSource
-            this-object:Buffer = hBuffer
             this-object:Params = params
             this-object:Context = context
             this-object:EntryIndex = iEntry.

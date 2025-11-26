@@ -385,8 +385,10 @@ class data.DataAccess:
         do:
             if (iEntry = 1 and context:KeyValue = "") then
             do:
-                procContext = new ProcessingContext(
-                    hDataSource, hBuffer, params, context, iEntry).
+                /* Create context with simplified constructor */
+                procContext = new ProcessingContext(params, context, iEntry).
+                procContext:DataSource = hDataSource.
+                procContext:Buffer = hBuffer.
                 this-object:ProcessPrimaryRecords(procContext).
                 delete object procContext no-error.
             end.
