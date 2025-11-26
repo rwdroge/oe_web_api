@@ -116,7 +116,7 @@ CLASS tests.core.LoggerTest:
         COPY-LOB FILE infoLogPath TO logContent.
         
         /* Check that only messages at INFO level and above were logged */
-        Assert:IsTrue(index(string(logContent), "Debug message") > 0, "Debug message should be logged when level is INFO").
+        Assert:IsFalse(index(string(logContent), "Debug message") > 0, "Debug message should NOT be logged when level is INFO").
         Assert:IsTrue(index(string(logContent), "Info message") > 0, "Info message should be logged when level is INFO").
         Assert:IsTrue(index(string(logContent), "Warning message") > 0, "Warning message should be logged when level is INFO").
         Assert:IsTrue(index(string(logContent), "Error message") > 0, "Error message should be logged when level is INFO").

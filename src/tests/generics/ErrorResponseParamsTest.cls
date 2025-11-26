@@ -14,7 +14,7 @@ using generics.ErrorResponseParams.
 
 block-level on error undo, throw.
 
-class tests.generics.ErrorResponseParamsTest:
+class tests.generics.ErrorResponseParamsTest: 
 
     /* Test ErrorResponseParams instance */
     var ErrorResponseParams errorParams.

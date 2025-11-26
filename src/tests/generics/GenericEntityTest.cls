@@ -11,6 +11,7 @@
 using Progress.Lang.*.
 using OpenEdge.Core.Assert.
 using generics.GenericEntity.
+using Progress.Collections.*.
 
 block-level on error undo, throw.
 
@@ -180,10 +181,9 @@ class tests.generics.GenericEntityTest:
     @Test.
     method public void TestMemoryManagement():
         var integer i.
-        var GenericEntity[] entityArray.
+        var GenericEntity entityArray extent 10.
 
         /* Create multiple entities to test memory handling */
-        extent(entityArray) = 10.
         do i = 1 to 10:
             entityArray[i] = new GenericEntity("entity" + string(i)).
             Assert:NotNull(entityArray[i]).
@@ -193,6 +193,45 @@ class tests.generics.GenericEntityTest:
         do i = 1 to 10:
             delete object entityArray[i].
         end.
+    end method.
+
+    /* Test modern collection approach */
+    @Test.
+    method public void TestModernCollectionApproach():
+        
+        
+        var List<GenericEntity> entityList = new List<GenericEntity>().
+        var GenericEntity tempEntity.
+        var integer i.
+
+        /* Add entities to the list */
+        do i = 1 to 10:
+            tempEntity = new GenericEntity("entity" + string(i)).
+            entityList:Add(tempEntity).
+        end.
+
+        /* Verify list size and contents */
+        Assert:AreEqual(10, entityList:Count).
+        Assert:IsFalse(entityList:IsEmpty()).
+
+        /* Test accessing elements */
+        tempEntity = entityList:Get(1).
+        Assert:NotNull(tempEntity).
+
+        /* Test contains functionality */
+        Assert:IsTrue(entityList:Contains(tempEntity)).
+
+        /* Clean up all entities in the list */
+        do i = 1 to entityList:Count:
+            tempEntity = entityList:Get(i).
+            if valid-object(tempEntity) then
+                delete object tempEntity.
+        end.
+
+        /* Clear the list */
+        entityList:Clear().
+        Assert:AreEqual(0, entityList:Count).
+        Assert:IsTrue(entityList:IsEmpty()).
     end method.
 
     /* Test error handling in constructor */

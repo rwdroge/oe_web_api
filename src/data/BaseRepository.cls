@@ -15,6 +15,7 @@ using generics.DataSourceAttachParams.
 using Progress.Json.ObjectModel.*.
 using data.DataAccess.
 using services.MetadataService.
+using Progress.Profiler.MemoryProfiler.
 
 block-level on error undo, throw.
 
@@ -70,10 +71,12 @@ class data.BaseRepository abstract implements interfaces.IRepository:
      Returns: handle to dataset containing the entity
     ------------------------------------------------------------------------------*/
     method public handle FindById(input pcId as character):
+        
         /* Create filter for primary key lookup */
         var generics.FilterParams filter.
         var handle dshandle.
         VAR DataSourceAttachParams attachParams.
+        MemoryProfiler:TakeSnapshot("StartOfFindById").
         create dataset dshandle.
         dshandle = this-object:DatasetHandle.
         empty temp-table ttQueryParams.
@@ -100,6 +103,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
             undo, throw e.
         end.
         finally:
+            MemoryProfiler:TakeSnapshot("EndOfFindById").
             delete object filter no-error.
         end finally.
     end method.
@@ -111,9 +115,10 @@ class data.BaseRepository abstract implements interfaces.IRepository:
      Returns: handle to dataset containing matching entities
     ------------------------------------------------------------------------------*/
     method public handle FindByFilter(input pFilter as generics.FilterParams):
+        
         var handle dshandle = ?.
         VAR DataSourceAttachParams attachParams.
-        
+        MemoryProfiler:TakeSnapshot("StartOfFindByFilter").
         /* Create a new dataset handle for each request */
         create dataset dshandle.
         
@@ -143,6 +148,9 @@ class data.BaseRepository abstract implements interfaces.IRepository:
             end.
             undo, throw e.
         end catch.
+        finally:
+            MemoryProfiler:TakeSnapshot("EndOfFindByFilter").
+        end finally.
        
     end method.
     

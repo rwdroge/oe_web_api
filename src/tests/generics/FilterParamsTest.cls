@@ -14,14 +14,13 @@ using generics.FilterParams.
 
 block-level on error undo, throw.
 
-define temp-table ttQueryParams
-field fieldname   as character
-field fieldvalue  as character
-index fieldname is primary unique fieldname ascending
-.
 
 class tests.generics.FilterParamsTest:
-
+    define temp-table ttQueryParams
+    field fieldname   as character
+    field fieldvalue  as character
+    index fieldname is primary unique fieldname ascending
+    .
     /* Test FilterParams instance */
     var FilterParams filterParams.
 

@@ -24,6 +24,7 @@ class tests.errors.ErrorHandlerTest:
     method public void SetUp():
         /* Create a basic ErrorHandler for testing */
         errorHandler = new ErrorHandler().
+
     end method.
 
     /* Test default constructor */

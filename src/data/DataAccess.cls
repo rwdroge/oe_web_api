@@ -15,6 +15,7 @@
 using Progress.Lang.*.
 using generics.FilterParams.
 using generics.DataSourceAttachParams.
+using Progress.Profiler.MemoryProfiler.
 
 block-level on error undo, throw.
 
@@ -56,6 +57,7 @@ class data.DataAccess:
         var character cWhere, cQuery, cOrderby, cId, pcKeyValue.
         cOrderBy = "".
         cId = ?.
+        MemoryProfiler:TakeSnapshot("attach_begin").
         
         /* Validate input parameters */
         if params = ? then
@@ -188,6 +190,7 @@ class data.DataAccess:
                                 "Error getting query handle: " + error-status:get-message(1)).
                         
                         /* Open the query */
+                        MemoryProfiler:TakeSnapshot("attach_qopen_before").
                         hQuery:query-open no-error.
                         if error-status:error then
                             undo, throw new Progress.Lang.AppError(
@@ -253,13 +256,16 @@ class data.DataAccess:
                             
                             iCount = iCount + 1.
                         end.
+                        MemoryProfiler:TakeSnapshot("attach_qopen_after").
                     end.
                     else 
                     do:
                         if cId > "" then hDataSource:restart-rowid(1)
                             = to-rowid ((cId)).
                         params:dsDataSet:get-buffer-handle(iEntry):set-callback ("after-row-fill", "addIdField").
+                        MemoryProfiler:TakeSnapshot("attach_fill_before").
                         params:dsDataSet:fill().
+                        MemoryProfiler:TakeSnapshot("attach_fill_after").
                         
                     end.
                 end. /* do if iEntry = 1 */
@@ -269,6 +275,7 @@ class data.DataAccess:
                     hQuery:query-prepare("for each " + entry(1, params:Sources) +
                         " where " + entry(1, params:SourceKeys) + " = " + pcKeyValue).
                     hDataSource:query = hQuery.
+                    MemoryProfiler:TakeSnapshot("attach_child_qopen_before").
                     hQuery:query-open.
                     hQuery:get-next() no-error.
                     if hBuffer:available then do:
@@ -278,6 +285,7 @@ class data.DataAccess:
                         iSeq = iSeq + 1.
                         params:dsDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
                     end.
+                    MemoryProfiler:TakeSnapshot("attach_child_qopen_after").
                     delete object hQuery.
                 end. 
             end.
@@ -330,7 +338,9 @@ class data.DataAccess:
             assign cErrorMsg = "Invalid dataset handle".
             undo, throw new Progress.Lang.AppError(cErrorMsg).
         end.
+        MemoryProfiler:TakeSnapshot("fetchAll_fill_before").
         phDataSet:fill().
+        MemoryProfiler:TakeSnapshot("fetchAll_fill_after").
         
     end method.
 

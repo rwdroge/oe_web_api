@@ -7,7 +7,7 @@
         },
         "resource_attributes": {
             "deployment.environment": "production",
-            "service.instance.id": "pasoe-instance-1",
+            "service.instance.id": "pasoe-instance-2",
             "host.name": "localhost"
         },
         "exporters": {

@@ -99,10 +99,10 @@ class generics.FilterParams:
                             ttQueryParams.fieldvalue    = cValue
                             .     
                     
-                    if cWhere > "" then 
-                        cWhere = cWhere + " AND " + cName + "=" + QUOTER(OpenEdge.Net.URI:Decode(cValue)).
-                    else 
-                        cWhere = cName + "=" + QUOTER(OpenEdge.Net.URI:Decode(cValue)).
+                    if cWhere > "" then
+                        cWhere = cWhere + " AND " + cName + "=" + QUOTER(cValue).
+                    else
+                        cWhere = cName + "=" + QUOTER(cValue).
                     end.    
                 end case.        
 
@@ -112,7 +112,6 @@ class generics.FilterParams:
     end method.  
     
 DESTRUCTOR PUBLIC FilterParams( ):
-    if available ttQueryParams then delete ttQueryParams.
 END DESTRUCTOR.
     
 end class.

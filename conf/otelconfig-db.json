@@ -1,14 +1,16 @@
 {
     "OpenTelemetryConfiguration": {
         "service": {
-            "name": "oe-web-api-pasoe",
+            "name": "sports2020-database",
             "version": "1.0.0",
             "namespace": "production"
         },
         "resource_attributes": {
             "deployment.environment": "production",
-            "service.instance.id": "pasoe-instance-1",
-            "host.name": "localhost"
+            "service.instance.id": "sports2020-db",
+            "host.name": "localhost",
+            "db.system": "openedge",
+            "db.name": "sports2020"
         },
         "exporters": {
             "otlp": {
@@ -56,18 +58,17 @@
             "probability": 1.0
         }
     },
-    "OpenEdgeTelemetryConfiguration": {
+    "OpenEdgeDatabaseTelemetryConfiguration": {
         "enabled": true,
-        "trace_classes": "*",
-        "trace_procedures": "*",
-        "trace_requires_parent": false,
-        "trace_abl_transactions": true,
-        "trace_request_start": true,
-        "trace_request_end": true,
-        "trace_database_operations": true,
-        "trace_external_calls": true,
         "metrics_enabled": true,
         "metrics_export_interval": 60000,
+        "trace_sql_queries": true,
+        "trace_transactions": true,
+        "trace_connections": true,
+        "collect_performance_metrics": true,
+        "collect_buffer_pool_metrics": true,
+        "collect_lock_metrics": true,
+        "collect_io_metrics": true,
         "log_level": "INFO"
     }
 }

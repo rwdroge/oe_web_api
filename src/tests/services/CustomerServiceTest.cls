@@ -16,11 +16,11 @@ using Progress.Json.ObjectModel.*.
 
 block-level on error undo, throw.
 
-class src.tests.services.CustomerServiceTest:
+class tests.services.CustomerServiceTest:
 
     /* Test service instance */
-    define private variable customerService as CustomerService no-undo.
-    define private variable mockRepository as tests.mocks.MockCustomerRepository no-undo.
+    var private CustomerService customerService.
+    var private tests.mocks.MockCustomerRepository mockRepository.
 
     /* Setup method - runs before each test */
     @Setup.
@@ -48,7 +48,7 @@ class src.tests.services.CustomerServiceTest:
     @Test.
     method public void TestConstructor():
         /* Test that service is created successfully */
-        Assert:IsNotNull(customerService).
+        Assert:NotNull(customerService).
         Assert:IsTrue(valid-object(customerService:Repository)).
     end method.
 
@@ -64,7 +64,7 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:GetCustomersByCountry("USA").
 
         /* Verify result structure */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:IsTrue(result:Has("country")).
         Assert:IsTrue(result:Has("count")).
         Assert:IsTrue(result:Has("customers")).
@@ -74,7 +74,7 @@ class src.tests.services.CustomerServiceTest:
 
         /* Verify we have customers */
         Assert:IsTrue(result:GetInteger("count") > 0).
-        Assert:IsNotNull(result:GetJsonArray("customers")).
+        Assert:NotNull(result:GetJsonArray("customers")).
     end method.
 
     /* Test GetCustomersByCountry with no data */
@@ -89,10 +89,10 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:GetCustomersByCountry("Canada").
 
         /* Verify result structure */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:Equals("Canada", result:GetCharacter("country")).
         Assert:Equals(0, result:GetInteger("count")).
-        Assert:IsNotNull(result:GetJsonArray("customers")).
+        Assert:NotNull(result:GetJsonArray("customers")).
     end method.
 
     /* Test GetCustomersBySalesRep with data */
@@ -107,7 +107,7 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:GetCustomersBySalesRep("John Doe").
 
         /* Verify result structure */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:IsTrue(result:Has("salesRep")).
         Assert:IsTrue(result:Has("count")).
         Assert:IsTrue(result:Has("customers")).
@@ -117,7 +117,7 @@ class src.tests.services.CustomerServiceTest:
 
         /* Verify we have customers */
         Assert:IsTrue(result:GetInteger("count") > 0).
-        Assert:IsNotNull(result:GetJsonArray("customers")).
+        Assert:NotNull(result:GetJsonArray("customers")).
     end method.
 
     /* Test GetCustomersBySalesRep with no data */
@@ -132,10 +132,10 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:GetCustomersBySalesRep("Jane Smith").
 
         /* Verify result structure */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:Equals("Jane Smith", result:GetCharacter("salesRep")).
         Assert:Equals(0, result:GetInteger("count")).
-        Assert:IsNotNull(result:GetJsonArray("customers")).
+        Assert:NotNull(result:GetJsonArray("customers")).
     end method.
 
     /* Test UpdateCreditLimit with valid data */
@@ -147,7 +147,7 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:UpdateCreditLimit("1001", 7500.00).
 
         /* Verify result */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:IsFalse(result:Has("error")).
         Assert:Equals(1001, result:GetInteger("custnum")).
         Assert:Equals(7500.00, result:GetDecimal("creditlimit")).
@@ -162,7 +162,7 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:UpdateCreditLimit("1001", -100.00).
 
         /* Verify error result */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:IsTrue(result:Has("error")).
         Assert:Equals("Invalid credit limit", result:GetCharacter("error")).
         Assert:Equals("Credit limit must be greater than or equal to 0", result:GetCharacter("message")).
@@ -182,7 +182,7 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:ValidateCustomer(customerData).
 
         /* Verify result */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:IsTrue(result:GetLogical("valid")).
         Assert:IsFalse(result:Has("errors")).
 
@@ -205,7 +205,7 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:ValidateCustomer(customerData).
 
         /* Verify result */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:IsFalse(result:GetLogical("valid")).
         Assert:IsTrue(result:Has("errors")).
 
@@ -232,7 +232,7 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:ValidateCustomer(customerData).
 
         /* Verify result */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:IsFalse(result:GetLogical("valid")).
         Assert:IsTrue(result:Has("errors")).
 
@@ -260,7 +260,7 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:Create(customerData).
 
         /* Verify result */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:IsFalse(result:Has("error")).
         Assert:Equals("New Customer", result:GetCharacter("name")).
 
@@ -282,7 +282,7 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:Create(customerData).
 
         /* Verify error result */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:IsFalse(result:GetLogical("valid")).
         Assert:IsTrue(result:Has("errors")).
 
@@ -300,7 +300,7 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:GetById("1001").
 
         /* Verify result */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:IsFalse(result:Has("error")).
         Assert:Equals(1001, result:GetInteger("custnum")).
         Assert:Equals("Mock Customer 1001", result:GetCharacter("name")).
@@ -320,7 +320,7 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:Update("1001", updateData).
 
         /* Verify result */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:IsFalse(result:Has("error")).
         Assert:Equals(1001, result:GetInteger("custnum")).
         Assert:Equals("Updated Customer", result:GetCharacter("name")).
@@ -339,7 +339,7 @@ class src.tests.services.CustomerServiceTest:
         result = customerService:Delete("1001").
 
         /* Verify result */
-        Assert:IsNotNull(result).
+        Assert:NotNull(result).
         Assert:IsFalse(result:Has("error")).
         Assert:Equals("Entity deleted successfully", result:GetCharacter("message")).
         Assert:Equals("customer", result:GetCharacter("entity")).

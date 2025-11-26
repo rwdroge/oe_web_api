@@ -8,12 +8,12 @@
     Notes       : Tests error creation, properties, and JSON conversion
   ----------------------------------------------------------------------*/
 
-  using Progress.Lang.*.
-  using OpenEdge.Core.Assert.
-  using Progress.Json.ObjectModel.*.
-  using errors.ApiError. 
-  
-  block-level on error undo, throw.
+using Progress.Lang.*.
+using OpenEdge.Core.Assert.
+using Progress.Json.ObjectModel.*.
+using errors.ApiError.
+
+block-level on error undo, throw.
   
   class tests.errors.ApiErrorTest:
   

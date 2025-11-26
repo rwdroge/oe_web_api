@@ -24,11 +24,11 @@ class tests.data.DataAccessTest:
     var private handle hQueryParams.
     var private handle hCustomerBuffer.
 
-    define temp-table hQueryParams
-    field fieldname   as character 
-    field fieldvalue  as character 
-    index fieldname is primary unique fieldname ascending
-    .  
+    define private temp-table ttQueryParams
+        field fieldname   as character 
+        field fieldvalue  as character 
+        index fieldname is primary unique fieldname ascending
+        .  
     
     /*------------------------------------------------------------------------------
      Purpose: Set up test environment before each test
@@ -79,7 +79,7 @@ class tests.data.DataAccessTest:
             "",            /* pcquerystring */
             "",            /* pcid1 */
             "",            /* pcid2 */
-            output table hQueryParams  /* output table */
+            output table ttQueryParams  /* output table */
         ).
         filter:TopRecs = 10.
         
@@ -118,7 +118,7 @@ class tests.data.DataAccessTest:
             "",            /* pcquerystring */
             "",            /* pcid1 */
             "",            /* pcid2 */
-            output table hQueryParams  /* output table */
+            output table ttQueryParams  /* output table */
         ).
         filter:Where = "CustNum > 100".
         filter:TopRecs = 5.
@@ -158,7 +158,7 @@ class tests.data.DataAccessTest:
             "",            /* pcquerystring */
             "",            /* pcid1 */
             "",            /* pcid2 */
-            output table hQueryParams  /* output table */
+            output table ttQueryParams  /* output table */
         ).
         filter:SortBy = "Name".
         
@@ -197,7 +197,7 @@ class tests.data.DataAccessTest:
             "",            /* pcquerystring */
             "",            /* pcid1 */
             "",            /* pcid2 */
-            output table hQueryParams  /* output table */
+            output table ttQueryParams  /* output table */
         ).
         filter:SkipRecs = 5.
         filter:TopRecs = 10.
@@ -238,7 +238,7 @@ class tests.data.DataAccessTest:
             "",            /* pcquerystring */
             "",            /* pcid1 */
             "",            /* pcid2 */
-            output table hQueryParams  /* output table */
+            output table ttQueryParams  /* output table */
         ).
         
         /* Test with invalid buffer name */
