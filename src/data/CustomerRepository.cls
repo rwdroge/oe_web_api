@@ -61,18 +61,7 @@ class data.CustomerRepository inherits BaseRepository:
      Notes: Example of repository-specific method
     ------------------------------------------------------------------------------*/
     method public handle FindCustomersByCountry(input pcCountry as character):
-        var generics.FilterParams filter = new generics.FilterParams(
-            "customer", 
-            "country = '" + pcCountry + "'",
-            "",
-            output table ttQueryParams).
-            
-        /* Use base method to find customers */
-        return this-object:FindByFilter(filter).
-        
-        finally:
-            delete object filter no-error.
-        end finally.
+        return this-object:FindByQueryString("country = '" + pcCountry + "'").
     end method.
     
     /*------------------------------------------------------------------------------
@@ -83,18 +72,7 @@ class data.CustomerRepository inherits BaseRepository:
      Notes: Example of repository-specific method
     ------------------------------------------------------------------------------*/
     method public handle FindCustomersBySalesRep(input pcSalesRep as character):
-        var generics.FilterParams filter = new generics.FilterParams(
-            "customer", 
-            "salesrep = '" + pcSalesRep + "'",
-            "",
-            output table ttQueryParams).
-            
-        /* Use base method to find customers */
-        return this-object:FindByFilter(filter).
-        
-        finally:
-            delete object filter no-error.
-        end finally.
+        return this-object:FindByQueryString("salesrep = '" + pcSalesRep + "'").
     end method.
     
     /*------------------------------------------------------------------------------

@@ -40,6 +40,29 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         index fieldname is primary unique fieldname ascending.
     
     /*------------------------------------------------------------------------------
+     Purpose: Helper method to find by query string filter
+     Parameters:
+       input pcQueryString - Query string filter (e.g., "country='USA'")
+     Returns: handle to dataset containing matching entities
+     Notes: Common pattern for repository-specific filter methods
+    ------------------------------------------------------------------------------*/
+    method protected handle FindByQueryString(input pcQueryString as character):
+        var generics.FilterParams filter.
+        
+        filter = new generics.FilterParams(
+            this-object:DatabaseTable,
+            pcQueryString,
+            "",
+            output table ttQueryParams).
+        
+        return this-object:FindByFilter(filter).
+        
+        finally:
+            delete object filter no-error.
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Helper method to create and prepare a dataset handle
      Parameters:
        input lCloneStructure - Whether to clone from template or use existing

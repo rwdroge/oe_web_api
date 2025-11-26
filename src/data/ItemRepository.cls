@@ -61,18 +61,7 @@ class data.ItemRepository inherits BaseRepository:
      Notes: Example of repository-specific method
     ------------------------------------------------------------------------------*/
     method public handle FindItemsByCategory(input pcCategory as character):
-        var generics.FilterParams filter = new generics.FilterParams(
-            "item", 
-            "category = '" + pcCategory + "'",
-            "",
-            output table ttQueryParams).
-            
-        /* Use base method to find items */
-        return this-object:FindByFilter(filter).
-        
-        finally:
-            delete object filter no-error.
-        end finally.
+        return this-object:FindByQueryString("category = '" + pcCategory + "'").
     end method.
     
     /*------------------------------------------------------------------------------

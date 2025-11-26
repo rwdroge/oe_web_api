@@ -61,18 +61,7 @@ class data.OrderRepository inherits BaseRepository:
      Notes: Example of repository-specific method
     ------------------------------------------------------------------------------*/
     method public handle FindOrdersByCustomer(input piCustNum as integer):
-        var generics.FilterParams filter = new generics.FilterParams(
-            "order", 
-            "custnum = " + string(piCustNum),
-            "",
-            output table ttQueryParams).
-            
-        /* Use base method to find orders */
-        return this-object:FindByFilter(filter).
-        
-        finally:
-            delete object filter no-error.
-        end finally.
+        return this-object:FindByQueryString("custnum = " + string(piCustNum)).
     end method.
     
     /*------------------------------------------------------------------------------
@@ -84,18 +73,8 @@ class data.OrderRepository inherits BaseRepository:
      Notes: Example of repository-specific method
     ------------------------------------------------------------------------------*/
     method public handle FindOrdersByDateRange(input pdStartDate as date, input pdEndDate as date):
-        var generics.FilterParams filter = new generics.FilterParams(
-            "order", 
-            "orderdate >= " + quoter(string(pdStartDate)) + " and orderdate <= " + quoter(string(pdEndDate)),
-            "",
-            output table ttQueryParams).
-            
-        /* Use base method to find orders */
-        return this-object:FindByFilter(filter).
-        
-        finally:
-            delete object filter no-error.
-        end finally.
+        return this-object:FindByQueryString(
+            "orderdate >= " + quoter(string(pdStartDate)) + " and orderdate <= " + quoter(string(pdEndDate))).
     end method.
     
     /*------------------------------------------------------------------------------
@@ -106,18 +85,7 @@ class data.OrderRepository inherits BaseRepository:
      Notes: Example of repository-specific method
     ------------------------------------------------------------------------------*/
     method public handle FindOrdersByStatus(input pcStatus as character):
-        var generics.FilterParams filter = new generics.FilterParams(
-            "order", 
-            "orderstatus = '" + pcStatus + "'",
-            "",
-            output table ttQueryParams).
-            
-        /* Use base method to find orders */
-        return this-object:FindByFilter(filter).
-        
-        finally:
-            delete object filter no-error.
-        end finally.
+        return this-object:FindByQueryString("orderstatus = '" + pcStatus + "'").
     end method.
     
     /*------------------------------------------------------------------------------

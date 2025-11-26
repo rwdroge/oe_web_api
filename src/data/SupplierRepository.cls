@@ -61,18 +61,7 @@ class data.SupplierRepository inherits BaseRepository:
      Notes: Example of repository-specific method
     ------------------------------------------------------------------------------*/
     method public handle FindSuppliersByCountry(input pcCountry as character):
-        var generics.FilterParams filter = new generics.FilterParams(
-            "supplier", 
-            "country = '" + pcCountry + "'",
-            "",
-            output table ttQueryParams).
-            
-        /* Use base method to find suppliers */
-        return this-object:FindByFilter(filter).
-        
-        finally:
-            delete object filter no-error.
-        end finally.
+        return this-object:FindByQueryString("country = '" + pcCountry + "'").
     end method.
     
     /*------------------------------------------------------------------------------
@@ -83,18 +72,7 @@ class data.SupplierRepository inherits BaseRepository:
      Notes: Example of repository-specific method
     ------------------------------------------------------------------------------*/
     method public handle FindSuppliersWithDiscount(input piMinDiscount as integer):
-        var generics.FilterParams filter = new generics.FilterParams(
-            "supplier", 
-            "discount >= " + string(piMinDiscount),
-            "",
-            output table ttQueryParams).
-            
-        /* Use base method to find suppliers */
-        return this-object:FindByFilter(filter).
-        
-        finally:
-            delete object filter no-error.
-        end finally.
+        return this-object:FindByQueryString("discount >= " + string(piMinDiscount)).
     end method.
     
     /*------------------------------------------------------------------------------
