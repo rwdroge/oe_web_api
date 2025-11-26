@@ -42,6 +42,149 @@ class data.DataAccess:
        - Implements skip/top for pagination
        - Handles sorting through order by clause
     ------------------------------------------------------------------------------*/
+    /*------------------------------------------------------------------------------
+     Purpose: Process records with pagination using query repositioning
+     Parameters:
+       input hQuery - Query handle
+       input hBuffer - Buffer handle
+       input params - DataSourceAttachParams
+       input cId - Row ID for positioning
+       input iSkipRows - Rows to skip
+       input iMaxRows - Maximum rows to fetch
+    ------------------------------------------------------------------------------*/
+    method private void ProcessRecordsWithPagination(
+        input hQuery as handle,
+        input hBuffer as handle,
+        input params as DataSourceAttachParams,
+        input cId as character,
+        input iSkipRows as integer,
+        input iMaxRows as integer):
+        
+        var integer iCount.
+        
+        /* Position to specific record or skip rows */
+        if cId > "" and cId <> "?" then
+        do:
+            hQuery:reposition-to-rowid(to-rowid(cId)) no-error.
+            if error-status:error then
+                undo, throw new Progress.Lang.AppError(
+                    "Error repositioning to rowid: " + error-status:get-message(1)).
+        end.
+        else if iSkipRows <> ? and iSkipRows > 0 then
+        do:
+            hQuery:reposition-to-row(iSkipRows) no-error.
+            if error-status:error then
+                undo, throw new Progress.Lang.AppError(
+                    "Error repositioning to row: " + error-status:get-message(1)).
+                    
+            if not hbuffer:available then
+                hQuery:get-next() no-error.
+            if error-status:error then
+                undo, throw new Progress.Lang.AppError(
+                    "Error getting next record: " + error-status:get-message(1)).
+        end.
+        
+        /* Process records within maxRows limit */
+        iCount = 0.
+        repeat while not hQuery:query-off-end and (iMaxRows = ? or iCount < iMaxRows):
+            hQuery:get-next() no-error.
+            if error-status:error then
+                undo, throw new Progress.Lang.AppError(
+                    "Error getting next record: " + error-status:get-message(1)).
+                    
+            if hBuffer:available then
+                this-object:CopyBufferWithIdAndSeq(hBuffer, params:dsDataSet:get-buffer-handle(1)).
+            
+            iCount = iCount + 1.
+        end.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Copy buffer and set id and sequence fields
+     Parameters:
+       input hSourceBuffer - Source buffer to copy from
+       input hTargetBuffer - Target buffer to copy to
+    ------------------------------------------------------------------------------*/
+    method private void CopyBufferWithIdAndSeq(
+        input hSourceBuffer as handle,
+        input hTargetBuffer as handle):
+        
+        /* Create and copy buffer */
+        hTargetBuffer:buffer-create no-error.
+        if error-status:error then
+            undo, throw new Progress.Lang.AppError(
+                "Error creating buffer: " + error-status:get-message(1)).
+                
+        hTargetBuffer:buffer-copy(hSourceBuffer) no-error.
+        if error-status:error then
+            undo, throw new Progress.Lang.AppError(
+                "Error copying buffer: " + error-status:get-message(1)).
+        
+        /* Set id and sequence fields */
+        hTargetBuffer:buffer-field("id"):buffer-value() = 
+            string(hSourceBuffer:rowid) no-error.
+        if error-status:error then
+            undo, throw new Progress.Lang.AppError(
+                "Error setting id field: " + error-status:get-message(1)).
+        
+        iSeq = iSeq + 1.
+        hTargetBuffer:buffer-field("seq"):buffer-value() = 
+            string(iSeq) no-error.
+        if error-status:error then
+            undo, throw new Progress.Lang.AppError(
+                "Error setting sequence field: " + error-status:get-message(1)).
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Prepare query with WHERE and ORDER BY clauses
+     Parameters:
+       input params - DataSourceAttachParams object
+       output cWhere - WHERE clause
+       output cOrderBy - ORDER BY clause
+       output iMaxRows - Maximum rows to fetch
+       output iSkipRows - Rows to skip
+       output pcKeyValue - Primary key value
+       output cId - Row ID
+    ------------------------------------------------------------------------------*/
+    method private void PrepareQueryClauses(
+        input params as DataSourceAttachParams,
+        output cWhere as character,
+        output cOrderBy as character,
+        output iMaxRows as integer,
+        output iSkipRows as integer,
+        output pcKeyValue as character,
+        output cId as character):
+        
+        /* Initialize output parameters */
+        assign
+            cWhere = ""
+            cOrderBy = ""
+            iMaxRows = ?
+            iSkipRows = ?
+            pcKeyValue = ""
+            cId = ?.
+        
+        /* Extract filter parameters with error handling */
+        if params:Filter <> ? then
+        do:
+            assign
+                iMaxRows = params:Filter:TopRecs
+                iSkipRows = params:Filter:SkipRecs
+                cWhere = params:Filter:Where
+                cId = params:Filter:rowid
+                pcKeyValue = params:Filter:id1
+                cOrderBy = params:Filter:SortBy no-error.
+        end.
+        
+        /* Use default key value if filter doesn't provide one */
+        if pcKeyValue = "" and params:KeyValue > "" then
+            pcKeyValue = params:KeyValue.
+        
+        /* Construct WHERE and ORDER BY clauses using helper */
+        cWhere = DataAccessHelper:BuildWhereClause(cWhere).
+        cOrderBy = DataAccessHelper:BuildOrderByClause(cOrderBy).
+    end method.
+    
     method public void attachSource(input params as DataSourceAttachParams):
         
         /* Handle variables */
@@ -49,15 +192,14 @@ class data.DataAccess:
         
         /* Integer variables */
         var integer iNumRecs, iEntry, iCount.
-        var integer iMaxRows, iSkipRows = ?.
+        var integer iMaxRows, iSkipRows.
         
         /* Logical variables */
         var logical lUseReposition.
         
         /* Character variables */
-        var character cWhere, cQuery, cOrderby, cId, pcKeyValue.
-        cOrderBy = "".
-        cId = ?.
+        var character cWhere, cOrderby, cId, pcKeyValue.
+        
         MemoryProfiler:TakeSnapshot("attach_begin").
         
         /* Validate input parameters */
@@ -67,19 +209,9 @@ class data.DataAccess:
         if not params:IsValid() then
             undo, throw new Progress.Lang.AppError("Invalid DataSourceAttachParams: required fields are missing").
         
-        /* Extract filter parameters with error handling */
-        assign
-            iMaxRows = (if params:Filter <> ? then params:Filter:TopRecs else ?)
-            iSkipRows = (if params:Filter <> ? then params:Filter:SkipRecs else ?)
-            cWhere = (if params:Filter <> ? then params:Filter:Where else "")
-            cId = (if params:Filter <> ? then params:Filter:rowid else ?)
-            pcKeyValue = (if params:Filter <> ? then params:Filter:id1 else params:KeyValue)
-            cOrderBy = (if params:Filter <> ? then params:Filter:SortBy else "") no-error.
-        
-            
-        /* Construct WHERE and ORDER BY clauses using helper */
-        cWhere = DataAccessHelper:BuildWhereClause(cWhere).
-        cOrderBy = DataAccessHelper:BuildOrderByClause(cOrderBy).
+        /* Prepare query clauses */
+        this-object:PrepareQueryClauses(params, output cWhere, output cOrderBy, 
+            output iMaxRows, output iSkipRows, output pcKeyValue, output cId).
         
         /* Set pagination flag */
         lUseReposition = iSkipRows > 0.
@@ -162,66 +294,10 @@ class data.DataAccess:
                             undo, throw new Progress.Lang.AppError(
                                 "Error opening query: " + error-status:get-message(1)).
                         
-                        /* Position to specific record or skip rows */
-                        if cId > "" and cId <> "?" then
-                        do:
-                            hQuery:reposition-to-rowid(to-rowid(cId)) no-error.
-                            if error-status:error then
-                                undo, throw new Progress.Lang.AppError(
-                                    "Error repositioning to rowid: " + error-status:get-message(1)).
-                        end.
-                        else if iSkipRows <> ? and iSkipRows > 0 then
-                        do:
-                            hQuery:reposition-to-row(iSkipRows) no-error.
-                            if error-status:error then
-                                undo, throw new Progress.Lang.AppError(
-                                    "Error repositioning to row: " + error-status:get-message(1)).
-                                    
-                            if not hbuffer:available then
-                                hQuery:get-next() no-error.
-                            if error-status:error then
-                                undo, throw new Progress.Lang.AppError(
-                                    "Error getting next record: " + error-status:get-message(1)).
-                        end.
+                        /* Process records with pagination */
+                        this-object:ProcessRecordsWithPagination(
+                            hQuery, hBuffer, params, cId, iSkipRows, iMaxRows).
                         
-                        /* Process records within maxRows limit */
-                        iCount = 0.
-                        repeat while not hQuery:query-off-end and (iMaxRows = ? or iCount < iMaxRows):
-                            hQuery:get-next() no-error.
-                            if error-status:error then
-                                undo, throw new Progress.Lang.AppError(
-                                    "Error getting next record: " + error-status:get-message(1)).
-                                    
-                            if hBuffer:available then
-                            do:
-                                /* Create and copy buffer */
-                                params:dsDataSet:get-buffer-handle(1):buffer-create no-error.
-                                if error-status:error then
-                                    undo, throw new Progress.Lang.AppError(
-                                        "Error creating buffer: " + error-status:get-message(1)).
-                                        
-                                params:dsDataSet:get-buffer-handle(1):buffer-copy(hBuffer) no-error.
-                                if error-status:error then
-                                    undo, throw new Progress.Lang.AppError(
-                                        "Error copying buffer: " + error-status:get-message(1)).
-                                
-                                /* Set id and sequence fields */
-                                params:dsDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = 
-                                    string(hBuffer:rowid) no-error.
-                                if error-status:error then
-                                    undo, throw new Progress.Lang.AppError(
-                                        "Error setting id field: " + error-status:get-message(1)).
-                                
-                                iSeq = iSeq + 1.
-                                params:dsDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = 
-                                    string(iSeq) no-error.
-                                if error-status:error then
-                                    undo, throw new Progress.Lang.AppError(
-                                        "Error setting sequence field: " + error-status:get-message(1)).
-                            end.
-                            
-                            iCount = iCount + 1.
-                        end.
                         MemoryProfiler:TakeSnapshot("attach_qopen_after").
                     end.
                     else 
@@ -236,6 +312,7 @@ class data.DataAccess:
                     end.
                 end. /* do if iEntry = 1 */
                 else do:
+                    /* Process child records */
                     create query hQuery.
                     hQuery:add-buffer(hBuffer).
                     hQuery:query-prepare("for each " + entry(1, params:Sources) +
@@ -244,13 +321,10 @@ class data.DataAccess:
                     MemoryProfiler:TakeSnapshot("attach_child_qopen_before").
                     hQuery:query-open.
                     hQuery:get-next() no-error.
-                    if hBuffer:available then do:
-                        params:dsDataSet:get-buffer-handle(1):buffer-create().
-                        params:dsDataSet:get-buffer-handle(1):buffer-copy(hBuffer).
-                        params:dsDataSet:get-buffer-handle(1):buffer-field("id"):buffer-value() = string(hBuffer:rowid).
-                        iSeq = iSeq + 1.
-                        params:dsDataSet:get-buffer-handle(1):buffer-field("seq"):buffer-value() = string(iSeq).
-                    end.
+                    
+                    if hBuffer:available then
+                        this-object:CopyBufferWithIdAndSeq(hBuffer, params:dsDataSet:get-buffer-handle(1)).
+                    
                     MemoryProfiler:TakeSnapshot("attach_child_qopen_after").
                     delete object hQuery.
                 end. 

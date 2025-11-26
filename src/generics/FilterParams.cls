@@ -33,6 +33,29 @@ class generics.FilterParams:
     .  
 
     /*------------------------------------------------------------------------------
+     Purpose: Simplified constructor with entity, query string, and ID
+     Notes: Common use case - reduces parameter count from 6 to 4
+    ------------------------------------------------------------------------------*/
+    constructor public FilterParams(
+        input pcentity as character,
+        input pcquerystring as character,
+        input pcid1 as character,
+        output table ttQueryParams):
+        
+        super().
+        
+        /* Initialize with entity name and ID */
+        this-object:InitializeBasicParams(pcentity, "", pcid1, "").
+        
+        /* Build query string if provided */
+        if pcqueryString > "" then 
+        do:
+            this-object:filtered = true.
+            this-object:BuildQueryString(pcquerystring, table ttQueryParams).
+        end.
+    end constructor.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Constructor with all parameters
      Notes: Initializes filter with entity names, IDs, and query string
     ------------------------------------------------------------------------------*/
@@ -109,6 +132,7 @@ class generics.FilterParams:
        input pcValue - Parameter value
        output table ttQueryParams - Query parameters table
        input-output pcWhere - WHERE clause being built
+     Notes: Handles standard parameters (sort_by, limit, offset, id) and custom parameters
     ------------------------------------------------------------------------------*/
     method private void ProcessQueryParameter(
         input pcName as character,
@@ -126,39 +150,24 @@ class generics.FilterParams:
             when "id" then
                 this-object:rowid = pcValue.
             otherwise
-                this-object:AddCustomParameter(pcName, pcValue, table ttQueryParams, input-output pcWhere).
+            do:
+                /* Add custom parameter inline to reduce method calls */
+                this-object:FieldList = left-trim(this-object:FieldList + "," + pcName, ",").
+                this-object:ValueList = left-trim(this-object:ValueList + "," + pcValue, ",").
+                
+                /* Create query parameter record */
+                create ttQueryParams.
+                assign 
+                    ttQueryParams.fieldname = pcName
+                    ttQueryParams.fieldvalue = pcValue.
+                
+                /* Build WHERE clause */
+                if pcWhere > "" then
+                    pcWhere = pcWhere + " AND " + pcName + "=" + QUOTER(pcValue).
+                else
+                    pcWhere = pcName + "=" + QUOTER(pcValue).
+            end.
         end case.
-    end method.
-    
-    /*------------------------------------------------------------------------------
-     Purpose: Add custom parameter to query
-     Parameters:
-       input pcName - Parameter name
-       input pcValue - Parameter value
-       output table ttQueryParams - Query parameters table
-       input-output pcWhere - WHERE clause being built
-    ------------------------------------------------------------------------------*/
-    method private void AddCustomParameter(
-        input pcName as character,
-        input pcValue as character,
-        output table ttQueryParams,
-        input-output pcWhere as character):
-        
-        /* Add to field and value lists */
-        this-object:FieldList = left-trim(this-object:FieldList + "," + pcName, ",").
-        this-object:ValueList = left-trim(this-object:ValueList + "," + pcValue, ",").
-        
-        /* Create query parameter record */
-        create ttQueryParams.
-        assign 
-            ttQueryParams.fieldname = pcName
-            ttQueryParams.fieldvalue = pcValue.
-        
-        /* Build WHERE clause */
-        if pcWhere > "" then
-            pcWhere = pcWhere + " AND " + pcName + "=" + QUOTER(pcValue).
-        else
-            pcWhere = pcName + "=" + QUOTER(pcValue).
     end method.  
     
 DESTRUCTOR PUBLIC FilterParams( ):

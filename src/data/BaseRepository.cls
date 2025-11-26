@@ -40,6 +40,25 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         index fieldname is primary unique fieldname ascending.
     
     /*------------------------------------------------------------------------------
+     Purpose: Helper method to create and prepare a dataset handle
+     Parameters:
+       input lCloneStructure - Whether to clone from template or use existing
+     Returns: Dataset handle
+    ------------------------------------------------------------------------------*/
+    method private handle PrepareDatasetHandle(input lCloneStructure as logical):
+        var handle dshandle.
+        
+        create dataset dshandle.
+        
+        if lCloneStructure then
+            dshandle:create-like(this-object:DatasetHandle).
+        else
+            dshandle = this-object:DatasetHandle.
+        
+        return dshandle.
+    end method.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Helper method to create DataSourceAttachParams
      Parameters:
        input pcKeyValue - Primary key value
@@ -60,6 +79,24 @@ class data.BaseRepository abstract implements interfaces.IRepository:
             pcKeyValue,
             pFilter,
             phDataset).
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Helper method to attach data source and fetch data
+     Parameters:
+       input pcKeyValue - Primary key value
+       input pFilter - Filter parameters
+       input phDataset - Dataset handle
+    ------------------------------------------------------------------------------*/
+    method private void AttachAndFetch(
+        input pcKeyValue as character,
+        input pFilter as generics.FilterParams,
+        input phDataset as handle):
+        
+        var DataSourceAttachParams attachParams.
+        
+        attachParams = this-object:CreateAttachParams(pcKeyValue, pFilter, phDataset).
+        this-object:Dao:attachSource(attachParams).
     end method.
     
     /*------------------------------------------------------------------------------
@@ -94,27 +131,23 @@ class data.BaseRepository abstract implements interfaces.IRepository:
      Returns: handle to dataset containing the entity
     ------------------------------------------------------------------------------*/
     method public handle FindById(input pcId as character):
-        
-        /* Create filter for primary key lookup */
         var generics.FilterParams filter.
         var handle dshandle.
-        VAR DataSourceAttachParams attachParams.
+        
         MemoryProfiler:TakeSnapshot("StartOfFindById").
-        create dataset dshandle.
-        dshandle = this-object:DatasetHandle.
+        
+        /* Prepare dataset and filter */
+        dshandle = this-object:PrepareDatasetHandle(false).
         empty temp-table ttQueryParams.
         filter = new generics.FilterParams(
-            this-object:DatabaseTable, ?, ?, pcId, ?, output table ttQueryParams).
+            this-object:DatabaseTable, ?, pcId, output table ttQueryParams).
         
-            
-        /* Use data access object to fetch data */
-        attachParams = this-object:CreateAttachParams(pcId, filter, dshandle).
-        this-object:Dao:attachSource(attachParams).
-            
+        /* Fetch data */
+        this-object:AttachAndFetch(pcId, filter, dshandle).
         this-object:DatasetHandle = dshandle.
         
-        /* Return dataset handle */
         return this-object:DatasetHandle:handle.
+        
         catch e as Progress.Lang.Error:
             undo, throw e.
         end.
@@ -131,21 +164,15 @@ class data.BaseRepository abstract implements interfaces.IRepository:
      Returns: handle to dataset containing matching entities
     ------------------------------------------------------------------------------*/
     method public handle FindByFilter(input pFilter as generics.FilterParams):
+        var handle dshandle.
         
-        var handle dshandle = ?.
-        VAR DataSourceAttachParams attachParams.
         MemoryProfiler:TakeSnapshot("StartOfFindByFilter").
-        /* Create a new dataset handle for each request */
-        create dataset dshandle.
         
-        /* Clone the structure from the template dataset */
-        dshandle:create-like(this-object:DatasetHandle).
-       
-        /* Use data access object to fetch filtered data */
-        attachParams = this-object:CreateAttachParams(pFilter:id1, pFilter, dshandle).
-        this-object:Dao:attachSource(attachParams).
+        /* Prepare new dataset with cloned structure */
+        dshandle = this-object:PrepareDatasetHandle(true).
         
-        /* Return the new dataset handle - caller is responsible for cleanup */
+        /* Fetch filtered data */
+        this-object:AttachAndFetch(pFilter:id1, pFilter, dshandle).
         
         return dshandle.
         
@@ -160,7 +187,6 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         finally:
             MemoryProfiler:TakeSnapshot("EndOfFindByFilter").
         end finally.
-       
     end method.
     
     /*------------------------------------------------------------------------------
@@ -198,26 +224,23 @@ class data.BaseRepository abstract implements interfaces.IRepository:
     ------------------------------------------------------------------------------*/
     method public handle Update(input pcId as character, input poEntity as JsonObject):
         var handle dshandle.
-        VAR DataSourceAttachParams attachParams.
+        var generics.FilterParams filter.
         
-        /* Create filter for primary key lookup */
-        var generics.FilterParams filter = new generics.FilterParams(
-            this-object:DatabaseTable, ?, ?, pcId, ?, output table ttQueryParams).
+        /* Prepare dataset and filter */
+        dshandle = this-object:PrepareDatasetHandle(false).
+        filter = new generics.FilterParams(
+            this-object:DatabaseTable, ?, pcId, output table ttQueryParams).
         
-            create dataset dshandle.
-            dshandle = this-object:DatasetHandle.    
-        /* Attach data source for the entity */
-        attachParams = this-object:CreateAttachParams(pcId, filter, dshandle).
-        this-object:Dao:attachSource(attachParams).
-            
+        /* Fetch existing entity */
+        this-object:AttachAndFetch(pcId, filter, dshandle).
+        
         /* Apply updates from JSON */
         dshandle:read-json('JsonObject', poEntity).
         
-        /* Commit changes to database */
+        /* Commit changes */
         this-object:Dao:commitChanges(this-object:PrimaryKeyField, 
-                                     input-output dataset-handle dshandle by-reference).
-                                     
-        /* Return dataset handle */
+            input-output dataset-handle dshandle by-reference).
+        
         return this-object:DatasetHandle:handle.
         
         finally:
@@ -232,27 +255,27 @@ class data.BaseRepository abstract implements interfaces.IRepository:
      Returns: logical indicating success
     ------------------------------------------------------------------------------*/
     method public logical Delete(input pcId as character):
-        /* Create filter for primary key lookup */
-        var generics.FilterParams filter = new generics.FilterParams(
-            this-object:DatabaseTable, ?, ?, pcId, ?, output table ttQueryParams).
-            var handle dshandle.
-            VAR DataSourceAttachParams attachParams.
-            create dataset dshandle.
-            dshandle = this-object:DatasetHandle.    
-        /* Attach data source for the entity */
-        attachParams = this-object:CreateAttachParams(pcId, filter, dshandle).
-        this-object:Dao:attachSource(attachParams).
-            
-        /* Delete the entity */
+        var generics.FilterParams filter.
+        var handle dshandle.
+        
+        /* Prepare dataset and filter */
+        dshandle = this-object:PrepareDatasetHandle(false).
+        filter = new generics.FilterParams(
+            this-object:DatabaseTable, ?, pcId, output table ttQueryParams).
+        
+        /* Fetch entity to delete */
+        this-object:AttachAndFetch(pcId, filter, dshandle).
+        
+        /* Delete if found */
         if dshandle:get-buffer-handle(1):available then do:
             dshandle:get-buffer-handle(1):buffer-delete().
-            this-object:Dao:commitChanges(  this-object:PrimaryKeyField, 
-                                            input-output dataset-handle dshandle by-reference).
+            this-object:Dao:commitChanges(this-object:PrimaryKeyField, 
+                input-output dataset-handle dshandle by-reference).
             return true.
         end.
-        else
-            return false.
-            
+        
+        return false.
+        
         finally:
             delete object filter no-error.
         end finally.
