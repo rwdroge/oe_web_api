@@ -93,26 +93,34 @@ if [ "$SKIP_DB" = false ]; then
     echo
     echo -e "${YELLOW}Step 1: Setting up database...${NC}"
     
+    # Create database directory if it doesn't exist
+    mkdir -p "$APP_ROOT/db"
     cd "$APP_ROOT/db"
     
     # Check if database exists
     if [ ! -f "sports2020.db" ]; then
-        echo "Creating Sports2020 database..."
-        prodb sports2020 $DLC/sports2020
-        echo -e "${GREEN}✓ Database created${NC}"
+        echo "Creating Sports2020 database from Sports2020 template..."
+        
+        # Use prodb to create database from Sports2020 template
+        if command_exists prodb; then
+            prodb sports2020 Sports2020
+        else
+            # Fallback to procopy if prodb not available
+            echo "Using procopy as fallback..."
+            procopy "$DLC/sports2020" sports2020
+        fi
+        
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✓ Database created successfully${NC}"
+        else
+            echo -e "${RED}✗ Failed to create database${NC}"
+            exit 1
+        fi
     else
-        echo -e "${GREEN}✓ Database already exists${NC}"
+        echo "Database already exists"
     fi
     
-    # Start database if not running
-    if ! proshut sports2020 -C list 2>/dev/null | grep -q "sports2020"; then
-        echo "Starting database..."
-        bash "$APP_ROOT/scripts/start_db.sh"
-        sleep 5
-        echo -e "${GREEN}✓ Database started${NC}"
-    else
-        echo -e "${GREEN}✓ Database already running${NC}"
-    fi
+    echo -e "${GREEN}✓ Database setup complete${NC}"
 else
     echo -e "${YELLOW}Skipping database setup${NC}"
 fi
@@ -157,8 +165,28 @@ fi
 # Create instance if it doesn't exist
 if [ ! -d "$PAS1_PATH" ]; then
     echo "Creating PASOE Instance 1..."
-    cd $DLC/bin
-    ./tcman create -p 8810 -P 8811 "$PAS1_PATH"
+    
+    # Create parent directory if needed
+    mkdir -p "$(dirname "$PAS1_PATH")"
+    
+    # Use tcman.sh to create new PASOE instance
+    if [ -f "$DLC/bin/tcman.sh" ]; then
+        "$DLC/bin/tcman.sh" create -p 8810 -P 8811 "$PAS1_PATH"
+    elif [ -f "$DLC/bin/tcman" ]; then
+        "$DLC/bin/tcman" create -p 8810 -P 8811 "$PAS1_PATH"
+    else
+        echo -e "${RED}✗ tcman not found in $DLC/bin${NC}"
+        exit 1
+    fi
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ PASOE Instance 1 created successfully${NC}"
+    else
+        echo -e "${RED}✗ Failed to create PASOE Instance 1${NC}"
+        exit 1
+    fi
+else
+    echo "PASOE Instance 1 already exists"
 fi
 
 # Deploy configuration
@@ -209,8 +237,28 @@ fi
 # Create instance if it doesn't exist
 if [ ! -d "$PAS2_PATH" ]; then
     echo "Creating PASOE Instance 2..."
-    cd $DLC/bin
-    ./tcman create -p 8820 -P 8821 "$PAS2_PATH"
+    
+    # Create parent directory if needed
+    mkdir -p "$(dirname "$PAS2_PATH")"
+    
+    # Use tcman.sh to create new PASOE instance
+    if [ -f "$DLC/bin/tcman.sh" ]; then
+        "$DLC/bin/tcman.sh" create -p 8820 -P 8821 "$PAS2_PATH"
+    elif [ -f "$DLC/bin/tcman" ]; then
+        "$DLC/bin/tcman" create -p 8820 -P 8821 "$PAS2_PATH"
+    else
+        echo -e "${RED}✗ tcman not found in $DLC/bin${NC}"
+        exit 1
+    fi
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ PASOE Instance 2 created successfully${NC}"
+    else
+        echo -e "${RED}✗ Failed to create PASOE Instance 2${NC}"
+        exit 1
+    fi
+else
+    echo "PASOE Instance 2 already exists"
 fi
 
 # Deploy configuration

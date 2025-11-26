@@ -33,82 +33,132 @@ class generics.FilterParams:
     .  
 
     /*------------------------------------------------------------------------------
-     Purpose:
-     Notes:
+     Purpose: Constructor with all parameters
+     Notes: Initializes filter with entity names, IDs, and query string
     ------------------------------------------------------------------------------*/
+    constructor public FilterParams(
+        input pcentity as character,
+        input pcentity2 as character,
+        input pcquerystring as character,
+        input pcid1 as character,
+        input pcid2 as character,
+        output table ttQueryParams):
         
-    constructor public FilterParams (   input pcentity as character,
-                                        input pcentity2 as character,
-                                        input pcquerystring as character,
-                                        input pcid1 as character,
-                                        input pcid2 as character,
-                                        output table ttQueryParams 
-                                           ):
-        super ().
+        super().
         
+        /* Initialize entity names and IDs */
+        this-object:InitializeBasicParams(pcentity, pcentity2, pcid1, pcid2).
         
-            if pcid1 > "" then
-                this-object:id1 = pcid1.
-            if pcid2 > "" then
-                this-object:id2 = pcid2.
-            if pcentity > "" then do:
-                this-object:entityName = pcentity.
-            end.
-            if pcentity2 > "" then
-                this-object:entityName2 = pcentity2.  
-            if pcqueryString > "" then 
-            do:
-                this-object:filtered = true.
-                this-object:BuildQueryString(pcquerystring, table ttQueryParams).
-            end.
-
-
-    
+        /* Build query string if provided */
+        if pcqueryString > "" then 
+        do:
+            this-object:filtered = true.
+            this-object:BuildQueryString(pcquerystring, table ttQueryParams).
+        end.
     end constructor.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Helper method to initialize basic parameters
+     Parameters:
+       input pcentity - Entity name
+       input pcentity2 - Second entity name
+       input pcid1 - First ID
+       input pcid2 - Second ID
+    ------------------------------------------------------------------------------*/
+    method private void InitializeBasicParams(
+        input pcentity as character,
+        input pcentity2 as character,
+        input pcid1 as character,
+        input pcid2 as character):
+        
+        if pcid1 > "" then
+            this-object:id1 = pcid1.
+        if pcid2 > "" then
+            this-object:id2 = pcid2.
+        if pcentity > "" then
+            this-object:entityName = pcentity.
+        if pcentity2 > "" then
+            this-object:entityName2 = pcentity2.
+    end method.
 
     method public void BuildQueryString(input pcquerystring as character, output table ttQueryParams):
-        define variable cParam as character no-undo.
-        define variable i      as integer   no-undo.
-        define variable cName  as character no-undo.
-        define variable cWhere as character no-undo.
-        define variable cValue as character no-undo.
-        define variable idx    as integer   no-undo.
+        var character cParam, cName, cValue, cWhere.
+        var integer i, idx.
         
         do i = 1 to num-entries(pcqueryString, "&"):
             cParam = entry(i, pcqueryString, "&").
             idx = index(cParam, "=").
+            
             if idx > 0 then 
             do:
                 cName = substring(cParam, 1, idx - 1, "CHARACTER").
-                cValue = OpenEdge.Net.URI:Decode(substring(cParam, idx + 1,-1,"CHARACTER")).
-                case cName:
-                    when "sort_by" then 
-                        this-object:SortBy = entry(2,cParam,"=").
-                    when "limit" then
-                        this-object:TopRecs = integer(entry(2,cParam,"=")).
-                    when "offset" then
-                        this-object:SkipRecs = integer(entry(2,cParam,"=")).
-                    when "id" then
-                        this-object:rowid = entry(2,cParam,"=").
-                    otherwise do:
-                        this-object:FieldList = left-trim(this-object:FieldList + "," + cName, ",").
-                        this-object:ValueList = left-trim(this-object:ValueList + "," + cValue, ",").
-                        create ttQueryParams.
-                        assign 
-                            ttQueryParams.fieldname     = cName
-                            ttQueryParams.fieldvalue    = cValue
-                            .     
-                    
-                    if cWhere > "" then
-                        cWhere = cWhere + " AND " + cName + "=" + QUOTER(cValue).
-                    else
-                        cWhere = cName + "=" + QUOTER(cValue).
-                    end.    
-                end case.        
-
-                this-object:where = cWhere.
+                cValue = OpenEdge.Net.URI:Decode(substring(cParam, idx + 1, -1, "CHARACTER")).
+                
+                /* Process parameter */
+                this-object:ProcessQueryParameter(cName, cValue, table ttQueryParams, input-output cWhere).
             end.
         end.
+        
+        this-object:where = cWhere.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Process individual query parameter
+     Parameters:
+       input pcName - Parameter name
+       input pcValue - Parameter value
+       output table ttQueryParams - Query parameters table
+       input-output pcWhere - WHERE clause being built
+    ------------------------------------------------------------------------------*/
+    method private void ProcessQueryParameter(
+        input pcName as character,
+        input pcValue as character,
+        output table ttQueryParams,
+        input-output pcWhere as character):
+        
+        case pcName:
+            when "sort_by" then 
+                this-object:SortBy = pcValue.
+            when "limit" then
+                this-object:TopRecs = integer(pcValue).
+            when "offset" then
+                this-object:SkipRecs = integer(pcValue).
+            when "id" then
+                this-object:rowid = pcValue.
+            otherwise
+                this-object:AddCustomParameter(pcName, pcValue, table ttQueryParams, input-output pcWhere).
+        end case.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Add custom parameter to query
+     Parameters:
+       input pcName - Parameter name
+       input pcValue - Parameter value
+       output table ttQueryParams - Query parameters table
+       input-output pcWhere - WHERE clause being built
+    ------------------------------------------------------------------------------*/
+    method private void AddCustomParameter(
+        input pcName as character,
+        input pcValue as character,
+        output table ttQueryParams,
+        input-output pcWhere as character):
+        
+        /* Add to field and value lists */
+        this-object:FieldList = left-trim(this-object:FieldList + "," + pcName, ",").
+        this-object:ValueList = left-trim(this-object:ValueList + "," + pcValue, ",").
+        
+        /* Create query parameter record */
+        create ttQueryParams.
+        assign 
+            ttQueryParams.fieldname = pcName
+            ttQueryParams.fieldvalue = pcValue.
+        
+        /* Build WHERE clause */
+        if pcWhere > "" then
+            pcWhere = pcWhere + " AND " + pcName + "=" + QUOTER(pcValue).
+        else
+            pcWhere = pcName + "=" + QUOTER(pcValue).
     end method.  
     
 DESTRUCTOR PUBLIC FilterParams( ):

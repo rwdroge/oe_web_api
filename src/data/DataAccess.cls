@@ -16,6 +16,7 @@ using Progress.Lang.*.
 using generics.FilterParams.
 using generics.DataSourceAttachParams.
 using Progress.Profiler.MemoryProfiler.
+using data.DataAccessHelper.
 
 block-level on error undo, throw.
 
@@ -76,56 +77,21 @@ class data.DataAccess:
             cOrderBy = (if params:Filter <> ? then params:Filter:SortBy else "") no-error.
         
             
-        /* Construct WHERE clause safely */
-        if cWhere > "" then
-            cWhere = " WHERE " + cWhere.
-        
-        /* Process ORDER BY clause */
-        if cOrderBy > "" then
-        do:
-            /* Convert comma-separated fields to ABL ORDER BY syntax */
-            cOrderBy = replace(cOrderBy, ",", " by ").
-            cOrderBy = "by " + cOrderBy + " ".
-            
-            /* Remove system fields from sorting */
-            assign
-                cOrderBy = replace(cOrderBy, "by id desc", "")
-                cOrderBy = replace(cOrderBy, "by id ", "")
-                cOrderBy = replace(cOrderBy, "by seq desc", "")
-                cOrderBy = replace(cOrderBy, "by seq ", "").
-        end.
+        /* Construct WHERE and ORDER BY clauses using helper */
+        cWhere = DataAccessHelper:BuildWhereClause(cWhere).
+        cOrderBy = DataAccessHelper:BuildOrderByClause(cOrderBy).
         
         /* Set pagination flag */
         lUseReposition = iSkipRows > 0.
         
         /* Process each data source */
         do iEntry = 1 to num-entries(params:Sources):
-            /* Create and attach data source */
-            create data-source hDataSource no-error.
-            if error-status:error then 
-            do:
-                undo, throw new Progress.Lang.AppError(
-                    "Error creating data source: " + error-status:get-message(1)).
-            end.
-            
-            create buffer hBuffer for table entry(iEntry, params:Sources) no-error.
-            if error-status:error then 
-            do:
-                delete object hDataSource no-error.
-                undo, throw new Progress.Lang.AppError(
-                    "Error creating buffer for " + entry(iEntry, params:Sources) + ": " + 
-                    error-status:get-message(1)).
-            end.
-            
-            /* Add buffer to data source */
-            hDataSource:add-source-buffer(hBuffer, entry(iEntry,params:SourceKeys)) no-error.
-            if error-status:error then 
-            do:
-                delete object hDataSource no-error.
-                delete object hBuffer no-error.
-                undo, throw new Progress.Lang.AppError(
-                    "Error adding source buffer: " + error-status:get-message(1)).
-            end.
+            /* Create and attach data source using helper */
+            DataAccessHelper:CreateDataSourceBuffer(
+                entry(iEntry, params:Sources),
+                entry(iEntry, params:SourceKeys),
+                output hDataSource,
+                output hBuffer).
             
             /* Attach data source to dataset buffer */
             params:dsDataSet:get-buffer-handle(iEntry):attach-data-source(hDataSource) no-error.

@@ -40,6 +40,29 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         index fieldname is primary unique fieldname ascending.
     
     /*------------------------------------------------------------------------------
+     Purpose: Helper method to create DataSourceAttachParams
+     Parameters:
+       input pcKeyValue - Primary key value
+       input pFilter - Filter parameters (can be ?)
+       input phDataset - Dataset handle
+     Returns: DataSourceAttachParams object
+    ------------------------------------------------------------------------------*/
+    method private DataSourceAttachParams CreateAttachParams(
+        input pcKeyValue as character,
+        input pFilter as generics.FilterParams,
+        input phDataset as handle):
+        
+        return new DataSourceAttachParams(
+            this-object:TempTableName,
+            this-object:PrimaryKeyField,
+            this-object:DatabaseTable,
+            this-object:PrimaryKeyField,
+            pcKeyValue,
+            pFilter,
+            phDataset).
+    end method.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Constructor for BaseRepository
      Parameters:
        input pcTempTableName - Name of the temp-table
@@ -85,14 +108,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         
             
         /* Use data access object to fetch data */
-        attachParams = NEW DataSourceAttachParams(
-            this-object:TempTableName,
-            this-object:PrimaryKeyField,
-            this-object:DatabaseTable,
-            this-object:PrimaryKeyField,
-            pcId,
-            filter,
-            dshandle).
+        attachParams = this-object:CreateAttachParams(pcId, filter, dshandle).
         this-object:Dao:attachSource(attachParams).
             
         this-object:DatasetHandle = dshandle.
@@ -126,14 +142,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         dshandle:create-like(this-object:DatasetHandle).
        
         /* Use data access object to fetch filtered data */
-        attachParams = NEW DataSourceAttachParams(
-            this-object:TempTableName,
-            this-object:PrimaryKeyField,
-            this-object:DatabaseTable,
-            this-object:PrimaryKeyField,
-            pFilter:id1,
-            pFilter,
-            dshandle).
+        attachParams = this-object:CreateAttachParams(pFilter:id1, pFilter, dshandle).
         this-object:Dao:attachSource(attachParams).
         
         /* Return the new dataset handle - caller is responsible for cleanup */
@@ -166,14 +175,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         create dataset dshandle.
         dshandle = this-object:DatasetHandle.
         /* Attach data source for the new entity */
-        attachParams = NEW DataSourceAttachParams(
-            this-object:TempTableName,
-            this-object:PrimaryKeyField,
-            this-object:DatabaseTable,
-            this-object:PrimaryKeyField,
-            "",
-            ?,
-            dshandle).
+        attachParams = this-object:CreateAttachParams("", ?, dshandle).
         this-object:Dao:attachSource(attachParams).
             
         /* Convert JSON to dataset */
@@ -205,14 +207,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
             create dataset dshandle.
             dshandle = this-object:DatasetHandle.    
         /* Attach data source for the entity */
-        attachParams = NEW DataSourceAttachParams(
-            this-object:TempTableName,
-            this-object:PrimaryKeyField,
-            this-object:DatabaseTable,
-            this-object:PrimaryKeyField,
-            pcId,
-            filter,
-            dshandle).
+        attachParams = this-object:CreateAttachParams(pcId, filter, dshandle).
         this-object:Dao:attachSource(attachParams).
             
         /* Apply updates from JSON */
@@ -245,14 +240,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
             create dataset dshandle.
             dshandle = this-object:DatasetHandle.    
         /* Attach data source for the entity */
-        attachParams = NEW DataSourceAttachParams(
-            this-object:TempTableName,
-            this-object:PrimaryKeyField,
-            this-object:DatabaseTable,
-            this-object:PrimaryKeyField,
-            pcId,
-            filter,
-            dshandle).
+        attachParams = this-object:CreateAttachParams(pcId, filter, dshandle).
         this-object:Dao:attachSource(attachParams).
             
         /* Delete the entity */
@@ -283,7 +271,6 @@ class data.BaseRepository abstract implements interfaces.IRepository:
     method public longchar GetMetadata():
         var longchar lcModel = "".
         var handle hBuffer = ?.
-        message " what the fuck".
         
         /* Get the first buffer from the dataset */
         hBuffer = this-object:DatasetHandle:get-buffer-handle(1).

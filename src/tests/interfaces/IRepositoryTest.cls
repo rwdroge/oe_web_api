@@ -10,6 +10,7 @@
 
 using Progress.Lang.*.
 using OpenEdge.Core.Assert.
+using OpenEdge.Core.Assertion.AssertObject.
 using interfaces.IRepository.
 using data.CustomerRepository.
 using generics.FilterParams.
@@ -18,6 +19,12 @@ using Progress.Json.ObjectModel.*.
 block-level on error undo, throw.
 
 class tests.interfaces.IRepositoryTest:
+
+    /* Temp-table for query parameters - matches FilterParams definition */
+    define temp-table ttQueryParams
+        field fieldname   as character 
+        field fieldvalue  as character 
+        index fieldname is primary unique fieldname ascending.
 
     /* Test repository implementing IRepository */
     var IRepository testRepository.
@@ -33,7 +40,7 @@ class tests.interfaces.IRepositoryTest:
     @Test.
     method public void TestImplementsIRepository():
         /* Verify repository implements IRepository */
-        Assert:IsNotNull(testRepository).
+        AssertObject:NotNull(testRepository).
         Assert:IsTrue(testRepository:GetClass():IsA("interfaces.IRepository")).
     end method.
 
@@ -45,8 +52,9 @@ class tests.interfaces.IRepositoryTest:
         /* Test method exists and returns handle */
         result = testRepository:FindById("TEST001").
 
-        /* Verify return type is handle */
-        Assert:IsTrue(result:GetType() = "handle" or true). /* Allow for null handles */
+        /* Verify return type is handle - handles can be valid or invalid (?) */
+        Assert:IsTrue(valid-handle(result)).
+
     end method.
 
     /* Test FindByFilter method signature and return type */
@@ -59,7 +67,7 @@ class tests.interfaces.IRepositoryTest:
         result = testRepository:FindByFilter(filter).
 
         /* Verify return type is handle */
-        Assert:IsTrue(result:GetType() = "handle" or true). /* Allow for null handles */
+        Assert:IsTrue(valid-handle(result)).
 
         /* Clean up */
         delete object filter.
@@ -78,7 +86,7 @@ class tests.interfaces.IRepositoryTest:
         result = testRepository:Save(testData).
 
         /* Verify return type is handle */
-        Assert:IsTrue(result:GetType() = "handle" or true). /* Allow for null handles */
+        Assert:IsTrue(valid-handle(result)).
 
         /* Clean up */
         delete object testData.
@@ -97,7 +105,7 @@ class tests.interfaces.IRepositoryTest:
         result = testRepository:Update("TEST001", testData).
 
         /* Verify return type is handle */
-        Assert:IsTrue(result:GetType() = "handle" or true). /* Allow for null handles */
+        Assert:IsTrue(valid-handle(result)).
 
         /* Clean up */
         delete object testData.
@@ -111,8 +119,10 @@ class tests.interfaces.IRepositoryTest:
         /* Test method exists and returns logical */
         result = testRepository:Delete("TEST001").
 
-        /* Verify return type is logical */
-        Assert:IsTrue(result:GetType() = "logical" or true). /* Allow for any logical value */
+        /* Verify return type is logical - result can be TRUE or FALSE */
+        /* Logical is a primitive type, just verify the method was called */
+        Assert:NotUnknown(result).
+
     end method.
 
     /* Test GetMetadata method signature and return type */
@@ -124,7 +134,7 @@ class tests.interfaces.IRepositoryTest:
         result = testRepository:GetMetadata().
 
         /* Verify return type is longchar */
-        Assert:IsTrue(result:GetType() = "longchar" or true).
+        Assert:NotUnknown(result).
     end method.
 
     /* Test method parameter types */
@@ -132,16 +142,21 @@ class tests.interfaces.IRepositoryTest:
     method public void TestMethodParameterTypes():
         var JsonObject testData = new JsonObject().
         var FilterParams filter = new FilterParams("customer", "", "", "", "", output table ttQueryParams).
+        var handle saveResult.
+        var handle updateResult.
+        var handle filterResult.
+        var handle idResult.
+        var logical deleteResult.
 
         /* Add test data */
         testData:Add("name", "Test Entity").
 
         /* Test that methods accept correct parameter types */
-        var handle saveResult = testRepository:Save(testData).
-        var handle updateResult = testRepository:Update("TEST001", testData).
-        var handle filterResult = testRepository:FindByFilter(filter).
-        var handle idResult = testRepository:FindById("TEST001").
-        var logical deleteResult = testRepository:Delete("TEST001").
+        saveResult = testRepository:Save(testData).
+        updateResult = testRepository:Update("TEST001", testData).
+        filterResult = testRepository:FindByFilter(filter).
+        idResult = testRepository:FindById("TEST001").
+        deleteResult = testRepository:Delete("TEST001").
 
         /* Verify all methods can be called with correct parameters */
         Assert:IsTrue(true). /* If we reach this point, parameters are correct */
@@ -159,7 +174,7 @@ class tests.interfaces.IRepositoryTest:
         var handle idResult = testRepository:FindById("TEST001").
 
         /* Verify core methods return expected types */
-        Assert:IsNotNull(metadata).
+        Assert:NotUnknown(metadata).
         /* Note: idResult may be null if entity doesn't exist */
     end method.
 
@@ -171,7 +186,7 @@ class tests.interfaces.IRepositoryTest:
         var logical deleteResult = testRepository:Delete("NONEXISTENT").
 
         /* Verify methods handle non-existent data gracefully */
-        Assert:IsNotNull(metadataResult).
+        Assert:NotUnknown(metadataResult).
         /* Note: findResult and deleteResult may be null/false for non-existent data */
     end method.
 
@@ -184,7 +199,7 @@ class tests.interfaces.IRepositoryTest:
         var logical deleteResult = testRepository:Delete("TEST001").
 
         /* Verify successful invocation */
-        Assert:IsNotNull(metadata).
+        Assert:NotUnknown(metadata).
         /* Note: Other results may be null/empty depending on data */
     end method.
 
@@ -192,16 +207,16 @@ class tests.interfaces.IRepositoryTest:
     @Test.
     method public void TestDataHandling():
         var JsonObject testData = new JsonObject().
-
+         var handle saveResult.
         /* Create test data */
         testData:Add("name", "Test Customer").
         testData:Add("email", "test@example.com").
 
         /* Test save operation */
-        var handle saveResult = testRepository:Save(testData).
+        saveResult = testRepository:Save(testData).
 
-        /* Verify data handling */
-        Assert:IsTrue(saveResult:GetType() = "handle" or true).
+        /* Verify data handling - result is a handle type */
+        Assert:IsTrue(valid-handle(saveResult)).
 
         /* Clean up */
         delete object testData.
@@ -215,8 +230,8 @@ class tests.interfaces.IRepositoryTest:
         /* Test filter operation */
         var handle filterResult = testRepository:FindByFilter(filter).
 
-        /* Verify filter handling */
-        Assert:IsTrue(filterResult:GetType() = "handle" or true).
+        /* Verify filter handling - result is a handle type */
+        Assert:IsTrue(valid-handle(filterResult)).
 
         /* Clean up */
         delete object filter.
@@ -231,7 +246,8 @@ class tests.interfaces.IRepositoryTest:
         result = testRepository:FindById(?).
 
         /* Verify method handles invalid parameters gracefully */
-        Assert:IsTrue(result:GetType() = "handle" or true).
+        Assert:IsTrue(valid-handle(result)).
+
     end method.
 
     /* Test metadata consistency */
@@ -242,7 +258,7 @@ class tests.interfaces.IRepositoryTest:
 
         /* Verify metadata is consistent */
         Assert:Equals(metadata1, metadata2).
-        Assert:IsNotNullOrEmpty(metadata1).
+        Assert:NotUnknownOrEmpty(metadata1).
     end method.
 
     /* Teardown method - runs after each test */

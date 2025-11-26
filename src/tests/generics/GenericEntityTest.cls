@@ -181,7 +181,7 @@ class tests.generics.GenericEntityTest:
     @Test.
     method public void TestMemoryManagement():
         var integer i.
-        var GenericEntity entityArray extent 10.
+        define variable entityArray as GenericEntity extent 10 no-undo.
 
         /* Create multiple entities to test memory handling */
         do i = 1 to 10:
@@ -211,8 +211,8 @@ class tests.generics.GenericEntityTest:
         end.
 
         /* Verify list size and contents */
-        Assert:AreEqual(10, entityList:Count).
-        Assert:IsFalse(entityList:IsEmpty()).
+        Assert:Equals(10, entityList:Count).
+        Assert:IsFalse(entityList:Count = 0).
 
         /* Test accessing elements */
         tempEntity = entityList:Get(1).
@@ -230,8 +230,8 @@ class tests.generics.GenericEntityTest:
 
         /* Clear the list */
         entityList:Clear().
-        Assert:AreEqual(0, entityList:Count).
-        Assert:IsTrue(entityList:IsEmpty()).
+        Assert:Equals(0, entityList:Count).
+        Assert:IsTrue(entityList:Count = 0).
     end method.
 
     /* Test error handling in constructor */
