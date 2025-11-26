@@ -63,10 +63,8 @@ class data.CustomerRepository inherits BaseRepository:
     method public handle FindCustomersByCountry(input pcCountry as character):
         var generics.FilterParams filter = new generics.FilterParams(
             "customer", 
-            ?, 
-            "country = '" + pcCountry + "'", 
-            ?, 
-            ?, 
+            "country = '" + pcCountry + "'",
+            "",
             output table ttQueryParams).
             
         /* Use base method to find customers */
@@ -87,10 +85,8 @@ class data.CustomerRepository inherits BaseRepository:
     method public handle FindCustomersBySalesRep(input pcSalesRep as character):
         var generics.FilterParams filter = new generics.FilterParams(
             "customer", 
-            ?, 
-            "salesrep = '" + pcSalesRep + "'", 
-            ?, 
-            ?, 
+            "salesrep = '" + pcSalesRep + "'",
+            "",
             output table ttQueryParams).
             
         /* Use base method to find customers */

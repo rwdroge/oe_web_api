@@ -63,10 +63,8 @@ class data.ItemRepository inherits BaseRepository:
     method public handle FindItemsByCategory(input pcCategory as character):
         var generics.FilterParams filter = new generics.FilterParams(
             "item", 
-            ?, 
-            "category = '" + pcCategory + "'", 
-            ?, 
-            ?, 
+            "category = '" + pcCategory + "'",
+            "",
             output table ttQueryParams).
             
         /* Use base method to find items */

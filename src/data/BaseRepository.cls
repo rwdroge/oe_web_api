@@ -140,7 +140,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         dshandle = this-object:PrepareDatasetHandle(false).
         empty temp-table ttQueryParams.
         filter = new generics.FilterParams(
-            this-object:DatabaseTable, ?, pcId, output table ttQueryParams).
+            this-object:DatabaseTable, "", pcId, output table ttQueryParams).
         
         /* Fetch data */
         this-object:AttachAndFetch(pcId, filter, dshandle).
@@ -228,7 +228,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         /* Prepare dataset and filter */
         dshandle = this-object:PrepareDatasetHandle(false).
         filter = new generics.FilterParams(
-            this-object:DatabaseTable, ?, pcId, output table ttQueryParams).
+            this-object:DatabaseTable, "", pcId, output table ttQueryParams).
         
         /* Fetch existing entity */
         this-object:AttachAndFetch(pcId, filter, dshandle).
@@ -260,7 +260,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         /* Prepare dataset and filter */
         dshandle = this-object:PrepareDatasetHandle(false).
         filter = new generics.FilterParams(
-            this-object:DatabaseTable, ?, pcId, output table ttQueryParams).
+            this-object:DatabaseTable, "", pcId, output table ttQueryParams).
         
         /* Fetch entity to delete */
         this-object:AttachAndFetch(pcId, filter, dshandle).

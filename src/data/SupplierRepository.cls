@@ -63,10 +63,8 @@ class data.SupplierRepository inherits BaseRepository:
     method public handle FindSuppliersByCountry(input pcCountry as character):
         var generics.FilterParams filter = new generics.FilterParams(
             "supplier", 
-            ?, 
-            "country = '" + pcCountry + "'", 
-            ?, 
-            ?, 
+            "country = '" + pcCountry + "'",
+            "",
             output table ttQueryParams).
             
         /* Use base method to find suppliers */
@@ -87,10 +85,8 @@ class data.SupplierRepository inherits BaseRepository:
     method public handle FindSuppliersWithDiscount(input piMinDiscount as integer):
         var generics.FilterParams filter = new generics.FilterParams(
             "supplier", 
-            ?, 
-            "discount >= " + string(piMinDiscount), 
-            ?, 
-            ?, 
+            "discount >= " + string(piMinDiscount),
+            "",
             output table ttQueryParams).
             
         /* Use base method to find suppliers */

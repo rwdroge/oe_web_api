@@ -44,22 +44,17 @@ class data.DataAccess:
        - Handles sorting through order by clause
     ------------------------------------------------------------------------------*/
     /*------------------------------------------------------------------------------
-     Purpose: Process records with pagination using query repositioning
+     Purpose: Reposition query to starting point
      Parameters:
        input hQuery - Query handle
        input hBuffer - Buffer handle
-       input hTargetBuffer - Target buffer handle
-       input context - Query context with pagination settings
+       input context - Query context
     ------------------------------------------------------------------------------*/
-    method private void ProcessRecordsWithPagination(
+    method private void RepositionQuery(
         input hQuery as handle,
         input hBuffer as handle,
-        input hTargetBuffer as handle,
         input context as QueryContext):
         
-        var integer iCount.
-        
-        /* Position to specific record or skip rows */
         if context:RowId > "" and context:RowId <> "?" then
         do:
             hQuery:reposition-to-rowid(to-rowid(context:RowId)) no-error.
@@ -80,6 +75,26 @@ class data.DataAccess:
                 undo, throw new Progress.Lang.AppError(
                     "Error getting next record: " + error-status:get-message(1)).
         end.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Process records with pagination using query repositioning
+     Parameters:
+       input hQuery - Query handle
+       input hBuffer - Buffer handle
+       input hTargetBuffer - Target buffer handle
+       input context - Query context with pagination settings
+    ------------------------------------------------------------------------------*/
+    method private void ProcessRecordsWithPagination(
+        input hQuery as handle,
+        input hBuffer as handle,
+        input hTargetBuffer as handle,
+        input context as QueryContext):
+        
+        var integer iCount.
+        
+        /* Position to starting point */
+        this-object:RepositionQuery(hQuery, hBuffer, context).
         
         /* Process records within maxRows limit */
         iCount = 0.
@@ -133,6 +148,180 @@ class data.DataAccess:
     end method.
     
     /*------------------------------------------------------------------------------
+     Purpose: Process primary records with filtering and pagination
+     Parameters:
+       input hDataSource - Data source handle
+       input hBuffer - Buffer handle
+       input params - DataSourceAttachParams
+       input context - Query context
+       input iEntry - Entry index
+    ------------------------------------------------------------------------------*/
+    method private void ProcessPrimaryRecords(
+        input hDataSource as handle,
+        input hBuffer as handle,
+        input params as DataSourceAttachParams,
+        input context as QueryContext,
+        input iEntry as integer):
+        
+        var handle hQuery, qh.
+        var integer iNumRecs.
+        var character cWhere.
+        
+        /* Configure batch size */
+        if context:MaxRows <> ? and context:MaxRows > 0 then
+        do:
+            this-object:ConfigureBatchSize(hBuffer, params, context, entry(1, params:Sources)).
+            params:dsDataSet:get-buffer-handle(1):batch-size = context:MaxRows.
+        end.
+        else
+            params:dsDataSet:get-buffer-handle(iEntry):batch-size = 
+                (if context:RowId > "" then 1 else 0).
+        
+        /* Build complete WHERE clause */
+        cWhere = if context:Where > "" then 
+                    (context:Where + " " + context:OrderBy)
+                 else 
+                    context:OrderBy.
+        
+        hDataSource:fill-where-string = cWhere.
+        
+        /* Execute query with or without pagination */
+        if context:UseReposition then
+            this-object:ExecuteWithPagination(hDataSource, hBuffer, params, context).
+        else
+            this-object:ExecuteWithoutPagination(hDataSource, params, context, iEntry).
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Configure batch size with preselect query
+     Parameters:
+       input hBuffer - Buffer handle
+       input params - DataSourceAttachParams
+       input context - Query context
+       input pcTableName - Table name
+    ------------------------------------------------------------------------------*/
+    method private void ConfigureBatchSize(
+        input hBuffer as handle,
+        input params as DataSourceAttachParams,
+        input context as QueryContext,
+        input pcTableName as character):
+        
+        var handle qh.
+        var integer iNumRecs.
+        
+        create query qh no-error.
+        if error-status:error then
+            undo, throw new Progress.Lang.AppError(
+                "Error creating query: " + error-status:get-message(1)).
+                
+        qh:set-buffers(hBuffer).
+        qh:query-prepare("preselect each " + pcTableName + context:Where) no-error.
+        if error-status:error then
+        do:
+            delete object qh no-error.
+            undo, throw new Progress.Lang.AppError(
+                "Error preparing query: " + error-status:get-message(1)).
+        end.
+                
+        qh:query-open() no-error.
+        if error-status:error then
+        do:
+            delete object qh no-error.
+            undo, throw new Progress.Lang.AppError(
+                "Error opening query: " + error-status:get-message(1)).
+        end.
+                
+        iNumRecs = qh:num-results.
+        delete object qh no-error.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Execute query with pagination (reposition)
+     Parameters:
+       input hDataSource - Data source handle
+       input hBuffer - Buffer handle
+       input params - DataSourceAttachParams
+       input context - Query context
+    ------------------------------------------------------------------------------*/
+    method private void ExecuteWithPagination(
+        input hDataSource as handle,
+        input hBuffer as handle,
+        input params as DataSourceAttachParams,
+        input context as QueryContext):
+        
+        var handle hQuery.
+        
+        hQuery = hDataSource:query no-error.
+        if error-status:error then
+            undo, throw new Progress.Lang.AppError(
+                "Error getting query handle: " + error-status:get-message(1)).
+        
+        MemoryProfiler:TakeSnapshot("attach_qopen_before").
+        hQuery:query-open no-error.
+        if error-status:error then
+            undo, throw new Progress.Lang.AppError(
+                "Error opening query: " + error-status:get-message(1)).
+        
+        this-object:ProcessRecordsWithPagination(
+            hQuery, hBuffer, params:dsDataSet:get-buffer-handle(1), context).
+        
+        MemoryProfiler:TakeSnapshot("attach_qopen_after").
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Execute query without pagination (standard fill)
+     Parameters:
+       input hDataSource - Data source handle
+       input params - DataSourceAttachParams
+       input context - Query context
+       input iEntry - Entry index
+    ------------------------------------------------------------------------------*/
+    method private void ExecuteWithoutPagination(
+        input hDataSource as handle,
+        input params as DataSourceAttachParams,
+        input context as QueryContext,
+        input iEntry as integer):
+        
+        if context:RowId > "" then
+            hDataSource:restart-rowid(1) = to-rowid(context:RowId).
+            
+        params:dsDataSet:get-buffer-handle(iEntry):set-callback("after-row-fill", "addIdField").
+        MemoryProfiler:TakeSnapshot("attach_fill_before").
+        params:dsDataSet:fill().
+        MemoryProfiler:TakeSnapshot("attach_fill_after").
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Process child records
+     Parameters:
+       input hBuffer - Buffer handle
+       input params - DataSourceAttachParams
+       input context - Query context
+    ------------------------------------------------------------------------------*/
+    method private void ProcessChildRecords(
+        input hBuffer as handle,
+        input params as DataSourceAttachParams,
+        input context as QueryContext):
+        
+        var handle hQuery.
+        
+        create query hQuery.
+        hQuery:add-buffer(hBuffer).
+        hQuery:query-prepare("for each " + entry(1, params:Sources) +
+            " where " + entry(1, params:SourceKeys) + " = " + context:KeyValue).
+        
+        MemoryProfiler:TakeSnapshot("attach_child_qopen_before").
+        hQuery:query-open.
+        hQuery:get-next() no-error.
+        
+        if hBuffer:available then
+            this-object:CopyBufferWithIdAndSeq(hBuffer, params:dsDataSet:get-buffer-handle(1)).
+        
+        MemoryProfiler:TakeSnapshot("attach_child_qopen_after").
+        delete object hQuery no-error.
+    end method.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Prepare query context from parameters
      Parameters:
        input params - DataSourceAttachParams object
@@ -170,16 +359,9 @@ class data.DataAccess:
     end method.
     
     method public void attachSource(input params as DataSourceAttachParams):
-        
-        /* Handle variables */
-        var handle hDataSource, hBuffer, hQuery, qh.
-        
-        /* Integer variables */
-        var integer iNumRecs, iEntry.
-        
-        /* Query context */
+        var handle hDataSource, hBuffer.
+        var integer iEntry.
         var QueryContext context.
-        var character cWhere.
         
         MemoryProfiler:TakeSnapshot("attach_begin").
         
@@ -195,14 +377,13 @@ class data.DataAccess:
         
         /* Process each data source */
         do iEntry = 1 to num-entries(params:Sources):
-            /* Create and attach data source using helper */
+            /* Create and attach data source */
             DataAccessHelper:CreateDataSourceBuffer(
                 entry(iEntry, params:Sources),
                 entry(iEntry, params:SourceKeys),
                 output hDataSource,
                 output hBuffer).
             
-            /* Attach data source to dataset buffer */
             params:dsDataSet:get-buffer-handle(iEntry):attach-data-source(hDataSource) no-error.
             if error-status:error then 
             do:
@@ -216,104 +397,17 @@ class data.DataAccess:
             if params:Filter <> ? then
             do:
                 if (iEntry = 1 and context:KeyValue = "") then
-                do:
-                    /* Handle maximum rows limit */
-                    if context:MaxRows <> ? and context:MaxRows > 0 then
-                    do:
-                        create query qh no-error.
-                        if error-status:error then
-                            undo, throw new Progress.Lang.AppError(
-                                "Error creating query: " + error-status:get-message(1)).
-                                
-                        qh:set-buffers(hBuffer).
-                        qh:query-prepare("preselect each " + entry(1, params:Sources) + context:Where) no-error.
-                        if error-status:error then
-                            undo, throw new Progress.Lang.AppError(
-                                "Error preparing query: " + error-status:get-message(1)).
-                                
-                        qh:query-open() no-error.
-                        if error-status:error then
-                            undo, throw new Progress.Lang.AppError(
-                                "Error opening query: " + error-status:get-message(1)).
-                                
-                        iNumRecs = qh:num-results.
-                        params:dsDataSet:get-buffer-handle(1):batch-size = context:MaxRows.
-                    end.
-                    else do:
-                        /* Set batch size based on ID presence */
-                        params:dsDataSet:get-buffer-handle(iEntry):batch-size = 
-                            (if context:RowId > "" then 1 else 0).
-                    end.
-                    
-                    /* Build complete WHERE clause with ORDER BY */
-                    cWhere = if context:Where > "" then 
-                                (context:Where + " " + context:OrderBy)
-                             else 
-                                context:OrderBy.
-                
-                    hDataSource:fill-where-string = cWhere.
-                    
-                    if context:UseReposition then
-                    do:
-                        /* Get query handle from data source */
-                        hQuery = hDataSource:query no-error.
-                        if error-status:error then
-                            undo, throw new Progress.Lang.AppError(
-                                "Error getting query handle: " + error-status:get-message(1)).
-                        
-                        /* Open the query */
-                        MemoryProfiler:TakeSnapshot("attach_qopen_before").
-                        hQuery:query-open no-error.
-                        if error-status:error then
-                            undo, throw new Progress.Lang.AppError(
-                                "Error opening query: " + error-status:get-message(1)).
-                        
-                        /* Process records with pagination */
-                        this-object:ProcessRecordsWithPagination(
-                            hQuery, hBuffer, params:dsDataSet:get-buffer-handle(1), context).
-                        
-                        MemoryProfiler:TakeSnapshot("attach_qopen_after").
-                    end.
-                    else 
-                    do:
-                        if context:RowId > "" then hDataSource:restart-rowid(1)
-                            = to-rowid(context:RowId).
-                        params:dsDataSet:get-buffer-handle(iEntry):set-callback ("after-row-fill", "addIdField").
-                        MemoryProfiler:TakeSnapshot("attach_fill_before").
-                        params:dsDataSet:fill().
-                        MemoryProfiler:TakeSnapshot("attach_fill_after").
-                    end.
-                end. /* do if iEntry = 1 */
-                else do:
-                    /* Process child records */
-                    create query hQuery.
-                    hQuery:add-buffer(hBuffer).
-                    hQuery:query-prepare("for each " + entry(1, params:Sources) +
-                        " where " + entry(1, params:SourceKeys) + " = " + context:KeyValue).
-                    hDataSource:query = hQuery.
-                    MemoryProfiler:TakeSnapshot("attach_child_qopen_before").
-                    hQuery:query-open.
-                    hQuery:get-next() no-error.
-                    
-                    if hBuffer:available then
-                        this-object:CopyBufferWithIdAndSeq(hBuffer, params:dsDataSet:get-buffer-handle(1)).
-                    
-                    MemoryProfiler:TakeSnapshot("attach_child_qopen_after").
-                    delete object hQuery.
-                end. 
+                    this-object:ProcessPrimaryRecords(hDataSource, hBuffer, params, context, iEntry).
+                else
+                    this-object:ProcessChildRecords(hBuffer, params, context).
             end.
-            
-            
-        end. /* DO iEntry = 1 TO NUM-ENTRIES */
+        end.
+        
         catch e as Progress.Lang.Error:
             undo, throw e.
         end.
-        
         finally:
-            /* Clean up all handles and objects */
             delete object hBuffer no-error.
-            delete object hQuery no-error.
-            delete object qh no-error.
             delete object hDataSource no-error.
             delete object context no-error.
         end.
