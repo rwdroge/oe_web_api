@@ -15,6 +15,7 @@
 using Progress.Lang.*.
 using generics.FilterParams.
 using generics.DataSourceAttachParams.
+using generics.QueryContext.
 using Progress.Profiler.MemoryProfiler.
 using data.DataAccessHelper.
 
@@ -47,32 +48,28 @@ class data.DataAccess:
      Parameters:
        input hQuery - Query handle
        input hBuffer - Buffer handle
-       input params - DataSourceAttachParams
-       input cId - Row ID for positioning
-       input iSkipRows - Rows to skip
-       input iMaxRows - Maximum rows to fetch
+       input hTargetBuffer - Target buffer handle
+       input context - Query context with pagination settings
     ------------------------------------------------------------------------------*/
     method private void ProcessRecordsWithPagination(
         input hQuery as handle,
         input hBuffer as handle,
-        input params as DataSourceAttachParams,
-        input cId as character,
-        input iSkipRows as integer,
-        input iMaxRows as integer):
+        input hTargetBuffer as handle,
+        input context as QueryContext):
         
         var integer iCount.
         
         /* Position to specific record or skip rows */
-        if cId > "" and cId <> "?" then
+        if context:RowId > "" and context:RowId <> "?" then
         do:
-            hQuery:reposition-to-rowid(to-rowid(cId)) no-error.
+            hQuery:reposition-to-rowid(to-rowid(context:RowId)) no-error.
             if error-status:error then
                 undo, throw new Progress.Lang.AppError(
                     "Error repositioning to rowid: " + error-status:get-message(1)).
         end.
-        else if iSkipRows <> ? and iSkipRows > 0 then
+        else if context:SkipRows <> ? and context:SkipRows > 0 then
         do:
-            hQuery:reposition-to-row(iSkipRows) no-error.
+            hQuery:reposition-to-row(context:SkipRows) no-error.
             if error-status:error then
                 undo, throw new Progress.Lang.AppError(
                     "Error repositioning to row: " + error-status:get-message(1)).
@@ -86,14 +83,14 @@ class data.DataAccess:
         
         /* Process records within maxRows limit */
         iCount = 0.
-        repeat while not hQuery:query-off-end and (iMaxRows = ? or iCount < iMaxRows):
+        repeat while not hQuery:query-off-end and (context:MaxRows = ? or iCount < context:MaxRows):
             hQuery:get-next() no-error.
             if error-status:error then
                 undo, throw new Progress.Lang.AppError(
                     "Error getting next record: " + error-status:get-message(1)).
                     
             if hBuffer:available then
-                this-object:CopyBufferWithIdAndSeq(hBuffer, params:dsDataSet:get-buffer-handle(1)).
+                this-object:CopyBufferWithIdAndSeq(hBuffer, hTargetBuffer).
             
             iCount = iCount + 1.
         end.
@@ -136,53 +133,40 @@ class data.DataAccess:
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Prepare query with WHERE and ORDER BY clauses
+     Purpose: Prepare query context from parameters
      Parameters:
        input params - DataSourceAttachParams object
-       output cWhere - WHERE clause
-       output cOrderBy - ORDER BY clause
-       output iMaxRows - Maximum rows to fetch
-       output iSkipRows - Rows to skip
-       output pcKeyValue - Primary key value
-       output cId - Row ID
+     Returns: QueryContext object with prepared clauses
     ------------------------------------------------------------------------------*/
-    method private void PrepareQueryClauses(
-        input params as DataSourceAttachParams,
-        output cWhere as character,
-        output cOrderBy as character,
-        output iMaxRows as integer,
-        output iSkipRows as integer,
-        output pcKeyValue as character,
-        output cId as character):
+    method private QueryContext PrepareQueryContext(
+        input params as DataSourceAttachParams):
         
-        /* Initialize output parameters */
-        assign
-            cWhere = ""
-            cOrderBy = ""
-            iMaxRows = ?
-            iSkipRows = ?
-            pcKeyValue = ""
-            cId = ?.
+        var QueryContext context = new QueryContext().
         
         /* Extract filter parameters with error handling */
         if params:Filter <> ? then
         do:
             assign
-                iMaxRows = params:Filter:TopRecs
-                iSkipRows = params:Filter:SkipRecs
-                cWhere = params:Filter:Where
-                cId = params:Filter:rowid
-                pcKeyValue = params:Filter:id1
-                cOrderBy = params:Filter:SortBy no-error.
+                context:MaxRows = params:Filter:TopRecs
+                context:SkipRows = params:Filter:SkipRecs
+                context:Where = params:Filter:Where
+                context:RowId = params:Filter:rowid
+                context:KeyValue = params:Filter:id1
+                context:OrderBy = params:Filter:SortBy no-error.
         end.
         
         /* Use default key value if filter doesn't provide one */
-        if pcKeyValue = "" and params:KeyValue > "" then
-            pcKeyValue = params:KeyValue.
+        if context:KeyValue = "" and params:KeyValue > "" then
+            context:KeyValue = params:KeyValue.
         
         /* Construct WHERE and ORDER BY clauses using helper */
-        cWhere = DataAccessHelper:BuildWhereClause(cWhere).
-        cOrderBy = DataAccessHelper:BuildOrderByClause(cOrderBy).
+        context:Where = DataAccessHelper:BuildWhereClause(context:Where).
+        context:OrderBy = DataAccessHelper:BuildOrderByClause(context:OrderBy).
+        
+        /* Set pagination flag */
+        context:UseReposition = context:SkipRows > 0.
+        
+        return context.
     end method.
     
     method public void attachSource(input params as DataSourceAttachParams):
@@ -191,14 +175,11 @@ class data.DataAccess:
         var handle hDataSource, hBuffer, hQuery, qh.
         
         /* Integer variables */
-        var integer iNumRecs, iEntry, iCount.
-        var integer iMaxRows, iSkipRows.
+        var integer iNumRecs, iEntry.
         
-        /* Logical variables */
-        var logical lUseReposition.
-        
-        /* Character variables */
-        var character cWhere, cOrderby, cId, pcKeyValue.
+        /* Query context */
+        var QueryContext context.
+        var character cWhere.
         
         MemoryProfiler:TakeSnapshot("attach_begin").
         
@@ -209,12 +190,8 @@ class data.DataAccess:
         if not params:IsValid() then
             undo, throw new Progress.Lang.AppError("Invalid DataSourceAttachParams: required fields are missing").
         
-        /* Prepare query clauses */
-        this-object:PrepareQueryClauses(params, output cWhere, output cOrderBy, 
-            output iMaxRows, output iSkipRows, output pcKeyValue, output cId).
-        
-        /* Set pagination flag */
-        lUseReposition = iSkipRows > 0.
+        /* Prepare query context */
+        context = this-object:PrepareQueryContext(params).
         
         /* Process each data source */
         do iEntry = 1 to num-entries(params:Sources):
@@ -238,10 +215,10 @@ class data.DataAccess:
             /* Apply filtering if provided */
             if params:Filter <> ? then
             do:
-                if (iEntry = 1 and pcKeyValue = "") then
+                if (iEntry = 1 and context:KeyValue = "") then
                 do:
                     /* Handle maximum rows limit */
-                    if iMaxRows <> ? and iMaxRows > 0 then
+                    if context:MaxRows <> ? and context:MaxRows > 0 then
                     do:
                         create query qh no-error.
                         if error-status:error then
@@ -249,7 +226,7 @@ class data.DataAccess:
                                 "Error creating query: " + error-status:get-message(1)).
                                 
                         qh:set-buffers(hBuffer).
-                        qh:query-prepare("preselect each " + entry(1, params:Sources) + cWhere) no-error.
+                        qh:query-prepare("preselect each " + entry(1, params:Sources) + context:Where) no-error.
                         if error-status:error then
                             undo, throw new Progress.Lang.AppError(
                                 "Error preparing query: " + error-status:get-message(1)).
@@ -260,26 +237,23 @@ class data.DataAccess:
                                 "Error opening query: " + error-status:get-message(1)).
                                 
                         iNumRecs = qh:num-results.
-                        params:dsDataSet:get-buffer-handle(1):batch-size = iMaxRows.
+                        params:dsDataSet:get-buffer-handle(1):batch-size = context:MaxRows.
                     end.
                     else do:
                         /* Set batch size based on ID presence */
                         params:dsDataSet:get-buffer-handle(iEntry):batch-size = 
-                            (if cId > "" then 1 else 0).
+                            (if context:RowId > "" then 1 else 0).
                     end.
                     
-                    /* Ensure order by is initialized */
-                    if cOrderBy = ? then 
-                        cOrderBy = "".
-                
-                    cWhere =    if cWhere > "" then 
-                                    (cWhere + " " + cOrderBy)
-                                else 
-                                    (cOrderBy).
+                    /* Build complete WHERE clause with ORDER BY */
+                    cWhere = if context:Where > "" then 
+                                (context:Where + " " + context:OrderBy)
+                             else 
+                                context:OrderBy.
                 
                     hDataSource:fill-where-string = cWhere.
                     
-                    if lUseReposition then
+                    if context:UseReposition then
                     do:
                         /* Get query handle from data source */
                         hQuery = hDataSource:query no-error.
@@ -296,19 +270,18 @@ class data.DataAccess:
                         
                         /* Process records with pagination */
                         this-object:ProcessRecordsWithPagination(
-                            hQuery, hBuffer, params, cId, iSkipRows, iMaxRows).
+                            hQuery, hBuffer, params:dsDataSet:get-buffer-handle(1), context).
                         
                         MemoryProfiler:TakeSnapshot("attach_qopen_after").
                     end.
                     else 
                     do:
-                        if cId > "" then hDataSource:restart-rowid(1)
-                            = to-rowid ((cId)).
+                        if context:RowId > "" then hDataSource:restart-rowid(1)
+                            = to-rowid(context:RowId).
                         params:dsDataSet:get-buffer-handle(iEntry):set-callback ("after-row-fill", "addIdField").
                         MemoryProfiler:TakeSnapshot("attach_fill_before").
                         params:dsDataSet:fill().
                         MemoryProfiler:TakeSnapshot("attach_fill_after").
-                        
                     end.
                 end. /* do if iEntry = 1 */
                 else do:
@@ -316,7 +289,7 @@ class data.DataAccess:
                     create query hQuery.
                     hQuery:add-buffer(hBuffer).
                     hQuery:query-prepare("for each " + entry(1, params:Sources) +
-                        " where " + entry(1, params:SourceKeys) + " = " + pcKeyValue).
+                        " where " + entry(1, params:SourceKeys) + " = " + context:KeyValue).
                     hDataSource:query = hQuery.
                     MemoryProfiler:TakeSnapshot("attach_child_qopen_before").
                     hQuery:query-open.
@@ -337,11 +310,12 @@ class data.DataAccess:
         end.
         
         finally:
-            /* Clean up all handles */
+            /* Clean up all handles and objects */
             delete object hBuffer no-error.
             delete object hQuery no-error.
             delete object qh no-error.
             delete object hDataSource no-error.
+            delete object context no-error.
         end.
     end method.
 

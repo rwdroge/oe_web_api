@@ -197,21 +197,20 @@ class data.BaseRepository abstract implements interfaces.IRepository:
     ------------------------------------------------------------------------------*/
     method public handle Save(input poEntity as JsonObject):
         var handle dshandle.
-        VAR DataSourceAttachParams attachParams.
-        create dataset dshandle.
-        dshandle = this-object:DatasetHandle.
+        
+        /* Prepare dataset */
+        dshandle = this-object:PrepareDatasetHandle(false).
+        
         /* Attach data source for the new entity */
-        attachParams = this-object:CreateAttachParams("", ?, dshandle).
-        this-object:Dao:attachSource(attachParams).
-            
+        this-object:AttachAndFetch("", ?, dshandle).
+        
         /* Convert JSON to dataset */
         dshandle:read-json('JsonObject', poEntity).
         
-        /* Commit changes to database */
+        /* Commit changes */
         this-object:Dao:commitChanges(this-object:PrimaryKeyField, 
-                                     input-output dataset-handle dshandle by-reference).
-                                     
-        /* Return dataset handle */
+            input-output dataset-handle dshandle by-reference).
+        
         return dshandle.
     end method.
     
