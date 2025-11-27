@@ -102,7 +102,7 @@ class tests.interfaces.IRepositoryTest:
         testData:Add("name", "Updated Entity").
 
         /* Test method exists and returns handle */
-        result = testRepository:Update("TEST001", testData).
+        result = testRepository:UpdateEntity("TEST001", testData).
 
         /* Verify return type is handle */
         Assert:IsTrue(valid-handle(result)).
@@ -153,7 +153,7 @@ class tests.interfaces.IRepositoryTest:
 
         /* Test that methods accept correct parameter types */
         saveResult = testRepository:Save(testData).
-        updateResult = testRepository:Update("TEST001", testData).
+        updateResult = testRepository:UpdateEntity("TEST001", testData).
         filterResult = testRepository:FindByFilter(filter).
         idResult = testRepository:FindById("TEST001").
         deleteResult = testRepository:Delete("TEST001").

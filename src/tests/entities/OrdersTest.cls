@@ -158,7 +158,7 @@ class tests.entities.OrdersTest:
         
         /* Test Update method */
         do on error undo, throw:
-            ordersEntity:Update(testFilter, testJsonObject, output dataset-handle hDataSet).
+            ordersEntity:UpdateRecord(testFilter, testJsonObject, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),
@@ -227,7 +227,7 @@ class tests.entities.OrdersTest:
         
         /* Test Update method which calls Updateorders internally */
         do on error undo, throw:
-            ordersEntity:Update(testFilter, testJsonObject, output dataset-handle hDataSet).
+            ordersEntity:UpdateRecord(testFilter, testJsonObject, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),

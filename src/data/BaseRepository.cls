@@ -244,7 +244,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
        input poEntity - JSON object containing updated entity data
      Returns: handle to dataset containing the updated entity
     ------------------------------------------------------------------------------*/
-    method public handle Update(input pcId as character, input poEntity as JsonObject):
+    method public handle UpdateEntity(input pcId as character, input poEntity as JsonObject):
         var handle dshandle.
         var generics.FilterParams filter.
         

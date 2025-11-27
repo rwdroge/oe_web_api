@@ -62,7 +62,7 @@ CLASS tests.mocks.MockService IMPLEMENTS IService:
         RETURN jsonObj.
     END METHOD.
     
-    METHOD PUBLIC JsonObject Update(INPUT id AS CHARACTER, INPUT data AS JsonObject):
+    METHOD PUBLIC JsonObject UpdateEntity(INPUT id AS CHARACTER, INPUT data AS JsonObject):
         VAR JsonObject jsonObj.
         jsonObj = NEW JsonObject().
         jsonObj:Add("id", id).

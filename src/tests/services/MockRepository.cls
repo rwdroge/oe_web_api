@@ -88,7 +88,7 @@ class tests.services.MockRepository implements IRepository:
         return jsonObj.
     end method.
     
-    method public handle Update(input id as character, input data as Progress.Json.ObjectModel.JsonObject):
+    method public handle UpdateEntity(input id as character, input data as Progress.Json.ObjectModel.JsonObject):
         define variable hDataset as handle no-undo.
         define variable hTempTable as handle no-undo.
         define variable hBuffer as handle no-undo.

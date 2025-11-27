@@ -128,7 +128,7 @@ CLASS tests.services.BaseServiceTest INHERITS BaseService:
         data:Add("name", "Updated Test Item").
         
         /* Call Update method */
-        result = testService:Update("123", data).
+        result = testService:UpdateEntity("123", data).
         
         /* Verify result */
         Assert:NotNull(result, "Update should return a JsonObject").

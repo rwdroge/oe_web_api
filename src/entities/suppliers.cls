@@ -63,9 +63,9 @@ class entities.suppliers inherits BusinessEntity implements interfaces.CRUD:
               input  jsonObject - JSON data containing updated information
               output hDataSet   - Handle to the resulting dataset                                                                  
     ------------------------------------------------------------------------------*/
-    method public void Update(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
+    method public void UpdateRecord(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
         /* Use repository to update supplier */
-        hDataSet = supplierRepository:Update(filter:id1, jsonObject).
+        hDataSet = supplierRepository:UpdateEntity(filter:id1, jsonObject).
     end method.
     
     /*------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ class entities.suppliers inherits BusinessEntity implements interfaces.CRUD:
         updateJson:Read(dataset dsSupplier:get-buffer-handle(1):table-handle).
         
         /* Use repository to update */
-        dataset dsSupplier:handle = supplierRepository:Update(filter:id1, updateJson).
+        dataset dsSupplier:handle = supplierRepository:UpdateEntity(filter:id1, updateJson).
         
         finally:
             delete object updateJson no-error.

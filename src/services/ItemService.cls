@@ -13,6 +13,7 @@ using services.BaseService.
 using data.ItemRepository.
 using generics.FilterParams.
 using Progress.Json.ObjectModel.*.
+using interfaces.IRepository.
 
 block-level on error undo, throw.
 
@@ -28,6 +29,17 @@ class services.ItemService inherits BaseService:
     end constructor.
     
     /*------------------------------------------------------------------------------
+     Purpose: Constructor for ItemService with dependency injection
+     Parameters:
+       input poRepository - Repository instance (for testing)
+     Notes: Allows injection of mock repository for testing
+    ------------------------------------------------------------------------------*/
+    constructor public ItemService(input poRepository as interfaces.IRepository):
+        /* Call super constructor with provided repository and entity name */
+        super(poRepository, "item").
+    end constructor.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Get items by category
      Parameters:
        input pcCategory - Category name
@@ -35,17 +47,28 @@ class services.ItemService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetItemsByCategory(input pcCategory as character):
-        /* Cast repository to specific type to access specialized methods */
-        var ItemRepository itemRepo = cast(this-object:Repository, ItemRepository).
+        var handle hDataSet.
+        var ItemRepository itemRepo.
+        var JsonObject joResult.
+        var JsonArray jaItems.
+        var JsonObject joItem.
+        var handle hBuffer.
         
-        /* Get items by category */
-        var handle hDataSet = itemRepo:FindItemsByCategory(pcCategory).
+        /* Try to cast to ItemRepository, otherwise use dynamic invocation */
+        if type-of(this-object:Repository, ItemRepository) then do:
+            itemRepo = cast(this-object:Repository, ItemRepository).
+            hDataSet = itemRepo:FindItemsByCategory(pcCategory).
+        end.
+        else do:
+            /* For mock repositories, use dynamic invocation */
+            hDataSet = dynamic-invoke(this-object:Repository, "FindItemsByCategory", pcCategory).
+        end.
         
         /* Convert to JSON */
-        var JsonObject joResult = new JsonObject().
-        var JsonArray jaItems = new JsonArray().
-        var JsonObject joItem = new JsonObject().
-        var handle hBuffer = hDataSet:get-buffer-handle(1).
+        joResult = new JsonObject().
+        jaItems = new JsonArray().
+        joItem = new JsonObject().
+        hBuffer = hDataSet:get-buffer-handle(1).
         /* Check if items were found */
         if valid-handle(hDataSet) then do:
             hBuffer = hDataSet:get-buffer-handle(1).
@@ -122,7 +145,7 @@ class services.ItemService inherits BaseService:
         joItem:Add("discountApplied", pdDiscountPercent).
         
         /* Save updated item */
-        return this-object:Update(pcId, joItem).
+        return this-object:UpdateEntity(pcId, joItem).
     end method.
     
     /*------------------------------------------------------------------------------

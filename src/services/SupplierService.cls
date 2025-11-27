@@ -13,6 +13,7 @@ using services.BaseService.
 using data.SupplierRepository.
 using generics.FilterParams.
 using Progress.Json.ObjectModel.*.
+using interfaces.IRepository.
 
 block-level on error undo, throw.
 
@@ -28,6 +29,17 @@ class services.SupplierService inherits BaseService:
     end constructor.
     
     /*------------------------------------------------------------------------------
+     Purpose: Constructor for SupplierService with dependency injection
+     Parameters:
+       input poRepository - Repository instance (for testing)
+     Notes: Allows injection of mock repository for testing
+    ------------------------------------------------------------------------------*/
+    constructor public SupplierService(input poRepository as interfaces.IRepository):
+        /* Call super constructor with provided repository and entity name */
+        super(poRepository, "supplier").
+    end constructor.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Get suppliers by country
      Parameters:
        input pcCountry - Country name
@@ -35,17 +47,27 @@ class services.SupplierService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetSuppliersByCountry(input pcCountry as character):
-        /* Cast repository to specific type to access specialized methods */
-        var SupplierRepository supplierRepo = cast(this-object:Repository, SupplierRepository).
+        var handle hDataSet.
+        var SupplierRepository supplierRepo.
+        var JsonObject joResult.
+        var JsonArray jaSuppliers.
+        var JsonObject joSupplier.
+        var handle hBuffer.
         
-        /* Get suppliers by country */
-        var handle hDataSet = supplierRepo:FindSuppliersByCountry(pcCountry).
+        /* Try to cast to SupplierRepository, otherwise use dynamic invocation */
+        if type-of(this-object:Repository, SupplierRepository) then do:
+            supplierRepo = cast(this-object:Repository, SupplierRepository).
+            hDataSet = supplierRepo:FindSuppliersByCountry(pcCountry).
+        end.
+        else do:
+            /* For mock repositories, use dynamic invocation */
+            hDataSet = dynamic-invoke(this-object:Repository, "FindSuppliersByCountry", pcCountry).
+        end.
         
         /* Convert to JSON */
-        var JsonObject joResult = new JsonObject().
-        var JsonArray jaSuppliers = new JsonArray().
-        var JsonObject joSupplier = new JsonObject().
-        var handle hBuffer = ?.
+        joResult = new JsonObject().
+        jaSuppliers = new JsonArray().
+        joSupplier = new JsonObject().
         
         /* Check if suppliers were found */
         if valid-handle(hDataSet) then do:
@@ -182,7 +204,7 @@ class services.SupplierService inherits BaseService:
         joSupplier:Set("discount", piDiscount).
         
         /* Save updated supplier */
-        return this-object:Update(pcId, joSupplier).
+        return this-object:UpdateEntity(pcId, joSupplier).
         
         finally:
             delete object joError no-error.

@@ -205,7 +205,7 @@ class services.BaseService abstract implements interfaces.IService:
        input poEntity - JSON object containing updated entity data
      Returns: JsonObject containing updated entity
     ------------------------------------------------------------------------------*/
-    method public JsonObject Update(input pcId as character, input poEntity as JsonObject):
+    method public JsonObject UpdateEntity(input pcId as character, input poEntity as JsonObject):
         /* Validate entity data */
         var character cInvalidFields.
         var character cFieldList = this-object:GetFieldList(poEntity).
@@ -213,7 +213,7 @@ class services.BaseService abstract implements interfaces.IService:
         
         /* Convert normalized JSON to ProDataSet format for repository */
         var JsonObject joProDataSetFormat = this-object:ConvertToProDataSetFormat(poEntity).
-        var handle hDataSet = this-object:Repository:Update(pcId, joProDataSetFormat).
+        var handle hDataSet = this-object:Repository:UpdateEntity(pcId, joProDataSetFormat).
         var JsonObject joResult = new JsonObject().
         
         if not this-object:ValidateFields(cFieldList, output cInvalidFields) then do:

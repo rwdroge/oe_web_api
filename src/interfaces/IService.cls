@@ -45,7 +45,7 @@ interface interfaces.IService:
        input poEntity - JSON object containing updated entity data
      Returns: JsonObject containing updated entity
     ------------------------------------------------------------------------------*/
-    method public JsonObject Update(input pcId as character, input poEntity as JsonObject).
+    method public JsonObject UpdateEntity(input pcId as character, input poEntity as JsonObject).
     
     /*------------------------------------------------------------------------------
      Purpose: Delete an entity by ID

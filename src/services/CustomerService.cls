@@ -13,6 +13,7 @@ using services.BaseService.
 using data.CustomerRepository.
 using generics.FilterParams.
 using Progress.Json.ObjectModel.*.
+using interfaces.IRepository.
 
 block-level on error undo, throw.
 
@@ -28,6 +29,17 @@ class services.CustomerService inherits BaseService:
     end constructor.
     
     /*------------------------------------------------------------------------------
+     Purpose: Constructor for CustomerService with dependency injection
+     Parameters:
+       input poRepository - Repository instance (for testing)
+     Notes: Allows injection of mock repository for testing
+    ------------------------------------------------------------------------------*/
+    constructor public CustomerService(input poRepository as interfaces.IRepository):
+        /* Call super constructor with provided repository and entity name */
+        super(poRepository, "customer").
+    end constructor.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Get customers by country
      Parameters:
        input pcCountry - Country name
@@ -35,17 +47,28 @@ class services.CustomerService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetCustomersByCountry(input pcCountry as character):
-        /* Cast repository to specific type to access specialized methods */
-        var CustomerRepository custRepo = cast(this-object:Repository, CustomerRepository).
+        var handle hDataSet.
+        var CustomerRepository custRepo.
+        var JsonObject joResult.
+        var JsonArray jaCustomers.
+        var JsonObject joCustomer.
+        var handle hBuffer.
         
-        /* Get customers by country */
-        var handle hDataSet = custRepo:FindCustomersByCountry(pcCountry).
+        /* Try to cast to CustomerRepository, otherwise use dynamic invocation */
+        if type-of(this-object:Repository, CustomerRepository) then do:
+            custRepo = cast(this-object:Repository, CustomerRepository).
+            hDataSet = custRepo:FindCustomersByCountry(pcCountry).
+        end.
+        else do:
+            /* For mock repositories, use dynamic invocation */
+            hDataSet = dynamic-invoke(this-object:Repository, "FindCustomersByCountry", pcCountry).
+        end.
         
         /* Convert to JSON */
-        var JsonObject joResult = new JsonObject().
-        var JsonArray jaCustomers = new JsonArray().
-        var JsonObject joCustomer = new JsonObject().
-        var handle hBuffer = hDataSet:get-buffer-handle(1).
+        joResult = new JsonObject().
+        jaCustomers = new JsonArray().
+        joCustomer = new JsonObject().
+        hBuffer = hDataSet:get-buffer-handle(1).
         
         /* Check if customers were found */
         if valid-handle(hDataSet) then do:
@@ -96,17 +119,28 @@ class services.CustomerService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetCustomersBySalesRep(input pcSalesRep as character):
-        /* Cast repository to specific type to access specialized methods */
-        var CustomerRepository custRepo = cast(this-object:Repository, CustomerRepository).
+        var handle hDataSet.
+        var CustomerRepository custRepo.
+        var JsonObject joResult.
+        var JsonArray jaCustomers.
+        var JsonObject joCustomer.
+        var handle hBuffer.
         
-        /* Get customers by sales rep */
-        var handle hDataSet = custRepo:FindCustomersBySalesRep(pcSalesRep).
+        /* Try to cast to CustomerRepository, otherwise use dynamic invocation */
+        if type-of(this-object:Repository, CustomerRepository) then do:
+            custRepo = cast(this-object:Repository, CustomerRepository).
+            hDataSet = custRepo:FindCustomersBySalesRep(pcSalesRep).
+        end.
+        else do:
+            /* For mock repositories, use dynamic invocation */
+            hDataSet = dynamic-invoke(this-object:Repository, "FindCustomersBySalesRep", pcSalesRep).
+        end.
         
         /* Convert to JSON */
-        var JsonObject joResult = new JsonObject().
-        var JsonArray jaCustomers = new JsonArray().
-        var JsonObject joCustomer = new JsonObject().
-        var handle hBuffer = hDataSet:get-buffer-handle(1).
+        joResult = new JsonObject().
+        jaCustomers = new JsonArray().
+        joCustomer = new JsonObject().
+        hBuffer = hDataSet:get-buffer-handle(1).
         
         /* Check if customers were found */
         if valid-handle(hDataSet) then do:
@@ -180,7 +214,7 @@ class services.CustomerService inherits BaseService:
         joCustomer:Set("creditlimit", pdCreditLimit).
         
         /* Save updated customer */
-        return this-object:Update(pcId, joCustomer).
+        return this-object:UpdateEntity(pcId, joCustomer).
         
 
     end method.

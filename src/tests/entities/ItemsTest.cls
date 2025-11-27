@@ -158,7 +158,7 @@ class tests.entities.ItemsTest:
         
         /* Test update method */
         do on error undo, throw:
-            itemsEntity:Update(testFilter, testJsonObject, output dataset-handle hDataSet).
+            itemsEntity:UpdateRecord(testFilter, testJsonObject, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),
@@ -227,7 +227,7 @@ class tests.entities.ItemsTest:
         
         /* Test update method which calls Updateitems internally */
         do on error undo, throw:
-            itemsEntity:Update(testFilter, testJsonObject, output dataset-handle hDataSet).
+            itemsEntity:UpdateRecord(testFilter, testJsonObject, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),

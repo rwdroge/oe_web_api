@@ -20,7 +20,7 @@ class tests.services.CustomerServiceTest:
 
     /* Test service instance */
     var private CustomerService customerService.
-    var private tests.mocks.MockCustomerRepository mockRepository.
+    var private MockCustomerRepository mockRepository.
 
     /* Setup method - runs before each test */
     @Setup.
@@ -28,10 +28,8 @@ class tests.services.CustomerServiceTest:
         /* Create mock repository */
         mockRepository = new MockCustomerRepository().
 
-        /* Create service with mock repository */
-        customerService = new CustomerService().
-        /* Replace the repository with our mock */
-        customerService:Repository = mockRepository.
+        /* Create service with mock repository using dependency injection */
+        customerService = new CustomerService(mockRepository).
     end method.
 
     /* TearDown method - runs after each test */
@@ -49,7 +47,8 @@ class tests.services.CustomerServiceTest:
     method public void TestConstructor():
         /* Test that service is created successfully */
         Assert:NotNull(customerService).
-        Assert:IsTrue(valid-object(customerService:Repository)).
+        /* Note: Repository is protected, so we test functionality instead */
+        Assert:NotNull(customerService:GetById("1001")).
     end method.
 
     /* Test GetCustomersByCountry with data */
@@ -317,7 +316,7 @@ class tests.services.CustomerServiceTest:
         updateData:Add("creditlimit", 10000.00).
 
         /* Test update */
-        result = customerService:Update("1001", updateData).
+        result = customerService:UpdateEntity("1001", updateData).
 
         /* Verify result */
         Assert:NotNull(result).
@@ -333,17 +332,13 @@ class tests.services.CustomerServiceTest:
     /* Test Delete method */
     @Test.
     method public void TestDelete():
-        var JsonObject result.
+        var logical result.
 
         /* Test deletion */
         result = customerService:Delete("1001").
 
         /* Verify result */
-        Assert:NotNull(result).
-        Assert:IsFalse(result:Has("error")).
-        Assert:Equals("Entity deleted successfully", result:GetCharacter("message")).
-        Assert:Equals("customer", result:GetCharacter("entity")).
-        Assert:Equals("1001", result:GetCharacter("id")).
+        Assert:IsTrue(result, "Delete should return true for successful deletion").
     end method.
 
 end class.

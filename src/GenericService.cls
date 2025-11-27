@@ -235,7 +235,7 @@ class GenericService inherits WebHandler:
         entityService = serviceFactory:GetService(entityName).
         
         /* Process update request */
-        ctx:JsonResponse = entityService:Update(id, requestBody).
+        ctx:JsonResponse = entityService:UpdateEntity(id, requestBody).
             
         /* Check for error in response */
         if ctx:JsonResponse:Has("error") then

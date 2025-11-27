@@ -103,7 +103,7 @@ class tests.interfaces.IServiceTest:
         testData:Add("name", "Updated Entity").
 
         /* Test method exists and returns JsonObject */
-        result = testService:Update("TEST001", testData).
+        result = testService:UpdateEntity("TEST001", testData).
 
         /* Verify return type */
         Assert:IsTrue(valid-object(result) and result:GetClass():toString() = ("Progress.Json.ObjectModel.JsonObject")).

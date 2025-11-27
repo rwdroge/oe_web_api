@@ -13,6 +13,7 @@ using services.BaseService.
 using data.OrderRepository.
 using generics.FilterParams.
 using Progress.Json.ObjectModel.*.
+using interfaces.IRepository.
 
 block-level on error undo, throw.
 
@@ -28,6 +29,17 @@ class services.OrderService inherits BaseService:
     end constructor.
     
     /*------------------------------------------------------------------------------
+     Purpose: Constructor for OrderService with dependency injection
+     Parameters:
+       input poRepository - Repository instance (for testing)
+     Notes: Allows injection of mock repository for testing
+    ------------------------------------------------------------------------------*/
+    constructor public OrderService(input poRepository as interfaces.IRepository):
+        /* Call super constructor with provided repository and entity name */
+        super(poRepository, "order").
+    end constructor.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Get orders by customer
      Parameters:
        input piCustNum - Customer number
@@ -35,17 +47,27 @@ class services.OrderService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetOrdersByCustomer(input piCustNum as integer):
-        /* Cast repository to specific type to access specialized methods */
-        var OrderRepository orderRepo = cast(this-object:Repository, OrderRepository).
+        var handle hDataSet.
+        var OrderRepository orderRepo.
+        var JsonObject joResult.
+        var JsonArray jaOrders.
+        var JsonObject joOrder.
+        var handle hBuffer.
         
-        /* Get orders by customer */
-        var handle hDataSet = orderRepo:FindOrdersByCustomer(piCustNum).
+        /* Try to cast to OrderRepository, otherwise use dynamic invocation */
+        if type-of(this-object:Repository, OrderRepository) then do:
+            orderRepo = cast(this-object:Repository, OrderRepository).
+            hDataSet = orderRepo:FindOrdersByCustomer(piCustNum).
+        end.
+        else do:
+            /* For mock repositories, use dynamic invocation */
+            hDataSet = dynamic-invoke(this-object:Repository, "FindOrdersByCustomer", piCustNum).
+        end.
         
         /* Convert to JSON */
-        var JsonObject joResult = new JsonObject().
-        var JsonArray jaOrders = new JsonArray().
-        var JsonObject joOrder = new JsonObject().
-        var handle hBuffer = ?.
+        joResult = new JsonObject().
+        jaOrders = new JsonArray().
+        joOrder = new JsonObject().
         
         /* Check if orders were found */
         if valid-handle(hDataSet) then do:
@@ -248,7 +270,7 @@ class services.OrderService inherits BaseService:
         joOrder:Set("orderstatus", pcStatus).
         
         /* Save updated order */
-        return this-object:Update(pcId, joOrder).
+        return this-object:UpdateEntity(pcId, joOrder).
         
         finally:
             delete object joError no-error.

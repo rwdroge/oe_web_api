@@ -159,7 +159,7 @@ class tests.entities.CustomersTest:
         
         /* Test update method */
         do on error undo, throw:
-            customersEntity:Update(testFilter, testJsonObject, output dataset-handle hDataSet).
+            customersEntity:UpdateRecord(testFilter, testJsonObject, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),
@@ -228,7 +228,7 @@ class tests.entities.CustomersTest:
         
         /* Test update method which calls updateCustomer internally */
         do on error undo, throw:
-            customersEntity:Update(testFilter, testJsonObject, output dataset-handle hDataSet).
+            customersEntity:UpdateRecord(testFilter, testJsonObject, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),

@@ -50,9 +50,9 @@ class entities.orders inherits BusinessEntity implements interfaces.CRUD:
         hDataSet = orderRepository:Save(jsonObject).
     end method.
     
-    method public void Update(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
+    method public void UpdateRecord(input filter as generics.FilterParams, input jsonObject as JsonObject, output dataset-handle hDataSet):
         /* Use repository to update order */
-        hDataSet = orderRepository:Update(filter:id1, jsonObject).
+        hDataSet = orderRepository:UpdateEntity(filter:id1, jsonObject).
     end method.
     
     method public void Delete(input filter as generics.FilterParams, output dataset-handle hDataSet):
@@ -84,7 +84,7 @@ class entities.orders inherits BusinessEntity implements interfaces.CRUD:
         updateJson:Read(dataset dsOrder:get-buffer-handle(1):table-handle).
         
         /* Use repository to update */
-        dataset dsOrder:handle = orderRepository:Update(filter:id1, updateJson).
+        dataset dsOrder:handle = orderRepository:UpdateEntity(filter:id1, updateJson).
         
         finally:
             delete object updateJson no-error.
