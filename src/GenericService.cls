@@ -18,6 +18,7 @@ using generics.FilterParams.
 using generics.FilterConstructorParams.
 using generics.ErrorResponseParams.
 using generics.CrudErrorParams.
+using generics.ResponseContext.
 using Progress.Lang.*.
 using OpenEdge.Net.*.
 using OpenEdge.Net.HTTP.*.
@@ -143,50 +144,46 @@ class GenericService inherits WebHandler:
         var character id = poRequest:GetPathParameter("id").
         var JsonObject requestBody = cast(poRequest:Entity, JsonObject).
         
-        /* Response objects */
-        var WebResponse response = new WebResponse().
-        var WebResponseWriter writer = new WebResponseWriter(response).
-        var JsonObject joResponse = ?.
+        /* Response context */
+        var ResponseContext ctx = new ResponseContext().
         
         /* Service instance */
         var IService entityService = ?.
         var CrudErrorParams errorParams.
         
-        /* Initialize response */
-        response:ContentType = "application/json".
-        
         /* Validate request body */
         if not valid-object(requestBody) then do:
-            response:StatusCode = 400.
-            joResponse = new JsonObject().
-            joResponse:Add("error", "Missing request body").
-            joResponse:Add("entity", entityName).
-            writer:write(joResponse:GetJsonText()).
-            return response:StatusCode.
+            ctx:Response:StatusCode = 400.
+            ctx:JsonResponse = new JsonObject().
+            ctx:JsonResponse:Add("error", "Missing request body").
+            ctx:JsonResponse:Add("entity", entityName).
+            ctx:Writer:write(ctx:JsonResponse:GetJsonText()).
+            return ctx:Response:StatusCode.
         end.
         
         /* Get service for entity */
         entityService = serviceFactory:GetService(entityName).
         
         /* Process create request */
-        joResponse = entityService:Create(requestBody).
+        ctx:JsonResponse = entityService:Create(requestBody).
             
         /* Check for error in response */
-        if joResponse:Has("error") then
-            response:StatusCode = 422.
+        if ctx:JsonResponse:Has("error") then
+            ctx:Response:StatusCode = 422.
         else
-            response:StatusCode = 201.
+            ctx:Response:StatusCode = 201.
         
-        this-object:WriteJsonResponse(response, writer, joResponse).
+        this-object:WriteJsonResponse(ctx:Response, ctx:Writer, ctx:JsonResponse).
         
-        return response:StatusCode.
+        return ctx:Response:StatusCode.
         catch e as Progress.Lang.Error:
             errorParams = this-object:CreateCrudErrorParams("Error creating entity", entityName, e:GetMessage(1)).
-            return this-object:ProcessCatchError(response, writer, errorParams).
+            return this-object:ProcessCatchError(ctx:Response, ctx:Writer, errorParams).
         end.
         
         finally:
-            this-object:CleanupResponseObjects(joResponse, response, writer).
+            ctx:Cleanup().
+            delete object ctx no-error.
         end finally.
     end method.
     
@@ -206,60 +203,56 @@ class GenericService inherits WebHandler:
         var character id = poRequest:GetPathParameter("id").
         var JsonObject requestBody = cast(poRequest:Entity, JsonObject).
         
-        /* Response objects */
-        var WebResponse response = new WebResponse().
-        var WebResponseWriter writer = new WebResponseWriter(response).
-        var JsonObject joResponse = ?.
+        /* Response context */
+        var ResponseContext ctx = new ResponseContext().
         
         /* Service instance */
         var IService entityService = ?.
         var CrudErrorParams errorParams.
         
-        /* Initialize response */
-        response:ContentType = "application/json".
-        
         /* Validate request parameters */
         if id = "" then do:
-            response:StatusCode = 400.
-            joResponse = new JsonObject().
-            joResponse:Add("error", "Missing ID parameter").
-            joResponse:Add("entity", entityName).
-            writer:write(joResponse:GetJsonText()).
-            return response:StatusCode.
+            ctx:Response:StatusCode = 400.
+            ctx:JsonResponse = new JsonObject().
+            ctx:JsonResponse:Add("error", "Missing ID parameter").
+            ctx:JsonResponse:Add("entity", entityName).
+            ctx:Writer:write(ctx:JsonResponse:GetJsonText()).
+            return ctx:Response:StatusCode.
         end.
         
         /* Validate request body */
         if not valid-object(requestBody) then do:
-            response:StatusCode = 400.
-            joResponse = new JsonObject().
-            joResponse:Add("error", "Missing request body").
-            joResponse:Add("entity", entityName).
-            joResponse:Add("id", id).
-            writer:write(joResponse:GetJsonText()).
-            return response:StatusCode.
+            ctx:Response:StatusCode = 400.
+            ctx:JsonResponse = new JsonObject().
+            ctx:JsonResponse:Add("error", "Missing request body").
+            ctx:JsonResponse:Add("entity", entityName).
+            ctx:JsonResponse:Add("id", id).
+            ctx:Writer:write(ctx:JsonResponse:GetJsonText()).
+            return ctx:Response:StatusCode.
         end.
         
         /* Get service for entity */
         entityService = serviceFactory:GetService(entityName).
         
         /* Process update request */
-        joResponse = entityService:Update(id, requestBody).
+        ctx:JsonResponse = entityService:Update(id, requestBody).
             
         /* Check for error in response */
-        if joResponse:Has("error") then
-            response:StatusCode = 422.
+        if ctx:JsonResponse:Has("error") then
+            ctx:Response:StatusCode = 422.
         else
-            response:StatusCode = 200.
+            ctx:Response:StatusCode = 200.
         
-        this-object:WriteJsonResponse(response, writer, joResponse).
+        this-object:WriteJsonResponse(ctx:Response, ctx:Writer, ctx:JsonResponse).
         
-        return response:StatusCode.
+        return ctx:Response:StatusCode.
         catch e as Progress.Lang.Error:
             errorParams = this-object:CreateCrudErrorParamsWithId("Error updating entity", entityName, id, e:GetMessage(1)).
-            return this-object:ProcessCatchError(response, writer, errorParams).
+            return this-object:ProcessCatchError(ctx:Response, ctx:Writer, errorParams).
         end.
         finally:
-            this-object:CleanupResponseObjects(joResponse, response, writer).
+            ctx:Cleanup().
+            delete object ctx no-error.
         end finally.
     end method.
     
