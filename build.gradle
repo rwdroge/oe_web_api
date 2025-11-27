@@ -51,7 +51,7 @@ task runUnitTests(type: ABLUnit) {
 	// format property removed as it's not supported in this plugin version
 	// failOnError = true
 }
-runUnitTests.dependsOn 'createSports2020'
+runUnitTests.dependsOn 'createSports2020', 'compileCode'
 
 // The 'test' task is not defined in this project
 // If you want to use the standard Gradle test task, you need to apply the 'java' plugin
