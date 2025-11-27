@@ -62,7 +62,7 @@ class tests.interfaces.IServiceTest:
         /* Clear temp-table */
         empty temp-table ttQueryParams.
 
-        filter = new FilterParams("customer", "", "", "", "", output table ttQueryParams).
+        filter = new FilterParams("customer", "", "", output table ttQueryParams).
 
         /* Test method exists and returns JsonObject */
         result = testService:GetByFilter(filter).

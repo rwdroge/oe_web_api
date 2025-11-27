@@ -15,6 +15,7 @@
 
 using Progress.Json.ObjectModel.*.
 using generics.FilterParams.
+using generics.FilterConstructorParams.
 using generics.ErrorResponseParams.
 using Progress.Lang.*.
 using OpenEdge.Net.*.
@@ -66,15 +67,25 @@ class GenericService inherits WebHandler:
         var longchar body.
         
         /* Filter parameters */
-        
-        var FilterParams filter = new generics.FilterParams(
-            entityName, entityName2, queryString, id1, id2, output table ttQueryParams).
+        var generics.FilterConstructorParams filterParams = new generics.FilterConstructorParams().
+        var FilterParams filter.
         
         /* Service instance */
         var IService entityService = ?.
         
         /* JSON response objects */
         var JsonObject joResponse = new JsonObject().
+        
+        /* Set filter properties */
+        assign
+            filterParams:Entity = entityName
+            filterParams:Entity2 = entityName2
+            filterParams:QueryString = queryString
+            filterParams:Id1 = id1
+            filterParams:Id2 = id2.
+        
+        /* Create filter with parameters */
+        filter = new generics.FilterParams(filterParams, output table ttQueryParams).
         
         /* Process request based on API type */
         if apiType = "data" then do:

@@ -381,33 +381,17 @@ class data.DataAccess:
     /*------------------------------------------------------------------------------
      Purpose: Apply filtering to data source entry
      Parameters:
-       input params - DataSourceAttachParams
-       input context - Query context
-       input iEntry - Entry index
-       input hDataSource - Data source handle
-       input hBuffer - Buffer handle
+       input procContext - ProcessingContext containing all processing parameters
+     Notes: Reduced parameter count by using ProcessingContext object
     ------------------------------------------------------------------------------*/
-    method private void ApplyEntryFilter(
-        input params as DataSourceAttachParams,
-        input context as QueryContext,
-        input iEntry as integer,
-        input hDataSource as handle,
-        input hBuffer as handle):
+    method private void ApplyEntryFilter(input procContext as ProcessingContext):
         
-        var ProcessingContext procContext.
-        
-        if (iEntry = 1 and context:KeyValue = "") then
-        do:
-            /* Primary records - use processing context */
-            procContext = new ProcessingContext(params, context, iEntry).
-            procContext:DataSource = hDataSource.
-            procContext:Buffer = hBuffer.
+        if (procContext:EntryIndex = 1 and procContext:Context:KeyValue = "") then
+            /* Primary records */
             this-object:ProcessPrimaryRecords(procContext).
-            delete object procContext no-error.
-        end.
         else
             /* Child records */
-            this-object:ProcessChildRecords(hBuffer, params, context).
+            this-object:ProcessChildRecords(procContext:Buffer, procContext:Params, procContext:Context).
     end method.
     
     /*------------------------------------------------------------------------------
@@ -424,15 +408,22 @@ class data.DataAccess:
         input iEntry as integer):
         
         var handle hDataSource, hBuffer.
+        var ProcessingContext procContext.
         
         /* Create and attach data source */
         this-object:AttachDataSource(params, iEntry, output hDataSource, output hBuffer).
         
         /* Apply filtering if provided */
         if params:Filter <> ? then
-            this-object:ApplyEntryFilter(params, context, iEntry, hDataSource, hBuffer).
+        do:
+            procContext = new ProcessingContext(params, context, iEntry).
+            procContext:DataSource = hDataSource.
+            procContext:Buffer = hBuffer.
+            this-object:ApplyEntryFilter(procContext).
+        end.
         
         finally:
+            delete object procContext no-error.
             delete object hDataSource no-error.
             delete object hBuffer no-error.
         end finally.

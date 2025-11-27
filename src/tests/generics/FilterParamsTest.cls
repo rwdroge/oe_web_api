@@ -30,13 +30,13 @@ class tests.generics.FilterParamsTest:
         /* Clear temp-table */
         empty temp-table ttQueryParams.
         /* Create FilterParams with basic parameters */
-        filterParams = new FilterParams("customer", "", "", "", "", output table ttQueryParams).
+        filterParams = new FilterParams("customer", "", "", output table ttQueryParams).
     end method.
 
     /* Test constructor with basic parameters */
     @Test.
     method public void TestConstructorBasic():
-        var FilterParams testFilter = new FilterParams("product", "", "", "", "", output table ttQueryParams).
+        var FilterParams testFilter = new FilterParams("product", "", "", output table ttQueryParams).
 
         /* Verify basic properties */
         Assert:Equals("product", testFilter:entityName).
@@ -49,10 +49,14 @@ class tests.generics.FilterParamsTest:
         delete object testFilter.
     end method.
 
-    /* Test constructor with all parameters */
+    /* Test constructor with property setters for entity2 and id2 */
     @Test.
     method public void TestConstructorWithAllParameters():
-        var FilterParams testFilter = new FilterParams("order", "customer", "", "ORD001", "CUST001", output table ttQueryParams).
+        var FilterParams testFilter = new FilterParams("order", "", "ORD001", output table ttQueryParams).
+        
+        /* Set additional properties */
+        testFilter:entityName2 = "customer".
+        testFilter:id2 = "CUST001".
 
         /* Verify all properties */
         Assert:Equals("order", testFilter:entityName).
@@ -67,7 +71,7 @@ class tests.generics.FilterParamsTest:
     /* Test constructor with query string */
     @Test.
     method public void TestConstructorWithQueryString():
-        var FilterParams testFilter = new FilterParams("item", "", "category=electronics&limit=10", "", "", output table ttQueryParams).
+        var FilterParams testFilter = new FilterParams("item", "category=electronics&limit=10", "", output table ttQueryParams).
 
         /* Verify properties are set */
         Assert:Equals("item", testFilter:entityName).
@@ -214,7 +218,7 @@ class tests.generics.FilterParamsTest:
     /* Test default property values */
     @Test.
     method public void TestDefaultPropertyValues():
-        var FilterParams defaultFilter = new FilterParams("", "", "", "", "", output table ttQueryParams).
+        var FilterParams defaultFilter = new FilterParams("", "", "", output table ttQueryParams).
 
         /* Verify default values */
         Assert:Equals("", defaultFilter:entityName).
@@ -240,7 +244,7 @@ class tests.generics.FilterParamsTest:
         var FilterParams testFilter.
 
         /* Create and delete filter to test destructor */
-        testFilter = new FilterParams("test", "", "field=value", "", "", output table ttQueryParams).
+        testFilter = new FilterParams("test", "field=value", "", output table ttQueryParams).
         delete object testFilter.
 
         /* Verify object is deleted */

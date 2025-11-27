@@ -36,7 +36,7 @@ class tests.SuppliersTest:
         /* Create fresh instances for each test */
         suppliersEntity = new suppliers().
         testJsonObject = new JsonObject().
-        testFilter = new FilterParams("supplier", "", "", "", "", output table-handle hQueryParams).
+        testFilter = new FilterParams("supplier", "", "", output table-handle hQueryParams).
         
         /* Reset dataset handle for each test */
         hDataSet = ?.

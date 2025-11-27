@@ -75,10 +75,8 @@ class tests.data.DataAccessTest:
         /* Create test filter */
         filter = new FilterParams(
             "customer",     /* pcentity */
-            "",            /* pcentity2 */
             "",            /* pcquerystring */
             "",            /* pcid1 */
-            "",            /* pcid2 */
             output table ttQueryParams  /* output table */
         ).
         filter:TopRecs = 10.
@@ -114,10 +112,8 @@ class tests.data.DataAccessTest:
         /* Create test filter with where clause */
         filter = new FilterParams(
             "customer",     /* pcentity */
-            "",            /* pcentity2 */
             "",            /* pcquerystring */
             "",            /* pcid1 */
-            "",            /* pcid2 */
             output table ttQueryParams  /* output table */
         ).
         filter:Where = "CustNum > 100".
@@ -154,10 +150,8 @@ class tests.data.DataAccessTest:
         /* Create test filter with sorting */
         filter = new FilterParams(
             "customer",     /* pcentity */
-            "",            /* pcentity2 */
             "",            /* pcquerystring */
             "",            /* pcid1 */
-            "",            /* pcid2 */
             output table ttQueryParams  /* output table */
         ).
         filter:SortBy = "Name".
@@ -193,10 +187,8 @@ class tests.data.DataAccessTest:
         /* Create test filter with pagination */
         filter = new FilterParams(
             "customer",     /* pcentity */
-            "",            /* pcentity2 */
             "",            /* pcquerystring */
             "",            /* pcid1 */
-            "",            /* pcid2 */
             output table ttQueryParams  /* output table */
         ).
         filter:SkipRecs = 5.
@@ -234,10 +226,8 @@ class tests.data.DataAccessTest:
         /* Create test filter */
         filter = new FilterParams(
             "customer",     /* pcentity */
-            "",            /* pcentity2 */
             "",            /* pcquerystring */
             "",            /* pcid1 */
-            "",            /* pcid2 */
             output table ttQueryParams  /* output table */
         ).
         

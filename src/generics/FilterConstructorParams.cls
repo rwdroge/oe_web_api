@@ -60,29 +60,6 @@ CLASS generics.FilterConstructorParams:
         QueryParamsHandle = ?.
     END CONSTRUCTOR.
     
-    /*------------------------------------------------------------------------------
-     Purpose: Creates a new instance with all parameters
-     Parameters: All the parameters needed for FilterParams constructor
-     Notes: Convenience constructor for full initialization
-    ------------------------------------------------------------------------------*/
-    CONSTRUCTOR PUBLIC FilterConstructorParams(
-        INPUT entity AS CHARACTER,
-        INPUT entity2 AS CHARACTER,
-        INPUT queryString AS CHARACTER,
-        INPUT id1 AS CHARACTER,
-        INPUT id2 AS CHARACTER,
-        INPUT queryParamsHandle AS HANDLE):
-        
-        THIS-OBJECT().
-        
-        ASSIGN
-            THIS-OBJECT:Entity = entity
-            THIS-OBJECT:Entity2 = entity2
-            THIS-OBJECT:QueryString = queryString
-            THIS-OBJECT:Id1 = id1
-            THIS-OBJECT:Id2 = id2
-            THIS-OBJECT:QueryParamsHandle = queryParamsHandle.
-    END CONSTRUCTOR.
     
     /*------------------------------------------------------------------------------
      Purpose: Validates that all required parameters are set

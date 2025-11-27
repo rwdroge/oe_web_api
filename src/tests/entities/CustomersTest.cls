@@ -36,7 +36,7 @@ class tests.entities.CustomersTest:
         /* Create fresh instances for each test */
         customersEntity = new customers().
         testJsonObject = new JsonObject().
-        testFilter = new FilterParams("customer", "", "", "", "", output table-handle hQueryParams).
+        testFilter = new FilterParams("customer", "", "", output table-handle hQueryParams).
         
         /* Reset dataset handle for each test */
         hDataSet = ?.

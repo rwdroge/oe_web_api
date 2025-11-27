@@ -36,7 +36,7 @@ class tests.entities.OrdersTest:
         /* Create fresh instances for each test */
         ordersEntity = new orders().
         testJsonObject = new JsonObject().
-        testFilter = new FilterParams("order", "", "", "", "", output table-handle hQueryParams).
+        testFilter = new FilterParams("order", "", "", output table-handle hQueryParams).
         
         /* Reset dataset handle for each test */
         hDataSet = ?.

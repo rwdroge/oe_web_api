@@ -61,7 +61,7 @@ class tests.interfaces.IRepositoryTest:
     @Test.
     method public void TestFindByFilterMethod():
         var handle result.
-        var FilterParams filter = new FilterParams("customer", "", "", "", "", output table ttQueryParams).
+        var FilterParams filter = new FilterParams("customer", "", "", output table ttQueryParams).
 
         /* Test method exists and returns handle */
         result = testRepository:FindByFilter(filter).
@@ -141,7 +141,7 @@ class tests.interfaces.IRepositoryTest:
     @Test.
     method public void TestMethodParameterTypes():
         var JsonObject testData = new JsonObject().
-        var FilterParams filter = new FilterParams("customer", "", "", "", "", output table ttQueryParams).
+        var FilterParams filter = new FilterParams("customer", "", "", output table ttQueryParams).
         var handle saveResult.
         var handle updateResult.
         var handle filterResult.
@@ -225,7 +225,7 @@ class tests.interfaces.IRepositoryTest:
     /* Test filter parameter handling */
     @Test.
     method public void TestFilterParameterHandling():
-        var FilterParams filter = new FilterParams("customer", "", "name=Test", "", "", output table ttQueryParams).
+        var FilterParams filter = new FilterParams("customer", "name=Test", "", output table ttQueryParams).
 
         /* Test filter operation */
         var handle filterResult = testRepository:FindByFilter(filter).

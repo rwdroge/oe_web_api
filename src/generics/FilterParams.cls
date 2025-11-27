@@ -33,6 +33,34 @@ class generics.FilterParams:
     .  
 
     /*------------------------------------------------------------------------------
+     Purpose: Constructor using parameter object
+     Parameters:
+       input params - FilterConstructorParams containing all initialization values
+     Notes: Preferred constructor - encapsulates all parameters in a single object
+           Reduces parameter count and improves maintainability
+    ------------------------------------------------------------------------------*/
+    constructor public FilterParams(
+        input params as generics.FilterConstructorParams,
+        output table ttQueryParams):
+        
+        super().
+        
+        /* Initialize with all parameters from object */
+        this-object:InitializeBasicParams(
+            params:Entity, 
+            params:Entity2, 
+            params:Id1, 
+            params:Id2).
+        
+        /* Build query string if provided */
+        if params:QueryString > "" then 
+        do:
+            this-object:filtered = true.
+            this-object:BuildQueryString(params:QueryString, table ttQueryParams).
+        end.
+    end constructor.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Simplified constructor with entity, query string, and ID
      Notes: Common use case - reduces parameter count from 6 to 4
            Recommended constructor for most use cases
@@ -56,30 +84,6 @@ class generics.FilterParams:
         end.
     end constructor.
     
-    /*------------------------------------------------------------------------------
-     Purpose: Constructor with all parameters
-     Notes: DEPRECATED - Use simpler 4-parameter constructor with property setters
-           This constructor is maintained for backward compatibility only
-           Delegates to simpler constructor and adds entity2 and id2
-     @deprecated Use FilterParams(entity, querystring, id1, table) and set properties
-    ------------------------------------------------------------------------------*/
-    constructor public FilterParams(
-        input pcentity as character,
-        input pcentity2 as character,
-        input pcquerystring as character,
-        input pcid1 as character,
-        input pcid2 as character,
-        output table ttQueryParams):
-        
-        /* Delegate to simpler constructor */
-        this-object(pcentity, pcquerystring, pcid1, output table ttQueryParams).
-        
-        /* Add additional parameters */
-        if pcentity2 > "" and pcentity2 <> ? then
-            this-object:entityName2 = pcentity2.
-        if pcid2 > "" and pcid2 <> ? then
-            this-object:id2 = pcid2.
-    end constructor.
     
     /*------------------------------------------------------------------------------
      Purpose: Helper method to initialize basic parameters

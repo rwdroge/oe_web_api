@@ -67,7 +67,7 @@ CLASS tests.services.BaseServiceTest INHERITS BaseService:
         var Progress.Json.ObjectModel.JsonObject firstItem.
         
         /* Create filter parameters */
-        filterParams = NEW generics.FilterParams("items", "", "", "", "", output table-handle hQueryParams).
+        filterParams = NEW generics.FilterParams("items", "", "", output table-handle hQueryParams).
         
         /* Call GetByFilter method */
         resultObj = testService:GetByFilter(filterParams).

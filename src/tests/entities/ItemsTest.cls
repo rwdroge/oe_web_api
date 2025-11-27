@@ -36,7 +36,7 @@ class tests.entities.ItemsTest:
         /* Create fresh instances for each test */
         itemsEntity = new items().
         testJsonObject = new JsonObject().
-        testFilter = new FilterParams("item", "", "", "", "", output table-handle hQueryParams).
+        testFilter = new FilterParams("item", "", "", output table-handle hQueryParams).
         
         /* Reset dataset handle for each test */
         hDataSet = ?.
