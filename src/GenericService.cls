@@ -119,9 +119,7 @@ class GenericService inherits WebHandler:
             assign
                 errorParams:EntityName = entityName
                 errorParams:ErrorDetails = e:GetMessage(1).
-            this-object:HandleCrudError(response, writer, errorParams).
-            delete object errorParams no-error.
-            return 500.
+            return this-object:ProcessCatchError(response, writer, errorParams).
         end.
 
         finally:
@@ -190,9 +188,7 @@ class GenericService inherits WebHandler:
             assign
                 errorParams:EntityName = entityName
                 errorParams:ErrorDetails = e:GetMessage(1).
-            this-object:HandleCrudError(response, writer, errorParams).
-            delete object errorParams no-error.
-            return 500.
+            return this-object:ProcessCatchError(response, writer, errorParams).
         end.
         
         finally:
@@ -270,9 +266,7 @@ class GenericService inherits WebHandler:
                 errorParams:EntityName = entityName
                 errorParams:Id = id
                 errorParams:ErrorDetails = e:GetMessage(1).
-            this-object:HandleCrudError(response, writer, errorParams).
-            delete object errorParams no-error.
-            return 500.
+            return this-object:ProcessCatchError(response, writer, errorParams).
         end.
         finally:
             this-object:CleanupResponseObjects(joResponse, response, writer).
@@ -345,9 +339,7 @@ class GenericService inherits WebHandler:
                 errorParams:EntityName = entityName
                 errorParams:Id = id
                 errorParams:ErrorDetails = e:GetMessage(1).
-            this-object:HandleCrudError(response, writer, errorParams).
-            delete object errorParams no-error.
-            return 500.
+            return this-object:ProcessCatchError(response, writer, errorParams).
         end.
         
         finally:
@@ -483,6 +475,25 @@ class GenericService inherits WebHandler:
         delete object joResponse no-error.
         delete object response no-error.
         delete object writer no-error.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Handles error in catch block with consistent pattern
+     Parameters:
+       input response - WebResponse object
+       input writer - WebResponseWriter object
+       input errorParams - CrudErrorParams object (already created)
+     Returns: integer - Always returns 500
+     Notes: Calls HandleCrudError, cleans up errorParams, returns 500
+    ------------------------------------------------------------------------------*/
+    method private integer ProcessCatchError(
+        input response as WebResponse,
+        input writer as WebResponseWriter,
+        input errorParams as CrudErrorParams):
+        
+        this-object:HandleCrudError(response, writer, errorParams).
+        delete object errorParams no-error.
+        return 500.
     end method.
     
     /*------------------------------------------------------------------------------
