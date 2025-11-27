@@ -17,6 +17,7 @@ using Progress.Json.ObjectModel.*.
 using generics.FilterParams.
 using generics.FilterConstructorParams.
 using generics.ErrorResponseParams.
+using generics.CrudErrorParams.
 using Progress.Lang.*.
 using OpenEdge.Net.*.
 using OpenEdge.Net.HTTP.*.
@@ -75,6 +76,7 @@ class GenericService inherits WebHandler:
         
         /* JSON response objects */
         var JsonObject joResponse = new JsonObject().
+        var CrudErrorParams errorParams.
         
         /* Set filter properties */
         assign
@@ -113,7 +115,12 @@ class GenericService inherits WebHandler:
         
         return response:StatusCode.
         catch e as Progress.Lang.Error:
-            this-object:HandleCrudError(response, writer, "Error retrieving entity data", entityName, "", e:GetMessage(1)).
+            errorParams = new CrudErrorParams("Error retrieving entity data").
+            assign
+                errorParams:EntityName = entityName
+                errorParams:ErrorDetails = e:GetMessage(1).
+            this-object:HandleCrudError(response, writer, errorParams).
+            delete object errorParams no-error.
             return 500.
         end.
 
@@ -148,6 +155,7 @@ class GenericService inherits WebHandler:
         
         /* Service instance */
         var IService entityService = ?.
+        var CrudErrorParams errorParams.
         
         /* Initialize response */
         response:ContentType = "application/json".
@@ -178,7 +186,12 @@ class GenericService inherits WebHandler:
         
         return response:StatusCode.
         catch e as Progress.Lang.Error:
-            this-object:HandleCrudError(response, writer, "Error creating entity", entityName, "", e:GetMessage(1)).
+            errorParams = new CrudErrorParams("Error creating entity").
+            assign
+                errorParams:EntityName = entityName
+                errorParams:ErrorDetails = e:GetMessage(1).
+            this-object:HandleCrudError(response, writer, errorParams).
+            delete object errorParams no-error.
             return 500.
         end.
         
@@ -210,6 +223,7 @@ class GenericService inherits WebHandler:
         
         /* Service instance */
         var IService entityService = ?.
+        var CrudErrorParams errorParams.
         
         /* Initialize response */
         response:ContentType = "application/json".
@@ -251,7 +265,13 @@ class GenericService inherits WebHandler:
         
         return response:StatusCode.
         catch e as Progress.Lang.Error:
-            this-object:HandleCrudError(response, writer, "Error updating entity", entityName, id, e:GetMessage(1)).
+            errorParams = new CrudErrorParams("Error updating entity").
+            assign
+                errorParams:EntityName = entityName
+                errorParams:Id = id
+                errorParams:ErrorDetails = e:GetMessage(1).
+            this-object:HandleCrudError(response, writer, errorParams).
+            delete object errorParams no-error.
             return 500.
         end.
         finally:
@@ -282,6 +302,7 @@ class GenericService inherits WebHandler:
         /* Service instance */
         var IService entityService = ?.
         var logical lSuccess.
+        var CrudErrorParams errorParams.
         
         /* Initialize response */
         response:ContentType = "application/json".
@@ -319,7 +340,13 @@ class GenericService inherits WebHandler:
         
         return response:StatusCode.
         catch e as Progress.Lang.Error:
-            this-object:HandleCrudError(response, writer, "Error deleting entity", entityName, id, e:GetMessage(1)).
+            errorParams = new CrudErrorParams("Error deleting entity").
+            assign
+                errorParams:EntityName = entityName
+                errorParams:Id = id
+                errorParams:ErrorDetails = e:GetMessage(1).
+            this-object:HandleCrudError(response, writer, errorParams).
+            delete object errorParams no-error.
             return 500.
         end.
         
@@ -413,33 +440,27 @@ class GenericService inherits WebHandler:
      Parameters:
        input response - WebResponse object
        input writer - WebResponseWriter object
-       input errorMessage - Error message text
-       input entityName - Entity name (optional)
-       input id - Entity ID (optional)
-       input errorDetails - Error details from exception
+       input errorParams - CrudErrorParams containing error details
      Notes: Creates error JSON, sets 500 status, and writes response
     ------------------------------------------------------------------------------*/
     method private void HandleCrudError(
         input response as WebResponse,
         input writer as WebResponseWriter,
-        input errorMessage as character,
-        input entityName as character,
-        input id as character,
-        input errorDetails as character):
+        input errorParams as CrudErrorParams):
         
         var JsonObject joError = new JsonObject().
         
         response:StatusCode = 500.
-        joError:Add("error", errorMessage).
+        joError:Add("error", errorParams:ErrorMessage).
         
-        if entityName > "" then
-            joError:Add("entity", entityName).
+        if errorParams:EntityName > "" then
+            joError:Add("entity", errorParams:EntityName).
             
-        if id > "" then
-            joError:Add("id", id).
+        if errorParams:Id > "" then
+            joError:Add("id", errorParams:Id).
             
-        if errorDetails > "" then
-            joError:Add("details", errorDetails).
+        if errorParams:ErrorDetails > "" then
+            joError:Add("details", errorParams:ErrorDetails).
             
         writer:write(joError:GetJsonText()).
         
