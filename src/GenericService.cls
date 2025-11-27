@@ -115,10 +115,7 @@ class GenericService inherits WebHandler:
         
         return response:StatusCode.
         catch e as Progress.Lang.Error:
-            errorParams = new CrudErrorParams("Error retrieving entity data").
-            assign
-                errorParams:EntityName = entityName
-                errorParams:ErrorDetails = e:GetMessage(1).
+            errorParams = this-object:CreateCrudErrorParams("Error retrieving entity data", entityName, e:GetMessage(1)).
             return this-object:ProcessCatchError(response, writer, errorParams).
         end.
 
@@ -184,10 +181,7 @@ class GenericService inherits WebHandler:
         
         return response:StatusCode.
         catch e as Progress.Lang.Error:
-            errorParams = new CrudErrorParams("Error creating entity").
-            assign
-                errorParams:EntityName = entityName
-                errorParams:ErrorDetails = e:GetMessage(1).
+            errorParams = this-object:CreateCrudErrorParams("Error creating entity", entityName, e:GetMessage(1)).
             return this-object:ProcessCatchError(response, writer, errorParams).
         end.
         
@@ -261,11 +255,7 @@ class GenericService inherits WebHandler:
         
         return response:StatusCode.
         catch e as Progress.Lang.Error:
-            errorParams = new CrudErrorParams("Error updating entity").
-            assign
-                errorParams:EntityName = entityName
-                errorParams:Id = id
-                errorParams:ErrorDetails = e:GetMessage(1).
+            errorParams = this-object:CreateCrudErrorParamsWithId("Error updating entity", entityName, id, e:GetMessage(1)).
             return this-object:ProcessCatchError(response, writer, errorParams).
         end.
         finally:
@@ -334,11 +324,7 @@ class GenericService inherits WebHandler:
         
         return response:StatusCode.
         catch e as Progress.Lang.Error:
-            errorParams = new CrudErrorParams("Error deleting entity").
-            assign
-                errorParams:EntityName = entityName
-                errorParams:Id = id
-                errorParams:ErrorDetails = e:GetMessage(1).
+            errorParams = this-object:CreateCrudErrorParamsWithId("Error deleting entity", entityName, id, e:GetMessage(1)).
             return this-object:ProcessCatchError(response, writer, errorParams).
         end.
         
@@ -494,6 +480,49 @@ class GenericService inherits WebHandler:
         this-object:HandleCrudError(response, writer, errorParams).
         delete object errorParams no-error.
         return 500.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Creates error params for CRUD operations with entity name
+     Parameters:
+       input errorMessage - Error message
+       input entityName - Entity name
+       input errorDetails - Error details from exception
+     Returns: CrudErrorParams - Configured error params object
+    ------------------------------------------------------------------------------*/
+    method private CrudErrorParams CreateCrudErrorParams(
+        input errorMessage as character,
+        input entityName as character,
+        input errorDetails as character):
+        
+        var CrudErrorParams params = new CrudErrorParams(errorMessage).
+        assign
+            params:EntityName = entityName
+            params:ErrorDetails = errorDetails.
+        return params.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Creates error params for CRUD operations with entity name and ID
+     Parameters:
+       input errorMessage - Error message
+       input entityName - Entity name
+       input id - Entity ID
+       input errorDetails - Error details from exception
+     Returns: CrudErrorParams - Configured error params object
+    ------------------------------------------------------------------------------*/
+    method private CrudErrorParams CreateCrudErrorParamsWithId(
+        input errorMessage as character,
+        input entityName as character,
+        input id as character,
+        input errorDetails as character):
+        
+        var CrudErrorParams params = new CrudErrorParams(errorMessage).
+        assign
+            params:EntityName = entityName
+            params:Id = id
+            params:ErrorDetails = errorDetails.
+        return params.
     end method.
     
     /*------------------------------------------------------------------------------
