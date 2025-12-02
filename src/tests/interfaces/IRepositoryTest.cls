@@ -68,7 +68,7 @@ class tests.interfaces.IRepositoryTest:
 
         /* Verify return type is handle */
         Assert:IsTrue(valid-handle(result)).
-
+ 
         /* Clean up */
         delete object filter.
     end method.

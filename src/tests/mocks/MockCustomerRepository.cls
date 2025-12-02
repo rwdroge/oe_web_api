@@ -107,30 +107,7 @@ class tests.mocks.MockCustomerRepository implements IRepository:
         end finally.
     end method.
 
-    /* Mock implementations of base methods */
-    method public JsonObject GetById(input pcId as character):
-        var JsonObject joResult = new JsonObject().
-        var integer iCustNum = 0.
-
-        /* Validate and convert ID */
-        do on error undo, throw:
-            iCustNum = integer(pcId).
-            catch e as Progress.Lang.Error:
-                /* Return error for invalid ID */
-                joResult:Add("error", "Invalid customer ID format").
-                return joResult.
-            end.
-        end.
-
-        /* Return mock customer data */
-        joResult:Add("custnum", iCustNum).
-        joResult:Add("name", "Mock Customer " + pcId).
-        joResult:Add("country", "USA").
-        joResult:Add("creditlimit", 5000.00).
-
-        return joResult.
-    end method.
-
+    /* Mock implementations of IRepository methods */
     method public handle FindById(input pcId as character):
         var handle hDataSet.
         var handle hBuffer.
@@ -245,25 +222,6 @@ class tests.mocks.MockCustomerRepository implements IRepository:
         return hDataSet.
     end method.
 
-    method public JsonObject Create(input poData as JsonObject):
-        var JsonObject joResult = new JsonObject().
-        var character cName = "".
-
-        /* Extract name from input data */
-        if poData:Has("name") then
-            cName = poData:GetCharacter("name").
-        else
-            cName = "New Customer".
-
-        /* Return created customer data */
-        joResult:Add("custnum", 9999).
-        joResult:Add("name", cName).
-        joResult:Add("country", "USA").
-        joResult:Add("creditlimit", 0.00).
-
-        return joResult.
-    end method.
-
     method public handle UpdateEntity(input pcId as character, input poData as JsonObject):
         var handle hDataSet.
         var handle hBuffer.
@@ -317,10 +275,6 @@ class tests.mocks.MockCustomerRepository implements IRepository:
     method public logical Delete(input pcId as character):
         /* Mock successful deletion */
         return true.
-    end method.
-
-    method public character GetEntityName():
-        return "customer".
     end method.
 
     method public longchar GetMetadata():
