@@ -10,8 +10,8 @@
 
 using Progress.Lang.*.
 using Progress.Json.ObjectModel.*.
-using generics.FieldListValidationparams.
-using generics.ValueListValidationparams.
+using generics.FieldListValidationParams.
+using generics.ValueListValidationParams.
  
 block-level on error undo, throw. 
  
@@ -20,10 +20,10 @@ class services.MetadataService:
     /*------------------------------------------------------------------------------
      Purpose: Check if a field list is valid for a given temp-table
      Parameters:
-       input-output pparams - FieldListValidationpparams containing validation parameters
+       input-output pparams - FieldListValidationParams containing validation parameters
      Notes: Validates that all fields in pparams.FieldList exist in the temp-table
     ------------------------------------------------------------------------------*/
-    method public void checkFieldList(input-output pparams as FieldListValidationparams):
+    method public void checkFieldList(input-output pparams as FieldListValidationParams):
         
         var character cFieldList = "".
         var integer i = 0.
@@ -59,10 +59,10 @@ class services.MetadataService:
     /*------------------------------------------------------------------------------
      Purpose: Check if values in query parameters match field data types
      Parameters:
-       input-output pparams - ValueListValidationpparams containing validation parameters
+       input-output pparams - ValueListValidationParams containing validation parameters
      Notes: Validates that values in query parameters match field data types
     ------------------------------------------------------------------------------*/
-    method public void checkValueList(input-output pparams as ValueListValidationparams):
+    method public void checkValueList(input-output pparams as ValueListValidationParams):
         
         var character cDataType = "".
         var character cFieldName = "".
