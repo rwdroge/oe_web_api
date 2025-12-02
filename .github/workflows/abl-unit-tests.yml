@@ -99,8 +99,8 @@ jobs:
             echo 'exec java -Dorg.gradle.appname=gradlew $JAVA_OPTS -classpath "/usr/dlc/gradle/wrapper-scripts/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"' >> gradlew
             chmod +x gradlew
             
-            # Run the tests using the existing build.gradle
-            ./gradlew runUnitTests --info
+            # Clean and run the tests using the existing build.gradle
+            ./gradlew clean runUnitTests --info
       
       - name: Upload test results
         if: always()
