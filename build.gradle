@@ -14,6 +14,10 @@ abl {
 	propath("${dlcHome}/src","${dlcHome}/tty","${dlcHome}/tty/netlib/OpenEdge.Net.pl","${dlcHome}/tty/OpenEdge.BusinessLogic.pl","${dlcHome}/tty/ablunit.pl")
 }
 
+task clean(type: Delete) {
+	delete buildDir
+}
+
 task createSports2020(type: CreateDB){
 	dbName = 'sports2020'
 	sourceDb = "${dlcHome}/sports2020"
