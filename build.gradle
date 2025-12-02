@@ -43,7 +43,7 @@ compileCode.dependsOn 'createSports2020'
 task runUnitTests(type: ABLUnit) {
 	source('src/tests')
 	include('**/*Test.cls')
-	propath("./src", ".", "${buildDir}", "${dlcHome}/tty", "${dlcHome}/tty/netlib/OpenEdge.Net.pl", "${dlcHome}/tty/OpenEdge.BusinessLogic.pl", "${dlcHome}/tty/ablunit.pl")
+	propath("src/tests", "src", "${dlcHome}/tty", "${dlcHome}/tty/netlib/OpenEdge.Net.pl", "${dlcHome}/tty/OpenEdge.BusinessLogic.pl", "${dlcHome}/tty/ablunit.pl")
 	dbConnection {
 		dbName = "${buildDir}/db/sports2020/sports2020"
 		connectionParameters = "-1"
