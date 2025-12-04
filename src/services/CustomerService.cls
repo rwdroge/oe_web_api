@@ -48,66 +48,26 @@ class services.CustomerService inherits BaseService:
     ------------------------------------------------------------------------------*/
     method public JsonObject GetCustomersByCountry(input pcCountry as character):
         var handle hDataSet.
-        var CustomerRepository custRepo.
+        var JsonObject joMetadata = new JsonObject().
         var JsonObject joResult.
-        var JsonArray jaCustomers.
-        var JsonObject joCustomer.
-        var handle hBuffer.
         
-        /* Try to cast to CustomerRepository, otherwise use dynamic invocation */
-        if type-of(this-object:Repository, CustomerRepository) then do:
-            custRepo = cast(this-object:Repository, CustomerRepository).
-            hDataSet = custRepo:FindCustomersByCountry(pcCountry).
-        end.
-        else do:
-            /* For mock repositories, use dynamic invocation */
-            hDataSet = dynamic-invoke(this-object:Repository, "FindCustomersByCountry", pcCountry).
-        end.
+        /* Invoke repository method (supports both concrete and mock repositories) */
+        hDataSet = dynamic-invoke(this-object:Repository, "FindCustomersByCountry", pcCountry).
         
-        /* Convert to JSON */
-        joResult = new JsonObject().
-        jaCustomers = new JsonArray().
-        joCustomer = new JsonObject().
-        hBuffer = hDataSet:get-buffer-handle(1).
+        /* Add metadata */
+        joMetadata:Add("country", pcCountry).
         
-        /* Check if customers were found */
-        if valid-handle(hDataSet) then do:
-            if hBuffer:available then do:
-                
-                /* Process all records */
-                hBuffer:find-first() no-error.
-                do while hBuffer:available:
-                    joCustomer = new JsonObject().
-                    joCustomer:Read(hBuffer).
-                    jaCustomers:Add(joCustomer).
-                end.
-                
-                joResult:Add("country", pcCountry).
-                joResult:Add("count", jaCustomers:Length).
-                joResult:Add("customers", jaCustomers).
-            end.
-            else do:
-                /* Return empty result if not found */
-                joResult:Add("country", pcCountry).
-                joResult:Add("count", 0).
-                joResult:Add("customers", jaCustomers).
-            end.
-        end.
-        else do:
-            /* Return empty result if dataset is invalid */
-            joResult:Add("country", pcCountry).
-            joResult:Add("count", 0).
-            joResult:Add("customers", jaCustomers).
-        end.
+        /* Convert dataset to JSON using helper method */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, joMetadata, "customers").
         
         return joResult.
         
         finally:
-            /* Clean up dataset resources */
-            if valid-handle(hDataSet) then do:
+            /* Clean up resources */
+            if valid-handle(hDataSet) then
                 delete object hDataSet no-error.
-            end.
-            delete object jaCustomers no-error.
+            if valid-object(joMetadata) then
+                delete object joMetadata no-error.
         end finally.
     end method.
     
@@ -120,67 +80,26 @@ class services.CustomerService inherits BaseService:
     ------------------------------------------------------------------------------*/
     method public JsonObject GetCustomersBySalesRep(input pcSalesRep as character):
         var handle hDataSet.
-        var CustomerRepository custRepo.
+        var JsonObject joMetadata = new JsonObject().
         var JsonObject joResult.
-        var JsonArray jaCustomers.
-        var JsonObject joCustomer.
-        var handle hBuffer.
         
-        /* Try to cast to CustomerRepository, otherwise use dynamic invocation */
-        if type-of(this-object:Repository, CustomerRepository) then do:
-            custRepo = cast(this-object:Repository, CustomerRepository).
-            hDataSet = custRepo:FindCustomersBySalesRep(pcSalesRep).
-        end.
-        else do:
-            /* For mock repositories, use dynamic invocation */
-            hDataSet = dynamic-invoke(this-object:Repository, "FindCustomersBySalesRep", pcSalesRep).
-        end.
+        /* Invoke repository method (supports both concrete and mock repositories) */
+        hDataSet = dynamic-invoke(this-object:Repository, "FindCustomersBySalesRep", pcSalesRep).
         
-        /* Convert to JSON */
-        joResult = new JsonObject().
-        jaCustomers = new JsonArray().
-        joCustomer = new JsonObject().
-        hBuffer = hDataSet:get-buffer-handle(1).
+        /* Add metadata */
+        joMetadata:Add("salesRep", pcSalesRep).
         
-        /* Check if customers were found */
-        if valid-handle(hDataSet) then do:
-            hBuffer = hDataSet:get-buffer-handle(1).
-            if hBuffer:available then do:
-                
-                /* Process all records */
-                hBuffer:find-first() no-error.
-                do while hBuffer:available:
-                    joCustomer = new JsonObject().
-                    joCustomer:Read(hBuffer).
-                    jaCustomers:Add(joCustomer).
-                end.
-                
-                joResult:Add("salesRep", pcSalesRep).
-                joResult:Add("count", jaCustomers:Length).
-                joResult:Add("customers", jaCustomers).
-            end.
-            else do:
-                /* Return empty result if not found */
-                joResult:Add("salesRep", pcSalesRep).
-                joResult:Add("count", 0).
-                joResult:Add("customers", jaCustomers).
-            end.
-        end.
-        else do:
-            /* Return empty result if dataset is invalid */
-            joResult:Add("salesRep", pcSalesRep).
-            joResult:Add("count", 0).
-            joResult:Add("customers", jaCustomers).
-        end.
+        /* Convert dataset to JSON using helper method */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, joMetadata, "customers").
         
         return joResult.
         
         finally:
-            /* Clean up dataset resources */
-            if valid-handle(hDataSet) then do:
+            /* Clean up resources */
+            if valid-handle(hDataSet) then
                 delete object hDataSet no-error.
-            end.
-            delete object jaCustomers no-error.
+            if valid-object(joMetadata) then
+                delete object joMetadata no-error.
         end finally.
     end method.
     

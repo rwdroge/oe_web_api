@@ -367,6 +367,76 @@ class services.BaseService abstract implements interfaces.IService:
     end method.
     
     /*------------------------------------------------------------------------------
+     Purpose: Invoke a repository method dynamically, handling both concrete and mock repositories
+     Parameters:
+       input pcMethodName - Name of the method to invoke
+       input pcParam - Character parameter to pass to the method
+     Returns: handle to dataset returned by the method
+     Notes: Helper method to reduce code duplication for dynamic invocation pattern
+    ------------------------------------------------------------------------------*/
+    method protected handle InvokeRepositoryMethod(input pcMethodName as character, input pcParam as character):
+        var handle hDataSet.
+        
+        /* Use dynamic invocation to support both concrete and mock repositories */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, pcParam).
+        
+        return hDataSet.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Invoke a repository method dynamically with integer parameter
+     Parameters:
+       input pcMethodName - Name of the method to invoke
+       input piParam - Integer parameter to pass to the method
+     Returns: handle to dataset returned by the method
+     Notes: Overload for integer parameters
+    ------------------------------------------------------------------------------*/
+    method protected handle InvokeRepositoryMethod(input pcMethodName as character, input piParam as integer):
+        var handle hDataSet.
+        
+        /* Use dynamic invocation to support both concrete and mock repositories */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, piParam).
+        
+        return hDataSet.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Invoke a repository method dynamically with two date parameters
+     Parameters:
+       input pcMethodName - Name of the method to invoke
+       input pdParam1 - First date parameter
+       input pdParam2 - Second date parameter
+     Returns: handle to dataset returned by the method
+     Notes: Overload for date range parameters
+    ------------------------------------------------------------------------------*/
+    method protected handle InvokeRepositoryMethod(input pcMethodName as character, input pdParam1 as date, input pdParam2 as date):
+        var handle hDataSet.
+        
+        /* Use dynamic invocation to support both concrete and mock repositories */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, pdParam1, pdParam2).
+        
+        return hDataSet.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Invoke a repository method dynamically with two date parameters (named variant)
+     Parameters:
+       input pcMethodName - Name of the method to invoke
+       input pdStartDate - Start date parameter
+       input pdEndDate - End date parameter
+     Returns: handle to dataset returned by the method
+     Notes: Alternative method name to avoid overload resolution issues
+    ------------------------------------------------------------------------------*/
+    method protected handle InvokeRepositoryMethodWithDateRange(input pcMethodName as character, input pdStartDate as date, input pdEndDate as date):
+        var handle hDataSet.
+        
+        /* Use dynamic invocation to support both concrete and mock repositories */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, pdStartDate, pdEndDate).
+        
+        return hDataSet.
+    end method.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Get fields for a specific entity
      Parameters:
        input pcEntity - Entity name
@@ -649,6 +719,107 @@ class services.BaseService abstract implements interfaces.IService:
         
         return joNormalized.
         
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Convert dataset to JSON array with metadata
+     Parameters:
+       input phDataSet - Handle to dataset
+       input poMetadata - JsonObject to add metadata fields to
+       input pcArrayName - Name for the array property (e.g., "orders", "customers")
+     Returns: JsonObject containing array and count
+     Notes: Eliminates duplicate dataset-to-JSON conversion logic
+    ------------------------------------------------------------------------------*/
+    method public JsonObject ConvertDataSetToJsonArray(
+        input phDataSet as handle,
+        input poMetadata as JsonObject,
+        input pcArrayName as character):
+        
+        var JsonObject joResult = new JsonObject().
+        var JsonArray jaRecords = new JsonArray().
+        var JsonObject joRecord.
+        var handle hBuffer.
+        var handle hQuery.
+        var character[] aNames.
+        var integer i.
+        
+        /* Check if dataset is valid */
+        if valid-handle(phDataSet) then do:
+            hBuffer = phDataSet:get-buffer-handle(1).
+            
+            /* Create query handle for buffer iteration */
+            create query hQuery.
+            hQuery:add-buffer(hBuffer).
+            hQuery:query-prepare("for each " + hBuffer:name).
+            hQuery:query-open().
+            
+            /* Process all records */
+            hQuery:get-first() no-error.
+            do while not hQuery:query-off-end:
+                if hBuffer:available then do:
+                    joRecord = new JsonObject().
+                    joRecord:Read(hBuffer).
+                    jaRecords:Add(joRecord).
+                end.
+                hQuery:get-next() no-error.
+            end.
+            
+            /* Clean up query handle */
+            hQuery:query-close().
+            delete object hQuery.
+        end.
+        
+        /* Add metadata fields if provided */
+        if valid-object(poMetadata) then do:
+            assign aNames = poMetadata:GetNames().
+            do i = 1 to extent(aNames):
+                case poMetadata:GetType(aNames[i]):
+                    when JsonDataType:string then
+                        joResult:Add(aNames[i], poMetadata:GetCharacter(aNames[i])).
+                    when JsonDataType:number then
+                        joResult:Add(aNames[i], poMetadata:GetDecimal(aNames[i])).
+                    when JsonDataType:boolean then
+                        joResult:Add(aNames[i], poMetadata:GetLogical(aNames[i])).
+                    otherwise
+                        joResult:Add(aNames[i], poMetadata:GetJsonText(aNames[i])).
+                end case.
+            end.
+        end.
+        
+        /* Add array and count */
+        joResult:Add(pcArrayName, jaRecords).
+        joResult:Add("count", jaRecords:Length).
+        
+        return joResult.
+        
+        finally:
+            if valid-object(jaRecords) then
+                delete object jaRecords no-error.
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Clean up dataset and JSON resources
+     Parameters:
+       input phDataSet - Handle to dataset to clean up
+       input poJsonObjects - Array of JSON objects to clean up
+     Notes: Eliminates duplicate cleanup code in finally blocks
+    ------------------------------------------------------------------------------*/
+    method protected void CleanupResources(
+        input phDataSet as handle,
+        input poJsonObjects as JsonObject extent):
+        var integer i.
+        /* Clean up dataset */
+        if valid-handle(phDataSet) then do:
+            delete object phDataSet no-error.
+        end.
+        
+        /* Clean up JSON objects */
+        
+        do i = 1 to extent(poJsonObjects):
+            if valid-object(poJsonObjects[i]) then
+                delete object poJsonObjects[i] no-error.
+        end.
     end method.
     
 end class.

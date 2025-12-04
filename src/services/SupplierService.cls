@@ -48,66 +48,26 @@ class services.SupplierService inherits BaseService:
     ------------------------------------------------------------------------------*/
     method public JsonObject GetSuppliersByCountry(input pcCountry as character):
         var handle hDataSet.
-        var SupplierRepository supplierRepo.
+        var JsonObject joMetadata = new JsonObject().
         var JsonObject joResult.
-        var JsonArray jaSuppliers.
-        var JsonObject joSupplier.
-        var handle hBuffer.
         
-        /* Try to cast to SupplierRepository, otherwise use dynamic invocation */
-        if type-of(this-object:Repository, SupplierRepository) then do:
-            supplierRepo = cast(this-object:Repository, SupplierRepository).
-            hDataSet = supplierRepo:FindSuppliersByCountry(pcCountry).
-        end.
-        else do:
-            /* For mock repositories, use dynamic invocation */
-            hDataSet = dynamic-invoke(this-object:Repository, "FindSuppliersByCountry", pcCountry).
-        end.
+        /* Invoke repository method (supports both concrete and mock repositories) */
+        hDataSet = dynamic-invoke(this-object:Repository, "FindSuppliersByCountry", pcCountry).
         
-        /* Convert to JSON */
-        joResult = new JsonObject().
-        jaSuppliers = new JsonArray().
-        joSupplier = new JsonObject().
+        /* Add metadata */
+        joMetadata:Add("country", pcCountry).
         
-        /* Check if suppliers were found */
-        if valid-handle(hDataSet) then do:
-            hBuffer = hDataSet:get-buffer-handle(1).
-            if hBuffer:available then do:
-                
-                /* Process all records */
-                hBuffer:find-first() no-error.
-                do while hBuffer:available:
-                    joSupplier = new JsonObject().
-                    joSupplier:Read(hBuffer).
-                    jaSuppliers:Add(joSupplier).
-                end.
-                
-                joResult:Add("country", pcCountry).
-                joResult:Add("count", jaSuppliers:Length).
-                joResult:Add("suppliers", jaSuppliers).
-            end.
-            else do:
-                /* Return empty result if not found */
-                joResult:Add("country", pcCountry).
-                joResult:Add("count", 0).
-                joResult:Add("suppliers", jaSuppliers).
-            end.
-        end.
-        else do:
-            /* Return empty result if dataset is invalid */
-            joResult:Add("country", pcCountry).
-            joResult:Add("count", 0).
-            joResult:Add("suppliers", jaSuppliers).
-        end.
+        /* Convert dataset to JSON using helper method */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, joMetadata, "suppliers").
         
         return joResult.
         
         finally:
-            /* Clean up dataset resources */
-            if valid-handle(hDataSet) then do:
+            /* Clean up resources */
+            if valid-handle(hDataSet) then
                 delete object hDataSet no-error.
-            end.
-            delete object jaSuppliers no-error.
+            if valid-object(joMetadata) then
+                delete object joMetadata no-error.
         end finally.
     end method.
     
@@ -119,57 +79,27 @@ class services.SupplierService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetSuppliersWithDiscount(input piMinDiscount as integer):
-        /* Cast repository to specific type to access specialized methods */
-        var SupplierRepository supplierRepo = cast(this-object:Repository, SupplierRepository).
+        var handle hDataSet.
+        var JsonObject joMetadata = new JsonObject().
+        var JsonObject joResult.
         
-        /* Get suppliers with discount */
-        var handle hDataSet = supplierRepo:FindSuppliersWithDiscount(piMinDiscount).
+        /* Use dynamic-invoke to call repository method */
+        hDataSet = dynamic-invoke(this-object:Repository, "FindSuppliersWithDiscount", piMinDiscount).
         
-        /* Convert to JSON */
-        var JsonObject joResult = new JsonObject().
-        var JsonArray jaSuppliers = new JsonArray().
-        var JsonObject joSupplier = new JsonObject().
-        var handle hBuffer = ?.
+        /* Add metadata */
+        joMetadata:Add("minDiscount", piMinDiscount).
         
-        /* Check if suppliers were found */
-        if valid-handle(hDataSet) then do:
-            hBuffer = hDataSet:get-buffer-handle(1).
-            if hBuffer:available then do:
-                
-                /* Process all records */
-                hBuffer:find-first() no-error.
-                do while hBuffer:available:
-                    joSupplier = new JsonObject().
-                    joSupplier:Read(hBuffer).
-                    jaSuppliers:Add(joSupplier).
-                end.
-                
-                joResult:Add("minDiscount", piMinDiscount).
-                joResult:Add("count", jaSuppliers:Length).
-                joResult:Add("suppliers", jaSuppliers).
-            end.
-            else do:
-                /* Return empty result if not found */
-                joResult:Add("minDiscount", piMinDiscount).
-                joResult:Add("count", 0).
-                joResult:Add("suppliers", jaSuppliers).
-            end.
-        end.
-        else do:
-            /* Return empty result if dataset is invalid */
-            joResult:Add("minDiscount", piMinDiscount).
-            joResult:Add("count", 0).
-            joResult:Add("suppliers", jaSuppliers).
-        end.
+        /* Convert dataset to JSON using helper method */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, joMetadata, "suppliers").
         
         return joResult.
         
         finally:
-            /* Clean up dataset resources */
-            if valid-handle(hDataSet) then do:
+            /* Clean up resources */
+            if valid-handle(hDataSet) then
                 delete object hDataSet no-error.
-            end.
-            delete object jaSuppliers no-error.
+            if valid-object(joMetadata) then
+                delete object joMetadata no-error.
         end finally.
     end method.
     

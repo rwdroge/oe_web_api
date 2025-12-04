@@ -48,67 +48,26 @@ class services.ItemService inherits BaseService:
     ------------------------------------------------------------------------------*/
     method public JsonObject GetItemsByCategory(input pcCategory as character):
         var handle hDataSet.
-        var ItemRepository itemRepo.
+        var JsonObject joMetadata = new JsonObject().
         var JsonObject joResult.
-        var JsonArray jaItems.
-        var JsonObject joItem.
-        var handle hBuffer.
         
-        /* Try to cast to ItemRepository, otherwise use dynamic invocation */
-        if type-of(this-object:Repository, ItemRepository) then do:
-            itemRepo = cast(this-object:Repository, ItemRepository).
-            hDataSet = itemRepo:FindItemsByCategory(pcCategory).
-        end.
-        else do:
-            /* For mock repositories, use dynamic invocation */
-            hDataSet = dynamic-invoke(this-object:Repository, "FindItemsByCategory", pcCategory).
-        end.
+        /* Invoke repository method (supports both concrete and mock repositories) */
+        hDataSet = dynamic-invoke(this-object:Repository, "FindItemsByCategory", pcCategory).
         
-        /* Convert to JSON */
-        joResult = new JsonObject().
-        jaItems = new JsonArray().
-        joItem = new JsonObject().
-        hBuffer = hDataSet:get-buffer-handle(1).
-        /* Check if items were found */
-        if valid-handle(hDataSet) then do:
-            hBuffer = hDataSet:get-buffer-handle(1).
-            if hBuffer:available then do:
-                
-                /* Process all records */
-                message "ITemService do I get a valid buffer?".
-                hBuffer:find-first() no-error.
-                do while hBuffer:available:
-                    joItem = new JsonObject().
-                    joItem:Read(hBuffer).
-                    jaItems:Add(joItem).
-                end.
-                
-                joResult:Add("category", pcCategory).
-                joResult:Add("count", jaItems:Length).
-                joResult:Add("items", jaItems).
-            end.
-            else do:
-                /* Return empty result if not found */
-                joResult:Add("category", pcCategory).
-                joResult:Add("count", 0).
-                joResult:Add("items", jaItems).
-            end.
-        end.
-        else do:
-            /* Return empty result if dataset is invalid */
-            joResult:Add("category", pcCategory).
-            joResult:Add("count", 0).
-            joResult:Add("items", jaItems).
-        end.
+        /* Add metadata */
+        joMetadata:Add("category", pcCategory).
+          
+        /* Convert dataset to JSON using helper method */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, joMetadata, "items").
         
         return joResult.
         
         finally:
-            /* Clean up dataset resources */
-            if valid-handle(hDataSet) then do:
+            /* Clean up resources */
+            if valid-handle(hDataSet) then
                 delete object hDataSet no-error.
-            end.
-            delete object jaItems no-error.
+            if valid-object(joMetadata) then
+                delete object joMetadata no-error.
         end finally.
     end method.
     

@@ -48,66 +48,27 @@ class services.OrderService inherits BaseService:
     ------------------------------------------------------------------------------*/
     method public JsonObject GetOrdersByCustomer(input piCustNum as integer):
         var handle hDataSet.
-        var OrderRepository orderRepo.
+        var JsonObject joMetadata = new JsonObject().
         var JsonObject joResult.
-        var JsonArray jaOrders.
-        var JsonObject joOrder.
-        var handle hBuffer.
         
-        /* Try to cast to OrderRepository, otherwise use dynamic invocation */
-        if type-of(this-object:Repository, OrderRepository) then do:
-            orderRepo = cast(this-object:Repository, OrderRepository).
-            hDataSet = orderRepo:FindOrdersByCustomer(piCustNum).
-        end.
-        else do:
-            /* For mock repositories, use dynamic invocation */
-            hDataSet = dynamic-invoke(this-object:Repository, "FindOrdersByCustomer", piCustNum).
-        end.
+        /* Invoke repository method (supports both concrete and mock repositories) */
+        /* Use dynamic-invoke directly to avoid overload resolution issues */
+        hDataSet = dynamic-invoke(this-object:Repository, "FindOrdersByCustomer", piCustNum).
         
-        /* Convert to JSON */
-        joResult = new JsonObject().
-        jaOrders = new JsonArray().
-        joOrder = new JsonObject().
+        /* Add metadata */
+        joMetadata:Add("customerNumber", piCustNum).
         
-        /* Check if orders were found */
-        if valid-handle(hDataSet) then do:
-            hBuffer = hDataSet:get-buffer-handle(1).
-            if hBuffer:available then do:
-                
-                /* Process all records */
-                hBuffer:find-first() no-error.
-                do while hBuffer:available:
-                    joOrder = new JsonObject().
-                    joOrder:Read(hBuffer).
-                    jaOrders:Add(joOrder).
-                end.
-                
-                joResult:Add("customerNumber", piCustNum).
-                joResult:Add("count", jaOrders:Length).
-                joResult:Add("orders", jaOrders).
-            end.
-            else do:
-                /* Return empty result if not found */
-                joResult:Add("customerNumber", piCustNum).
-                joResult:Add("count", 0).
-                joResult:Add("orders", jaOrders).
-            end.
-        end.
-        else do:
-            /* Return empty result if dataset is invalid */
-            joResult:Add("customerNumber", piCustNum).
-            joResult:Add("count", 0).
-            joResult:Add("orders", jaOrders).
-        end.
+        /* Convert dataset to JSON using helper method */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, joMetadata, "orders").
         
         return joResult.
         
         finally:
-            /* Clean up dataset resources */
-            if valid-handle(hDataSet) then do:
+            /* Clean up resources */
+            if valid-handle(hDataSet) then
                 delete object hDataSet no-error.
-            end.
-            delete object jaOrders no-error.
+            if valid-object(joMetadata) then
+                delete object joMetadata no-error.
         end finally.
     end method.
     
@@ -120,60 +81,28 @@ class services.OrderService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetOrdersByDateRange(input pdStartDate as date, input pdEndDate as date):
-        /* Cast repository to specific type to access specialized methods */
-        var OrderRepository orderRepo = cast(this-object:Repository, OrderRepository).
+        var handle hDataSet.
+        var JsonObject joMetadata = new JsonObject().
+        var JsonObject joResult.
         
-        /* Get orders by date range */
-        var handle hDataSet = orderRepo:FindOrdersByDateRange(pdStartDate, pdEndDate).
+        /* Invoke repository method (supports both concrete and mock repositories) */
+        hDataSet = dynamic-invoke(this-object:Repository, "FindOrdersByDateRange", pdStartDate, pdEndDate).
         
-        /* Convert to JSON */
-        var JsonObject joResult = new JsonObject().
-        var JsonArray jaOrders = new JsonArray().
-        var JsonObject joOrder = new JsonObject().
-        var handle hBuffer = ?.
+        /* Add metadata */
+        joMetadata:Add("startDate", string(pdStartDate)).
+        joMetadata:Add("endDate", string(pdEndDate)).
         
-        /* Check if orders were found */
-        if valid-handle(hDataSet) then do:
-            hBuffer = hDataSet:get-buffer-handle(1).
-            if hBuffer:available then do:
-                
-                /* Process all records */
-                hBuffer:find-first() no-error.
-                do while hBuffer:available:
-                    joOrder = new JsonObject().
-                    joOrder:Read(hBuffer).
-                    jaOrders:Add(joOrder).
-                end.
-                
-                joResult:Add("startDate", string(pdStartDate)).
-                joResult:Add("endDate", string(pdEndDate)).
-                joResult:Add("count", jaOrders:Length).
-                joResult:Add("orders", jaOrders).
-            end.
-            else do:
-                /* Return empty result if not found */
-                joResult:Add("startDate", string(pdStartDate)).
-                joResult:Add("endDate", string(pdEndDate)).
-                joResult:Add("count", 0).
-                joResult:Add("orders", jaOrders).
-            end.
-        end.
-        else do:
-            /* Return empty result if dataset is invalid */
-            joResult:Add("startDate", string(pdStartDate)).
-            joResult:Add("endDate", string(pdEndDate)).
-            joResult:Add("count", 0).
-            joResult:Add("orders", jaOrders).
-        end.
+        /* Convert dataset to JSON using helper method */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, joMetadata, "orders").
         
         return joResult.
         
         finally:
-            /* Clean up dataset resources */
-            if valid-handle(hDataSet) then do:
+            /* Clean up resources */
+            if valid-handle(hDataSet) then
                 delete object hDataSet no-error.
-            end.
-            delete object jaOrders no-error.
+            if valid-object(joMetadata) then
+                delete object joMetadata no-error.
         end finally.
     end method.
     
@@ -185,57 +114,28 @@ class services.OrderService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetOrdersByStatus(input pcStatus as character):
-        /* Cast repository to specific type to access specialized methods */
-        var OrderRepository orderRepo = cast(this-object:Repository, OrderRepository).
+        var handle hDataSet.
+        var JsonObject joMetadata = new JsonObject().
+        var JsonObject joResult.
         
-        /* Get orders by status */
-        var handle hDataSet = orderRepo:FindOrdersByStatus(pcStatus).
+        /* Invoke repository method (supports both concrete and mock repositories) */
+        /* Use dynamic-invoke directly to avoid overload resolution issues */
+        hDataSet = dynamic-invoke(this-object:Repository, "FindOrdersByStatus", pcStatus).
         
-        /* Convert to JSON */
-        var JsonObject joResult = new JsonObject().
-        var JsonArray jaOrders = new JsonArray().
-        var JsonObject joOrder = new JsonObject().
-        var handle hBuffer = ?.
+        /* Add metadata */
+        joMetadata:Add("status", pcStatus).
         
-        /* Check if orders were found */
-        if valid-handle(hDataSet) then do:
-            hBuffer = hDataSet:get-buffer-handle(1).
-            if hBuffer:available then do:
-                
-                /* Process all records */
-                hBuffer:find-first() no-error.
-                do while hBuffer:available:
-                    joOrder = new JsonObject().
-                    joOrder:Read(hBuffer).
-                    jaOrders:Add(joOrder).
-                end.
-                
-                joResult:Add("status", pcStatus).
-                joResult:Add("count", jaOrders:Length).
-                joResult:Add("orders", jaOrders).
-            end.
-            else do:
-                /* Return empty result if not found */
-                joResult:Add("status", pcStatus).
-                joResult:Add("count", 0).
-                joResult:Add("orders", jaOrders).
-            end.
-        end.
-        else do:
-            /* Return empty result if dataset is invalid */
-            joResult:Add("status", pcStatus).
-            joResult:Add("count", 0).
-            joResult:Add("orders", jaOrders).
-        end.
+        /* Convert dataset to JSON using helper method */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, joMetadata, "orders").
         
         return joResult.
         
         finally:
-            /* Clean up dataset resources */
-            if valid-handle(hDataSet) then do:
+            /* Clean up resources */
+            if valid-handle(hDataSet) then
                 delete object hDataSet no-error.
-            end.
-            delete object jaOrders no-error.
+            if valid-object(joMetadata) then
+                delete object joMetadata no-error.
         end finally.
     end method.
     
