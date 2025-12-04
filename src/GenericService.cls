@@ -42,6 +42,36 @@ class GenericService inherits WebHandler:
         /* Initialize service factory */
         serviceFactory = webhandlers.ServiceFactory:GetInstance().
     end constructor.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Validate request body exists
+     Parameters:
+       input poRequestBody - Request body to validate
+       input pcEntityName - Entity name for error message
+       input poContext - Response context
+       input pcId - Optional ID for error message
+     Returns: logical - true if valid, false if invalid (response already sent)
+     Notes: Helper to eliminate duplication in Handle* methods
+    ------------------------------------------------------------------------------*/
+    method private logical ValidateRequestBody(
+        input poRequestBody as JsonObject,
+        input pcEntityName as character,
+        input poContext as ResponseContext,
+        input pcId as character):
+        
+        if not valid-object(poRequestBody) then do:
+            poContext:Response:StatusCode = 400.
+            poContext:JsonResponse = new JsonObject().
+            poContext:JsonResponse:Add("error", "Missing request body").
+            poContext:JsonResponse:Add("entity", pcEntityName).
+            if pcId > "" then
+                poContext:JsonResponse:Add("id", pcId).
+            poContext:Writer:write(poContext:JsonResponse:GetJsonText()).
+            return false.
+        end.
+        
+        return true.
+    end method.
 
     /*------------------------------------------------------------------------------
      Purpose: Handles HTTP GET requests for entity data or metadata
@@ -152,14 +182,8 @@ class GenericService inherits WebHandler:
         var CrudErrorParams errorParams.
         
         /* Validate request body */
-        if not valid-object(requestBody) then do:
-            ctx:Response:StatusCode = 400.
-            ctx:JsonResponse = new JsonObject().
-            ctx:JsonResponse:Add("error", "Missing request body").
-            ctx:JsonResponse:Add("entity", entityName).
-            ctx:Writer:write(ctx:JsonResponse:GetJsonText()).
+        if not this-object:ValidateRequestBody(requestBody, entityName, ctx, "") then
             return ctx:Response:StatusCode.
-        end.
         
         /* Get service for entity */
         entityService = serviceFactory:GetService(entityName).
@@ -221,15 +245,8 @@ class GenericService inherits WebHandler:
         end.
         
         /* Validate request body */
-        if not valid-object(requestBody) then do:
-            ctx:Response:StatusCode = 400.
-            ctx:JsonResponse = new JsonObject().
-            ctx:JsonResponse:Add("error", "Missing request body").
-            ctx:JsonResponse:Add("entity", entityName).
-            ctx:JsonResponse:Add("id", id).
-            ctx:Writer:write(ctx:JsonResponse:GetJsonText()).
+        if not this-object:ValidateRequestBody(requestBody, entityName, ctx, id) then
             return ctx:Response:StatusCode.
-        end.
         
         /* Get service for entity */
         entityService = serviceFactory:GetService(entityName).

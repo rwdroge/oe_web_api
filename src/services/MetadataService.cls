@@ -134,6 +134,29 @@ class services.MetadataService inherits services.BaseService:
     
     /* Note: createEntityModel method inherited from BaseService */
     
+    /*------------------------------------------------------------------------------
+     Purpose: Create metadata for a single entity
+     Parameters:
+       input pcEntityName - Name of the entity
+       input phTempTable - Handle to temp-table with entity structure
+       input poParser - ObjectModelParser instance
+     Returns: JsonObject containing entity metadata
+     Notes: Helper method to reduce duplication in GetAllEntitiesMetadata
+    ------------------------------------------------------------------------------*/
+    method private JsonObject CreateSingleEntityMetadata(
+        input pcEntityName as character,
+        input phTempTable as handle,
+        input poParser as Progress.Json.ObjectModel.ObjectModelParser):
+        
+        var JsonObject joEntity = new JsonObject().
+        var longchar lcModel.
+        
+        this-object:createEntityModel(phTempTable, output lcModel).
+        joEntity:add("name", pcEntityName).
+        joEntity:add("fields", cast(poParser:Parse(lcModel), JsonObject)).
+        
+        return joEntity.
+    end method.
     
     /*------------------------------------------------------------------------------
      Purpose: Get metadata for all available entities
@@ -142,14 +165,10 @@ class services.MetadataService inherits services.BaseService:
     ------------------------------------------------------------------------------*/
     method public Progress.Json.ObjectModel.JsonArray GetAllEntitiesMetadata():
         
-        VAR Progress.Json.ObjectModel.JsonArray jaEntities.
-        VAR Progress.Json.ObjectModel.JsonObject joEntity.
-        VAR handle hTempTable.
-        VAR longchar lcModel.
-        VAR Progress.Json.ObjectModel.ObjectModelParser parser.
-        
-        jaEntities = new Progress.Json.ObjectModel.JsonArray().
-        parser = new Progress.Json.ObjectModel.ObjectModelParser().
+        var JsonArray jaEntities = new JsonArray().
+        var JsonObject joEntity.
+        var handle hTempTable.
+        var ObjectModelParser parser = new ObjectModelParser().
         
         /* Create metadata for customers entity */
         create temp-table hTempTable.
@@ -158,11 +177,7 @@ class services.MetadataService inherits services.BaseService:
         hTempTable:add-new-field("Country", "character").
         hTempTable:add-new-field("CreditLimit", "decimal").
         hTempTable:temp-table-prepare("ttCustomers").
-        
-        this-object:createEntityModel(hTempTable, output lcModel).
-        joEntity = new Progress.Json.ObjectModel.JsonObject().
-        joEntity:add("name", "customers").
-        joEntity:add("fields", cast(parser:Parse(lcModel), Progress.Json.ObjectModel.JsonObject)).
+        joEntity = this-object:CreateSingleEntityMetadata("customers", hTempTable, parser).
         jaEntities:add(joEntity).
         delete object hTempTable no-error.
         
@@ -173,11 +188,7 @@ class services.MetadataService inherits services.BaseService:
         hTempTable:add-new-field("Price", "decimal").
         hTempTable:add-new-field("OnHand", "integer").
         hTempTable:temp-table-prepare("ttItems").
-        
-        this-object:createEntityModel(hTempTable, output lcModel).
-        joEntity = new Progress.Json.ObjectModel.JsonObject().
-        joEntity:add("name", "items"). 
-        joEntity:add("fields", cast(parser:Parse(lcModel), Progress.Json.ObjectModel.JsonObject)).
+        joEntity = this-object:CreateSingleEntityMetadata("items", hTempTable, parser).
         jaEntities:add(joEntity).
         delete object hTempTable no-error.
         
@@ -188,11 +199,7 @@ class services.MetadataService inherits services.BaseService:
         hTempTable:add-new-field("OrderDate", "date").
         hTempTable:add-new-field("ShipDate", "date").
         hTempTable:temp-table-prepare("ttOrders").
-        
-        this-object:createEntityModel(hTempTable, output lcModel).
-        joEntity = new Progress.Json.ObjectModel.JsonObject().
-        joEntity:add("name", "orders").
-        joEntity:add("fields", cast(parser:Parse(lcModel), Progress.Json.ObjectModel.JsonObject)).
+        joEntity = this-object:CreateSingleEntityMetadata("orders", hTempTable, parser).
         jaEntities:add(joEntity).
         delete object hTempTable no-error.
         
@@ -203,11 +210,7 @@ class services.MetadataService inherits services.BaseService:
         hTempTable:add-new-field("Country", "character").
         hTempTable:add-new-field("ContactName", "character").
         hTempTable:temp-table-prepare("ttSuppliers").
-        
-        this-object:createEntityModel(hTempTable, output lcModel).
-        joEntity = new Progress.Json.ObjectModel.JsonObject().
-        joEntity:add("name", "suppliers").
-        joEntity:add("fields", cast(parser:Parse(lcModel), Progress.Json.ObjectModel.JsonObject)).
+        joEntity = this-object:CreateSingleEntityMetadata("suppliers", hTempTable, parser).
         jaEntities:add(joEntity). 
         delete object hTempTable no-error.
         
@@ -218,11 +221,7 @@ class services.MetadataService inherits services.BaseService:
         hTempTable:add-new-field("OrderNum", "integer").
         hTempTable:add-new-field("OrderDate", "date").
         hTempTable:temp-table-prepare("ttCustomersOrders").
-        
-        this-object:createEntityModel(hTempTable, output lcModel).
-        joEntity = new Progress.Json.ObjectModel.JsonObject().
-        joEntity:add("name", "customersorders").
-        joEntity:add("fields", cast(parser:Parse(lcModel), Progress.Json.ObjectModel.JsonObject)).
+        joEntity = this-object:CreateSingleEntityMetadata("customersorders", hTempTable, parser).
         jaEntities:add(joEntity).
         delete object hTempTable no-error.
         

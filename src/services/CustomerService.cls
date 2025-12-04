@@ -146,16 +146,9 @@ class services.CustomerService inherits BaseService:
             lValid = false.
         end.
         
-        /* Add validation result */
-        joResult:Add("valid", lValid).
-        if not lValid then
-            joResult:Add("errors", jaErrors).
-            
+        /* Build and return validation result */
+        joResult = this-object:BuildValidationResult(jaErrors, lValid).
         return joResult.
-        
-        finally:
-            delete object jaErrors no-error.
-        end finally.
     end method.
     
     /*------------------------------------------------------------------------------

@@ -72,10 +72,7 @@ class services.BaseService abstract implements interfaces.IService:
         return joResult.
 
         finally:
-            /* Clean up dataset */
-            if valid-handle(hDataSet) then do:
-                delete object hDataSet no-error.
-            end.
+            this-object:CleanupDataSetAndJson(hDataSet, ?).
         end finally.
     end method.
     
@@ -124,11 +121,7 @@ class services.BaseService abstract implements interfaces.IService:
         end.
         
         finally:
-            /* Clean up dataset - make sure to detach data source before deleting */
-            if valid-handle(hDataSet) then do:
-                /* The repository should have already detached the data source */
-                delete object hDataSet no-error.
-            end.
+            this-object:CleanupDataSetAndJson(hDataSet, ?).
         end finally.
     end method.
     
@@ -229,14 +222,7 @@ class services.BaseService abstract implements interfaces.IService:
             return joError.
         end.
         finally:
-            /* Clean up dataset */
-            if valid-handle(hDataSet) then do:
-                delete object hDataSet no-error.
-            end.
-            /* Clean up ProDataSet format object */
-            if valid-object(joProDataSetFormat) then do:
-                delete object joProDataSetFormat no-error.
-            end.
+            this-object:CleanupDataSetAndJson(hDataSet, joProDataSetFormat).
         end finally.
     end method.
     
@@ -283,17 +269,8 @@ class services.BaseService abstract implements interfaces.IService:
             return joResult.
         end.
         finally:
-            /* Clean up dataset */
-            if valid-handle(hDataSet) then do:
-                delete object hDataSet no-error.
-            end.
-            /* Clean up ProDataSet format object */
-            if valid-object(joProDataSetFormat) then do:
-                delete object joProDataSetFormat no-error.
-            end.
+            this-object:CleanupDataSetAndJson(hDataSet, joProDataSetFormat).
         end finally.
-            
-
     end method.
     
     /*------------------------------------------------------------------------------
@@ -569,6 +546,63 @@ class services.BaseService abstract implements interfaces.IService:
     end method.
     
     /*------------------------------------------------------------------------------
+     Purpose: Build validation result JSON from errors array
+     Parameters:
+       input paErrors - JsonArray containing validation errors
+       input plValid - Logical indicating if validation passed
+     Returns: JsonObject with validation results
+     Notes: Helper method to eliminate duplication in validation methods
+    ------------------------------------------------------------------------------*/
+    method public JsonObject BuildValidationResult(input paErrors as JsonArray, input plValid as logical):
+        var JsonObject joResult = new JsonObject().
+        
+        joResult:Add("valid", plValid).
+        if not plValid then
+            joResult:Add("errors", paErrors).
+            
+        return joResult.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Find dataset name in response object
+     Parameters:
+       input poResponse - JsonObject containing response
+       output pcDatasetName - Name of the dataset property found
+     Returns: logical indicating if dataset was found
+     Notes: Helper method to eliminate duplication in normalization methods
+    ------------------------------------------------------------------------------*/
+    method private logical FindDatasetName(input poResponse as JsonObject, output pcDatasetName as character):
+        var character[] aNames = poResponse:GetNames().
+        var integer i = 0.
+        
+        pcDatasetName = "".
+        
+        do i = 1 to extent(aNames):
+            if aNames[i] begins "ds" then do:
+                pcDatasetName = aNames[i].
+                return true.
+            end.
+        end.
+        
+        return false.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Clean up dataset and JSON object resources
+     Parameters:
+       input phDataSet - Handle to dataset to clean up
+       input poJsonObject - JsonObject to clean up
+     Notes: Helper method to eliminate cleanup duplication across methods
+    ------------------------------------------------------------------------------*/
+    method private void CleanupDataSetAndJson(input phDataSet as handle, input poJsonObject as JsonObject):
+        if valid-handle(phDataSet) then
+            delete object phDataSet no-error.
+            
+        if valid-object(poJsonObject) then
+            delete object poJsonObject no-error.
+    end method.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Convert normalized JSON to ProDataSet format for backend processing
      Parameters:
        input poNormalizedJson - JsonObject containing normalized entity data
@@ -615,17 +649,10 @@ class services.BaseService abstract implements interfaces.IService:
         var JsonObject joFirstRecord = ?.
         var character[] aTableNames.
         var character[] aRecordNames.
-
-        /* Find the dataset property (starts with "ds") */
-        var character[] aNames = poResponse:GetNames().
         var integer i = 0.
-        
-        do i = 1 to extent(aNames):
-            if aNames[i] begins "ds" then do:
-                cDatasetName = aNames[i].
-                leave.
-            end.
-        end.
+
+        /* Find the dataset property using helper method */
+        this-object:FindDatasetName(poResponse, output cDatasetName).
         
         /* If we found a dataset property */
         if cDatasetName > "" then do:
@@ -692,18 +719,11 @@ class services.BaseService abstract implements interfaces.IService:
         var JsonObject joNormalizedRecord = ?.
         var character[] aTableNames.
         var character[] aRecordNames.
-
-        /* Find the dataset property (starts with "ds") */
-        var character[] aNames = poResponse:GetNames().
         var integer i = 0.
         var integer j = 0.
-        
-        do i = 1 to extent(aNames):
-            if aNames[i] begins "ds" then do:
-                cDatasetName = aNames[i].
-                leave.
-            end.
-        end.
+
+        /* Find the dataset property using helper method */
+        this-object:FindDatasetName(poResponse, output cDatasetName).
         
         /* If we found a dataset property */
         if cDatasetName > "" then do:
