@@ -47,29 +47,17 @@ class services.OrderService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetOrdersByCustomer(input piCustNum as integer):
-        var handle hDataSet.
         var JsonObject joMetadata = new JsonObject().
-        var JsonObject joResult.
-        
-        /* Invoke repository method (supports both concrete and mock repositories) */
-        /* Use dynamic-invoke directly to avoid overload resolution issues */
-        hDataSet = dynamic-invoke(this-object:Repository, "FindOrdersByCustomer", piCustNum).
         
         /* Add metadata */
         joMetadata:Add("customerNumber", piCustNum).
         
-        /* Convert dataset to JSON using helper method */
-        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, joMetadata, "orders").
-        
-        return joResult.
-        
-        finally:
-            /* Clean up resources */
-            if valid-handle(hDataSet) then
-                delete object hDataSet no-error.
-            if valid-object(joMetadata) then
-                delete object joMetadata no-error.
-        end finally.
+        /* Use base helper method to execute query and convert to JSON */
+        return this-object:ExecuteRepositoryQueryWithMetadata(
+            "FindOrdersByCustomer", 
+            piCustNum, 
+            joMetadata, 
+            "orders").
     end method.
     
     /*------------------------------------------------------------------------------
@@ -81,28 +69,24 @@ class services.OrderService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetOrdersByDateRange(input pdStartDate as date, input pdEndDate as date):
-        var handle hDataSet.
         var JsonObject joMetadata = new JsonObject().
+        var handle hDataSet.
         var JsonObject joResult.
-        
-        /* Invoke repository method (supports both concrete and mock repositories) */
-        hDataSet = dynamic-invoke(this-object:Repository, "FindOrdersByDateRange", pdStartDate, pdEndDate).
         
         /* Add metadata */
         joMetadata:Add("startDate", string(pdStartDate)).
         joMetadata:Add("endDate", string(pdEndDate)).
         
-        /* Convert dataset to JSON using helper method */
+        /* Invoke repository method directly to avoid overload resolution issues */
+        hDataSet = dynamic-invoke(this-object:Repository, "FindOrdersByDateRange", pdStartDate, pdEndDate).
+        
+        /* Convert dataset to JSON with metadata */
         joResult = this-object:ConvertDataSetToJsonArray(hDataSet, joMetadata, "orders").
         
         return joResult.
         
         finally:
-            /* Clean up resources */
-            if valid-handle(hDataSet) then
-                delete object hDataSet no-error.
-            if valid-object(joMetadata) then
-                delete object joMetadata no-error.
+            this-object:CleanupResources(hDataSet, joMetadata).
         end finally.
     end method.
     
@@ -114,29 +98,17 @@ class services.OrderService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetOrdersByStatus(input pcStatus as character):
-        var handle hDataSet.
         var JsonObject joMetadata = new JsonObject().
-        var JsonObject joResult.
-        
-        /* Invoke repository method (supports both concrete and mock repositories) */
-        /* Use dynamic-invoke directly to avoid overload resolution issues */
-        hDataSet = dynamic-invoke(this-object:Repository, "FindOrdersByStatus", pcStatus).
         
         /* Add metadata */
         joMetadata:Add("status", pcStatus).
         
-        /* Convert dataset to JSON using helper method */
-        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, joMetadata, "orders").
-        
-        return joResult.
-        
-        finally:
-            /* Clean up resources */
-            if valid-handle(hDataSet) then
-                delete object hDataSet no-error.
-            if valid-object(joMetadata) then
-                delete object joMetadata no-error.
-        end finally.
+        /* Use base helper method to execute query and convert to JSON */
+        return this-object:ExecuteRepositoryQueryWithMetadata(
+            "FindOrdersByStatus", 
+            pcStatus, 
+            joMetadata, 
+            "orders").
     end method.
     
     /*------------------------------------------------------------------------------
@@ -241,25 +213,14 @@ class services.OrderService inherits BaseService:
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Override create method to add validation
+     Purpose: Override validation method for order-specific validation
      Parameters:
        input poEntity - JSON object containing entity data
-     Returns: JsonObject containing created entity
+     Returns: JsonObject with validation results
     ------------------------------------------------------------------------------*/
-    method override public JsonObject Create(input poEntity as JsonObject):
-        /* Perform order-specific validation */
-        var JsonObject joValidation = this-object:ValidateOrder(poEntity).
-        
-        /* Check validation result */
-        if not joValidation:GetLogical("valid") then
-            return joValidation.
-            
-        /* Call base implementation */
-        return super:Create(poEntity).
-        
-        finally:
-            delete object joValidation no-error.
-        end finally.
+    method override public JsonObject ValidateEntityForCreate(input poEntity as JsonObject):
+        /* Delegate to existing validation method */
+        return this-object:ValidateOrder(poEntity).
     end method.
     
     /*------------------------------------------------------------------------------

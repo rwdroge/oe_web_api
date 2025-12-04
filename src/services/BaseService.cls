@@ -133,6 +133,48 @@ class services.BaseService abstract implements interfaces.IService:
     end method.
     
     /*------------------------------------------------------------------------------
+     Purpose: Validate entity before creation (override in child classes)
+     Parameters:
+       input poEntity - JSON object containing entity data
+     Returns: JsonObject with validation results (has "valid" property)
+     Notes: Override this method in child classes for entity-specific validation
+    ------------------------------------------------------------------------------*/
+    method public JsonObject ValidateEntityForCreate(input poEntity as JsonObject):
+        var JsonObject joResult = new JsonObject().
+        
+        /* Base implementation always returns valid */
+        joResult:Add("valid", true).
+        
+        return joResult.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Create entity with validation (template method pattern)
+     Parameters:
+       input poEntity - JSON object containing entity data
+     Returns: JsonObject containing created entity or validation errors
+     Notes: Calls ValidateEntityForCreate before creation
+    ------------------------------------------------------------------------------*/
+    method public JsonObject CreateWithValidation(input poEntity as JsonObject):
+        var JsonObject joValidation.
+        
+        /* Perform entity-specific validation */
+        joValidation = this-object:ValidateEntityForCreate(poEntity).
+        
+        /* Check validation result */
+        if not joValidation:GetLogical("valid") then
+            return joValidation.
+            
+        /* Call base create implementation */
+        return this-object:Create(poEntity).
+        
+        finally:
+            if valid-object(joValidation) then
+                delete object joValidation no-error.
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Create a new entity
      Parameters:
        input poEntity - JSON object containing entity data
@@ -820,6 +862,140 @@ class services.BaseService abstract implements interfaces.IService:
             if valid-object(poJsonObjects[i]) then
                 delete object poJsonObjects[i] no-error.
         end.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Clean up dataset and single JSON object (common pattern)
+     Parameters:
+       input phDataSet - Handle to dataset to clean up
+       input poJsonObject - JSON object to clean up
+     Notes: Overload for single JSON object cleanup
+    ------------------------------------------------------------------------------*/
+    method protected void CleanupResources(
+        input phDataSet as handle,
+        input poJsonObject as JsonObject):
+        
+        if valid-handle(phDataSet) then
+            delete object phDataSet no-error.
+            
+        if valid-object(poJsonObject) then
+            delete object poJsonObject no-error.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Clean up two JSON objects (common pattern in service methods)
+     Parameters:
+       input poJsonObject1 - First JSON object to clean up
+       input poJsonObject2 - Second JSON object to clean up
+     Notes: Overload for two JSON objects
+    ------------------------------------------------------------------------------*/
+    method protected void CleanupResources(
+        input poJsonObject1 as JsonObject,
+        input poJsonObject2 as JsonObject):
+        
+        if valid-object(poJsonObject1) then
+            delete object poJsonObject1 no-error.
+            
+        if valid-object(poJsonObject2) then
+            delete object poJsonObject2 no-error.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Execute repository method and convert result to JSON with metadata
+     Parameters:
+       input pcMethodName - Repository method name to invoke
+       input pcParam - Parameter to pass to method
+       input poMetadata - Metadata to include in response
+       input pcArrayName - Name for the result array
+     Returns: JsonObject containing results with metadata
+     Notes: Eliminates duplicate pattern in all GetBy* methods across services
+    ------------------------------------------------------------------------------*/
+    method public JsonObject ExecuteRepositoryQueryWithMetadata(
+        input pcMethodName as character,
+        input pcParam as character,
+        input poMetadata as JsonObject,
+        input pcArrayName as character):
+        
+        var handle hDataSet.
+        var JsonObject joResult.
+        
+        /* Invoke repository method */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, pcParam).
+        
+        /* Convert dataset to JSON with metadata */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, poMetadata, pcArrayName).
+        
+        return joResult.
+        
+        finally:
+            this-object:CleanupResources(hDataSet, poMetadata).
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Execute repository method with integer param and convert to JSON
+     Parameters:
+       input pcMethodName - Repository method name to invoke
+       input piParam - Integer parameter to pass to method
+       input poMetadata - Metadata to include in response
+       input pcArrayName - Name for the result array
+     Returns: JsonObject containing results with metadata
+     Notes: Overload for integer parameters
+    ------------------------------------------------------------------------------*/
+    method public JsonObject ExecuteRepositoryQueryWithMetadata(
+        input pcMethodName as character,
+        input piParam as integer,
+        input poMetadata as JsonObject,
+        input pcArrayName as character):
+        
+        var handle hDataSet.
+        var JsonObject joResult.
+        
+        /* Invoke repository method */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, piParam).
+        
+        /* Convert dataset to JSON with metadata */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, poMetadata, pcArrayName).
+        
+        return joResult.
+        
+        finally:
+            this-object:CleanupResources(hDataSet, poMetadata).
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Execute repository method with date range and convert to JSON
+     Parameters:
+       input pcMethodName - Repository method name to invoke
+       input pdStartDate - Start date parameter
+       input pdEndDate - End date parameter
+       input poMetadata - Metadata to include in response
+       input pcArrayName - Name for the result array
+     Returns: JsonObject containing results with metadata
+     Notes: Overload for date range parameters
+    ------------------------------------------------------------------------------*/
+    method public JsonObject ExecuteRepositoryQueryWithMetadata(
+        input pcMethodName as character,
+        input pdStartDate as date,
+        input pdEndDate as date,
+        input poMetadata as JsonObject,
+        input pcArrayName as character):
+        
+        var handle hDataSet.
+        var JsonObject joResult.
+        
+        /* Invoke repository method */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, pdStartDate, pdEndDate).
+        
+        /* Convert dataset to JSON with metadata */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, poMetadata, pcArrayName).
+        
+        return joResult.
+        
+        finally:
+            this-object:CleanupResources(hDataSet, poMetadata).
+        end finally.
     end method.
     
 end class.

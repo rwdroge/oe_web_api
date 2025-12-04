@@ -47,28 +47,17 @@ class services.ItemService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetItemsByCategory(input pcCategory as character):
-        var handle hDataSet.
         var JsonObject joMetadata = new JsonObject().
-        var JsonObject joResult.
-        
-        /* Invoke repository method (supports both concrete and mock repositories) */
-        hDataSet = dynamic-invoke(this-object:Repository, "FindItemsByCategory", pcCategory).
         
         /* Add metadata */
         joMetadata:Add("category", pcCategory).
-          
-        /* Convert dataset to JSON using helper method */
-        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, joMetadata, "items").
         
-        return joResult.
-        
-        finally:
-            /* Clean up resources */
-            if valid-handle(hDataSet) then
-                delete object hDataSet no-error.
-            if valid-object(joMetadata) then
-                delete object joMetadata no-error.
-        end finally.
+        /* Use base helper method to execute query and convert to JSON */
+        return this-object:ExecuteRepositoryQueryWithMetadata(
+            "FindItemsByCategory", 
+            pcCategory, 
+            joMetadata, 
+            "items").
     end method.
     
     /*------------------------------------------------------------------------------
@@ -148,25 +137,14 @@ class services.ItemService inherits BaseService:
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Override create method to add validation
+     Purpose: Override validation method for item-specific validation
      Parameters:
        input poEntity - JSON object containing entity data
-     Returns: JsonObject containing created entity
+     Returns: JsonObject with validation results
     ------------------------------------------------------------------------------*/
-    method override public JsonObject Create(input poEntity as JsonObject):
-        /* Perform item-specific validation */
-        var JsonObject joValidation = this-object:ValidateItem(poEntity).
-        
-        /* Check validation result */
-        if not joValidation:GetCharacter("valid") = "true" then
-            return joValidation.
-            
-        /* Call base implementation */
-        return super:Create(poEntity).
-        
-        finally:
-            delete object joValidation no-error.
-        end finally.
+    method public override JsonObject ValidateEntityForCreate(input poEntity as JsonObject):
+        /* Delegate to existing validation method */
+        return this-object:ValidateItem(poEntity).
     end method.
     
     /*------------------------------------------------------------------------------

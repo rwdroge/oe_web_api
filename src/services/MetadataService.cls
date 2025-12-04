@@ -15,8 +15,16 @@ using generics.ValueListValidationParams.
  
 block-level on error undo, throw. 
  
-class services.MetadataService:
+class services.MetadataService inherits services.BaseService:
      
+    /*------------------------------------------------------------------------------
+     Purpose: Constructor for MetadataService
+     Notes: MetadataService is a utility service that doesn't require a repository
+    ------------------------------------------------------------------------------*/
+    constructor public MetadataService():
+        super(?, "metadata").
+    end constructor.
+    
     /*------------------------------------------------------------------------------
      Purpose: Check if a field list is valid for a given temp-table
      Parameters:
@@ -124,47 +132,7 @@ class services.MetadataService:
         end finally.
     end method.
     
-    /*------------------------------------------------------------------------------
-     Purpose: Create a JSON model of an entity's structure
-     Parameters:
-       input phTempTable - Handle to the temp-table
-       output plcModel - Longchar containing the JSON model
-     Notes: Builds a JSON object describing the entity's fields and data types
-    ------------------------------------------------------------------------------*/
-    method public void createEntityModel(
-        input phTempTable as handle,
-        output plcModel as longchar):
-        
-        var integer i = 0.
-        VAR Progress.Json.ObjectModel.JsonObject joModel.
-        var character cDataType = "".
-        
-        joModel = new Progress.Json.ObjectModel.JsonObject().
-        
-        /* Build JSON model from temp-table fields */
-        do i = 1 to phTempTable:num-fields:
-            /* Convert ABL data types to JSON-friendly types */
-            case phTempTable:buffer-field(i):data-type:
-                when "character" then cDataType = "string".
-                when "decimal" then cDataType = "number".
-                when "logical" then cDataType = "boolean".
-                otherwise
-                    cDataType = phTempTable:buffer-field(i):data-type.
-            end case.
-            
-            /* Skip internal fields */
-            if (phTempTable:buffer-field(i):name <> "seq" and 
-                phTempTable:buffer-field(i):name <> "id") then
-                joModel:add(phTempTable:buffer-field(i):name, cDataType).
-        end.
-        
-        plcModel = joModel:getJsonText().
-        
-        finally:
-            delete object joModel no-error.
-        end finally.
-    end method.
-
+    /* Note: createEntityModel method inherited from BaseService */
     
     
     /*------------------------------------------------------------------------------
