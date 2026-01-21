@@ -360,6 +360,9 @@ class data.DataAccess:
         output hDataSource as handle,
         output hBuffer as handle):
         
+        var character cErrorMsg = "".
+        var integer i = 0.
+        
         /* Create data source and buffer */
         DataAccessHelper:CreateDataSourceBuffer(
             entry(iEntry, params:Sources),
@@ -371,10 +374,17 @@ class data.DataAccess:
         params:dsDataSet:get-buffer-handle(iEntry):attach-data-source(hDataSource) no-error.
         if error-status:error then 
         do:
+            /* Collect all error messages */
+            do i = 1 to error-status:num-messages:
+                cErrorMsg = cErrorMsg + (if i > 1 then " | " else "") + error-status:get-message(i).
+            end.
+            
+            /* Add context about what we were trying to attach */
+            cErrorMsg = "Error attaching data source for table '" + entry(iEntry, params:Sources) + "': " + cErrorMsg.
+            
             delete object hDataSource no-error.
             delete object hBuffer no-error.
-            undo, throw new Progress.Lang.AppError(
-                "Error attaching data source: " + error-status:get-message(1)).
+            undo, throw new Progress.Lang.AppError(cErrorMsg).
         end.
     end method.
     

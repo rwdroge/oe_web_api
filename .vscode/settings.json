@@ -7,5 +7,6 @@
 ],
 "mcpAuth.username": "rwdroge@gmail.com",
 "mcpAuth.mcpServerUrl": "https://oemcp4abl.services.progress.com/mcp",
-"mcpAuth.backendUrl": "https://oemcp4abl.services.progress.com"
+"mcpAuth.backendUrl": "https://oemcp4abl.services.progress.com",
+"abl.buildMode": 3
 }

@@ -33,8 +33,8 @@ class data.SupplierRepository inherits BaseRepository:
     ------------------------------------------------------------------------------*/
     constructor public SupplierRepository():
         /* Call super constructor with entity information */
-        super("ttsupplier", "supplieridnum", "supplier", dataset dsSupplier).
-    end constructor.
+        super("ttsupplier", "supplieridnum", "supplier", "", dataset dsSupplier).
+    end constructor. 
     
     /*------------------------------------------------------------------------------
      Purpose: Get metadata for the suppliers entity

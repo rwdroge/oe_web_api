@@ -33,7 +33,7 @@ class data.OrderRepository inherits BaseRepository:
     ------------------------------------------------------------------------------*/
     constructor public OrderRepository():
         /* Call super constructor with entity information */
-        super("ttorder", "ordernum", "order", dataset dsOrder).
+        super("ttorder", "ordernum", "order", "", dataset dsOrder).
     end constructor.
     
     /*------------------------------------------------------------------------------

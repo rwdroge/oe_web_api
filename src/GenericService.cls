@@ -93,10 +93,8 @@ class GenericService inherits WebHandler:
         var character apiType = poRequest:GetPathParameter("apitype").
         var character queryString = poRequest:GetContextValue("QUERY_STRING").
         
-        /* Response objects */
-        var WebResponse response = new WebResponse().
-        var WebResponseWriter writer = new WebResponseWriter(response).
-        var longchar body.
+        /* Response context */
+        var ResponseContext ctx = new ResponseContext().
         
         /* Filter parameters */
         var generics.FilterConstructorParams filterParams = new generics.FilterConstructorParams().
@@ -104,10 +102,6 @@ class GenericService inherits WebHandler:
         
         /* Service instance */
         var IService entityService = ?.
-        
-        /* JSON response objects */
-        var JsonObject joResponse = new JsonObject().
-        var CrudErrorParams errorParams.
         
         /* Set filter properties */
         assign
@@ -122,39 +116,37 @@ class GenericService inherits WebHandler:
         
         /* Process request based on API type */
         if apiType = "data" then do:
-            joResponse = this-object:ProcessDataRequest(entityName, filter).
-            response:StatusCode = 200.
+            ctx:JsonResponse = this-object:ProcessDataRequest(entityName, filter).
+            ctx:Response:StatusCode = 200.
         end.
         else if apiType = "meta" then do:
-            joResponse = this-object:ProcessMetaRequest(entityName).
-            response:StatusCode = 200.
+            ctx:JsonResponse = this-object:ProcessMetaRequest(entityName).
+            ctx:Response:StatusCode = 200.
         end.    
         else do:
             /* Handle invalid API type */
-            response:StatusCode = 400.
-            joResponse = new JsonObject().
-            joResponse:Add("error", "Invalid API type").
-            joResponse:Add("apiType", apiType).
+            ctx:Response:StatusCode = 400.
+            ctx:JsonResponse = new JsonObject().
+            ctx:JsonResponse:Add("error", "Invalid API type").
+            ctx:JsonResponse:Add("apiType", apiType).
         end.
         
-        /* Write response */
-        response:ContentType = "application/json".
-        response:ContentLength = length(joResponse:GetJsonText()).
-        writer:write(joResponse:GetJsonText()).
-        writer:flush().
-        writer:close().
+        /* Set response entity and write using proper WebHandler pattern */
+        ctx:Response:Entity = ctx:JsonResponse.
+        ctx:Writer:Open().
+        ctx:Writer:Close().
         
-        return response:StatusCode.
+        return 0.
         catch e as Progress.Lang.Error:
-            errorParams = this-object:CreateCrudErrorParams("Error retrieving entity data", entityName, e:GetMessage(1)).
-            return this-object:ProcessCatchError(response, writer, errorParams).
+            return this-object:HandleException(e, ctx:Response, entityName).
         end.
 
         finally:
-            delete object joResponse no-error.
             delete object filter no-error.
-            delete object response no-error.
-            delete object writer no-error.
+            delete object ctx:JsonResponse no-error.
+            delete object ctx:Response no-error.
+            delete object ctx:Writer no-error.
+            delete object ctx no-error.
         end finally.
     end method.
     
@@ -179,11 +171,18 @@ class GenericService inherits WebHandler:
         
         /* Service instance */
         var IService entityService = ?.
-        var CrudErrorParams errorParams.
         
         /* Validate request body */
-        if not this-object:ValidateRequestBody(requestBody, entityName, ctx, "") then
-            return ctx:Response:StatusCode.
+        if not valid-object(requestBody) then do:
+            ctx:Response:StatusCode = 400.
+            ctx:JsonResponse = new JsonObject().
+            ctx:JsonResponse:Add("error", "Missing request body").
+            ctx:JsonResponse:Add("entity", entityName).
+            ctx:Response:Entity = ctx:JsonResponse.
+            ctx:Writer:Open().
+            ctx:Writer:Close().
+            return 0.
+        end.
         
         /* Get service for entity */
         entityService = serviceFactory:GetService(entityName).
@@ -197,16 +196,20 @@ class GenericService inherits WebHandler:
         else
             ctx:Response:StatusCode = 201.
         
-        this-object:WriteJsonResponse(ctx:Response, ctx:Writer, ctx:JsonResponse).
+        /* Set entity and write using proper pattern */
+        ctx:Response:Entity = ctx:JsonResponse.
+        ctx:Writer:Open().
+        ctx:Writer:Close().
         
-        return ctx:Response:StatusCode.
+        return 0.
         catch e as Progress.Lang.Error:
-            errorParams = this-object:CreateCrudErrorParams("Error creating entity", entityName, e:GetMessage(1)).
-            return this-object:ProcessCatchError(ctx:Response, ctx:Writer, errorParams).
+            return this-object:HandleException(e, ctx:Response, entityName).
         end.
         
         finally:
-            ctx:Cleanup().
+            delete object ctx:JsonResponse no-error.
+            delete object ctx:Response no-error.
+            delete object ctx:Writer no-error.
             delete object ctx no-error.
         end finally.
     end method.
@@ -232,7 +235,6 @@ class GenericService inherits WebHandler:
         
         /* Service instance */
         var IService entityService = ?.
-        var CrudErrorParams errorParams.
         
         /* Validate request parameters */
         if id = "" then do:
@@ -240,13 +242,24 @@ class GenericService inherits WebHandler:
             ctx:JsonResponse = new JsonObject().
             ctx:JsonResponse:Add("error", "Missing ID parameter").
             ctx:JsonResponse:Add("entity", entityName).
-            ctx:Writer:write(ctx:JsonResponse:GetJsonText()).
-            return ctx:Response:StatusCode.
+            ctx:Response:Entity = ctx:JsonResponse.
+            ctx:Writer:Open().
+            ctx:Writer:Close().
+            return 0.
         end.
         
         /* Validate request body */
-        if not this-object:ValidateRequestBody(requestBody, entityName, ctx, id) then
-            return ctx:Response:StatusCode.
+        if not valid-object(requestBody) then do:
+            ctx:Response:StatusCode = 400.
+            ctx:JsonResponse = new JsonObject().
+            ctx:JsonResponse:Add("error", "Missing request body").
+            ctx:JsonResponse:Add("entity", entityName).
+            ctx:JsonResponse:Add("id", id).
+            ctx:Response:Entity = ctx:JsonResponse.
+            ctx:Writer:Open().
+            ctx:Writer:Close().
+            return 0.
+        end.
         
         /* Get service for entity */
         entityService = serviceFactory:GetService(entityName).
@@ -260,15 +273,19 @@ class GenericService inherits WebHandler:
         else
             ctx:Response:StatusCode = 200.
         
-        this-object:WriteJsonResponse(ctx:Response, ctx:Writer, ctx:JsonResponse).
+        /* Set entity and write using proper pattern */
+        ctx:Response:Entity = ctx:JsonResponse.
+        ctx:Writer:Open().
+        ctx:Writer:Close().
         
-        return ctx:Response:StatusCode.
+        return 0.
         catch e as Progress.Lang.Error:
-            errorParams = this-object:CreateCrudErrorParamsWithId("Error updating entity", entityName, id, e:GetMessage(1)).
-            return this-object:ProcessCatchError(ctx:Response, ctx:Writer, errorParams).
+            return this-object:HandleException(e, ctx:Response, entityName).
         end.
         finally:
-            ctx:Cleanup().
+            delete object ctx:JsonResponse no-error.
+            delete object ctx:Response no-error.
+            delete object ctx:Writer no-error.
             delete object ctx no-error.
         end finally.
     end method.
@@ -296,7 +313,6 @@ class GenericService inherits WebHandler:
         /* Service instance */
         var IService entityService = ?.
         var logical lSuccess.
-        var CrudErrorParams errorParams.
         
         /* Initialize response */
         response:ContentType = "application/json".
@@ -306,8 +322,10 @@ class GenericService inherits WebHandler:
             response:StatusCode = 400.
             joResponse:Add("error", "Missing ID parameter").
             joResponse:Add("entity", entityName).
-            writer:write(joResponse:GetJsonText()).
-            return response:StatusCode.
+            response:Entity = joResponse.
+            writer:Open().
+            writer:Close().
+            return 0.
         end.
         
         /* Get service for entity */
@@ -330,16 +348,20 @@ class GenericService inherits WebHandler:
             joResponse:Add("id", id).
         end.
         
-        this-object:WriteJsonResponse(response, writer, joResponse).
+        /* Set entity and write using proper pattern */
+        response:Entity = joResponse.
+        writer:Open().
+        writer:Close().
         
-        return response:StatusCode.
+        return 0.
         catch e as Progress.Lang.Error:
-            errorParams = this-object:CreateCrudErrorParamsWithId("Error deleting entity", entityName, id, e:GetMessage(1)).
-            return this-object:ProcessCatchError(response, writer, errorParams).
+            return this-object:HandleException(e, response, entityName).
         end.
         
         finally:
-            this-object:CleanupResponseObjects(joResponse, response, writer).
+            delete object joResponse no-error.
+            delete object response no-error.
+            delete object writer no-error.
         end finally.
     end method.
     
@@ -405,6 +427,57 @@ class GenericService inherits WebHandler:
     end method.
     
     /*------------------------------------------------------------------------------
+     Purpose: Handles exceptions following proper WebHandler pattern
+     Parameters:
+       input poError - The error/exception being processed
+       input pResponse - The current response
+       input pcEntityName - Optional entity name for context
+     Returns: integer - Always returns 0 (framework handles response)
+     Notes: Follows RequestEchoHandler pattern for proper error handling
+    ------------------------------------------------------------------------------*/
+    method protected integer HandleException(
+        input poError as Progress.Lang.Error,
+        input pResponse as WebResponse,
+        input pcEntityName as character):
+        
+        var JsonObject joError = new JsonObject().
+        var WebResponseWriter writer = new WebResponseWriter(pResponse).
+        var character cErrorDetails = "".
+        var integer i = 0.
+        
+        /* Set error status and content type */
+        assign pResponse:StatusCode = 500
+               pResponse:ContentType = "application/json".
+        
+        /* Collect all error messages */
+        do i = 1 to poError:NumMessages:
+            cErrorDetails = cErrorDetails + (if i > 1 then " | " else "") + poError:GetMessage(i).
+        end.
+        
+        /* If no messages, provide generic error */
+        if cErrorDetails = "" then
+            cErrorDetails = "An error occurred processing the request".
+        
+        /* Build error response */
+        joError:Add("error", "Error processing request").
+        if pcEntityName > "" then
+            joError:Add("entity", pcEntityName).
+        joError:Add("details", cErrorDetails).
+        joError:Add("errorType", poError:GetClass():TypeName).
+        
+        /* Set entity and write using proper pattern */
+        pResponse:Entity = joError.
+        writer:Open().
+        writer:Close().
+        
+        return 0.
+        
+        finally:
+            delete object writer no-error.
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Writes JSON response and finalizes the HTTP response
      Parameters:
        input response - WebResponse object
@@ -420,7 +493,6 @@ class GenericService inherits WebHandler:
         response:ContentType = "application/json".
         writer:write(joResponse:GetJsonText()).
         writer:flush().
-        writer:close().
     end method.
     
     /*------------------------------------------------------------------------------
@@ -604,11 +676,18 @@ class GenericService inherits WebHandler:
         
         response:StatusCode = 405. /* Method Not Allowed */
         response:ContentType = "application/json".
-        writer:write(joError:GetJsonText()).
-        writer:flush().
+        response:Entity = joError.
+        writer:Open().
+        writer:Close().
         
+        return 0. 
         
-        return 405.
+        finally:
+            delete object joError no-error.
+            delete object response no-error.
+            delete object writer no-error.
+            delete object errorParams no-error.
+        end finally.
     end method.
     
     /*------------------------------------------------------------------------------
@@ -630,11 +709,11 @@ class GenericService inherits WebHandler:
         joResponse:Add("method", poRequest:Method).
         joResponse:Add("path", poRequest:PathInfo).
         
-        writer:write(joResponse:GetJsonText()).
-        writer:flush().
-        writer:close().
+        response:Entity = joResponse.
+        writer:Open().
+        writer:Close().
         
-        return response:StatusCode.
+        return 0.
         
         finally:
             delete object joResponse no-error.

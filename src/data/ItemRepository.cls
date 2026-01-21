@@ -33,7 +33,7 @@ class data.ItemRepository inherits BaseRepository:
     ------------------------------------------------------------------------------*/
     constructor public ItemRepository():
         /* Call super constructor with entity information */
-        super("ttitem", "itemnum", "item", dataset dsItem).
+        super("ttitem", "itemnum", "item", "", dataset dsItem).
     end constructor.
     
     /*------------------------------------------------------------------------------

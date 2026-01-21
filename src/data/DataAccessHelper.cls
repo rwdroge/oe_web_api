@@ -65,6 +65,9 @@ class data.DataAccessHelper:
         output phDataSource as handle,
         output phBuffer as handle):
         
+        var character cErrorMsg = "".
+        var integer i = 0.
+        
         /* Create data source */
         create data-source phDataSource no-error.
         if error-status:error then 
@@ -85,10 +88,21 @@ class data.DataAccessHelper:
         phDataSource:add-source-buffer(phBuffer, pcSourceKey) no-error.
         if error-status:error then 
         do:
+            cErrorMsg = "".
+            
+            /* Collect all error messages */
+            do i = 1 to error-status:num-messages:
+                cErrorMsg = cErrorMsg + (if i > 1 then " | " else "") + error-status:get-message(i).
+            end.
+            
+            /* Build comprehensive error message */
+            cErrorMsg = "Error adding source buffer for table '" + pcTableName + 
+                       "' with key '" + pcSourceKey + "': " + 
+                       (if cErrorMsg > "" then cErrorMsg else "No error message available (num-messages=" + string(error-status:num-messages) + ")").
+            
             delete object phDataSource no-error.
             delete object phBuffer no-error.
-            undo, throw new Progress.Lang.AppError(
-                "Error adding source buffer: " + error-status:get-message(1)).
+            undo, throw new Progress.Lang.AppError(cErrorMsg).
         end.
     end method.
     

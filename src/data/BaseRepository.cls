@@ -15,7 +15,7 @@ using generics.DataSourceAttachParams.
 using Progress.Json.ObjectModel.*.
 using data.DataAccess.
 using services.MetadataService.
-using Progress.Profiler.MemoryProfiler.
+using Progress.Profiler.MemoryProfiler. 
 
 block-level on error undo, throw.
 
@@ -24,6 +24,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
     /* Protected properties for entity information */
     define protected property TempTableName as character no-undo get. set.
     define protected property PrimaryKeyField as character no-undo get. set.
+    define protected property DatabaseKeyField as character no-undo get. set.
     define protected property DatabaseTable as character no-undo get. set.
     define protected property DatasetHandle as handle no-undo get. set.
     
@@ -98,7 +99,7 @@ class data.BaseRepository abstract implements interfaces.IRepository:
             this-object:TempTableName,
             this-object:PrimaryKeyField,
             this-object:DatabaseTable,
-            this-object:PrimaryKeyField,
+            this-object:DatabaseKeyField,
             pcKeyValue,
             pFilter,
             phDataset).
@@ -126,20 +127,24 @@ class data.BaseRepository abstract implements interfaces.IRepository:
      Purpose: Constructor for BaseRepository
      Parameters:
        input pcTempTableName - Name of the temp-table
-       input pcPrimaryKeyField - Name of the primary key field
+       input pcPrimaryKeyField - Name of the primary key field in temp-table
        input pcDatabaseTable - Name of the database table
+       input pcDatabaseKeyField - Name of the primary key field in database (optional, defaults to pcPrimaryKeyField)
        input phDatasetHandle - Handle to the dataset
-     Notes: Initializes repository with entity information
+     Notes: Supports field mapping between temp-table and database field names
     ------------------------------------------------------------------------------*/
     constructor public BaseRepository(
         input pcTempTableName as character,
         input pcPrimaryKeyField as character,
         input pcDatabaseTable as character,
+        input pcDatabaseKeyField as character,
         input dataset-handle phDatasetHandle):
         
         assign
             this-object:TempTableName = pcTempTableName
             this-object:PrimaryKeyField = pcPrimaryKeyField
+            /* If database key field is empty, use the same as temp-table field */
+            this-object:DatabaseKeyField = (if pcDatabaseKeyField > "" then pcDatabaseKeyField else pcPrimaryKeyField)
             this-object:DatabaseTable = pcDatabaseTable
             this-object:DatasetHandle = phDatasetHandle            
             this-object:Dao = new DataAccess()

@@ -86,9 +86,11 @@ class services.BaseService abstract implements interfaces.IService:
         /* Get entities from repository */
         /* Initialize result */
         var handle hDataSet = ?.
-        
         var JsonObject joResult = new JsonObject().
         var JsonArray jaEmpty = new JsonArray().
+        var character cErrorDetails = "".
+        var integer i = 0.
+        
         /* Get dataset from repository */
         hDataSet = this-object:Repository:FindByFilter(pFilter).
         
@@ -114,9 +116,30 @@ class services.BaseService abstract implements interfaces.IService:
         catch e as Progress.Lang.Error:
             /* Handle service errors */
             joResult = new JsonObject().
-            joResult:Add("error", "Error retrieving entity metadata").
-            joResult:Add("entity", entityName).
-            joResult:Add("details", e:GetMessage(1)).
+            cErrorDetails = "".
+            
+            /* Collect all error messages */
+            do i = 1 to e:NumMessages:
+                cErrorDetails = cErrorDetails + (if i > 1 then " | " else "") + e:GetMessage(i).
+            end.
+            
+            /* If no messages from GetMessage, try other sources */
+            if cErrorDetails = "" then do:
+                /* Check if it's an AppError with ReturnValue */
+                if type-of(e, Progress.Lang.AppError) then do:
+                    cErrorDetails = cast(e, Progress.Lang.AppError):ReturnValue.
+                    if cErrorDetails = "" or cErrorDetails = ? then
+                        cErrorDetails = "AppError with no message details".
+                end.
+                else
+                    cErrorDetails = "Error with no message details (NumMessages=" + string(e:NumMessages) + ")".
+            end.
+            
+            joResult:Add("error", "Error retrieving entity data").
+            joResult:Add("entity", this-object:EntityName).
+            joResult:Add("details", cErrorDetails).
+            joResult:Add("errorType", e:GetClass():TypeName).
+            joResult:Add("numMessages", e:NumMessages).
             return joResult.
         end.
         
@@ -973,6 +996,38 @@ class services.BaseService abstract implements interfaces.IService:
         
         /* Invoke repository method */
         hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, piParam).
+        
+        /* Convert dataset to JSON with metadata */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, poMetadata, pcArrayName).
+        
+        return joResult.
+        
+        finally:
+            this-object:CleanupResources(hDataSet, poMetadata).
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Execute repository method with single date param and convert to JSON
+     Parameters:
+       input pcMethodName - Repository method name to invoke
+       input pdParam - Date parameter to pass to method
+       input poMetadata - Metadata to include in response
+       input pcArrayName - Name for the result array
+     Returns: JsonObject containing results with metadata
+     Notes: Overload for single date parameter
+    ------------------------------------------------------------------------------*/
+    method public JsonObject ExecuteRepositoryQueryWithMetadata(
+        input pcMethodName as character,
+        input pdParam as date,
+        input poMetadata as JsonObject,
+        input pcArrayName as character):
+        
+        var handle hDataSet.
+        var JsonObject joResult.
+        
+        /* Invoke repository method */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, pdParam).
         
         /* Convert dataset to JSON with metadata */
         joResult = this-object:ConvertDataSetToJsonArray(hDataSet, poMetadata, pcArrayName).

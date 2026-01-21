@@ -3,22 +3,24 @@ version: '3.8'
 services:
 
   devcontainer:
-    image: ${DEVCONTAINER_IMAGE}
+    image: ${DEVCONTAINER_IMAGE}:${OE_VERSION}
     privileged: true
+    env_file:
+      - .env
     volumes:
       - ../..:/workspaces:cached
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
-      - ./windsurf/.windsurf:/home/openedge/.windsurf
+      # Windsurf-specific volume mounts to preserve IDE configuration and AI context
+      - ./windsurf/.windsurf-server:/home/openedge/.windsurf-server
       - ./windsurf/.codeium:/home/openedge/.codeium
     ports:
       - ${DEBUG_PORT}:3099
     command: sleep infinity
 
   sports2020-db:
-    image: ${DB_IMAGE}
+    image: ${DB_IMAGE}:${OE_VERSION}
     user: openedge
     volumes:
-    #  - ../src/schema/sports2020.df:/app/schema/sports2020.df
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
     ports:
       - 10000-10010:10000-10010
@@ -26,16 +28,17 @@ services:
       - DBNAME=sports2020    
       
   sports2020-pas:
-    image: ${PAS_IMAGE}
+    image: ${PAS_IMAGE}:${OE_VERSION}
     user: openedge
     volumes:
       - ${PROGRESS_CFG}:/usr/dlc/progress.cfg
       - ../src:/app/src
       - ../conf/as.pf:/app/config/as.pf
       - ../conf/openedge.properties:/app/pas/as/conf/openedge.properties
-      - ../conf/memProfConf:/app/pas/as/openedge/memProfConf
-     #- ./logs:/app/pas/as/logs
-
+      # This is where you could mount your PASOE logs directory to local disk, and/or to setup tracing for OpenEdge with a local otelconfig.json file
+      # Example:
+      #- ../conf/otelconfig.json:/app/pas/as/openedge/otelconfig.json
+      #- ./logs:/app/pas/as/logs
     ports:
       - ${PAS_PORT}:8810
       - ${PAS_HTTPS_PORT}:8811

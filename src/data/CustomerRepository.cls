@@ -11,7 +11,7 @@
 using Progress.Lang.*.
 using data.BaseRepository.
 using generics.FilterParams.
-using Progress.Json.ObjectModel.*.
+using Progress.Json.ObjectModel.*. 
 
 block-level on error undo, throw.
 
@@ -33,9 +33,9 @@ class data.CustomerRepository inherits BaseRepository:
     ------------------------------------------------------------------------------*/
     constructor public CustomerRepository():
         /* Call super constructor with entity information */
-        super("ttcustomer", "custnum", "customer", dataset dsCustomer).
+        super("ttcustomer", "custnum", "customer", "", dataset dsCustomer).
     end constructor.
-    
+     
     /*------------------------------------------------------------------------------
      Purpose: Get metadata for the customers entity
      Returns: longchar containing entity metadata

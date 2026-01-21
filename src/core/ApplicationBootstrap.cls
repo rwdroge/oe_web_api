@@ -60,12 +60,14 @@ class core.ApplicationBootstrap:
         Container:Register("interfaces.IRepository:customer", "data.CustomerRepository", false).
         Container:Register("interfaces.IRepository:order", "data.OrderRepository", false).
         Container:Register("interfaces.IRepository:supplier", "data.SupplierRepository", false).
+        Container:Register("interfaces.IRepository:client", "data.ClientRepository", false).
         
         /* Register services */
         Container:Register("interfaces.IService:item", "services.ItemService", true).
         Container:Register("interfaces.IService:customer", "services.CustomerService", true).
         Container:Register("interfaces.IService:order", "services.OrderService", true).
         Container:Register("interfaces.IService:supplier", "services.SupplierService", true).
+        Container:Register("interfaces.IService:client", "arag.services.ClientService", true).
         
         /* Register other dependencies as needed */
     end method.
