@@ -1,5 +1,5 @@
 {
-    "name": "DevContPoc",
+    "name": "OE Web API",
     "version": "1.0",
     "oeversion": "12.8",
     "graphicalMode": false,
@@ -13,7 +13,10 @@
         { "type": "propath", "path": "${DLC}/tty/netlib/OpenEdge.Net.pl" },
         { "type": "propath", "path": "${DLC}/tty/OpenEdge.BusinessLogic.pl" }
     ],
-    "dbConnections": [ { "name": "sports2020", "connect": "-db sports2020 -S 10000 -H sports2020-db", "schemaFile": "src/schema/sports2020.df", "aliases": [] } ],
+    "dbConnections": [ 
+        { "name": "sports2020", "connect": "-db sports2020 -S 10000 -H sports2020-db", "schemaFile": "src/schema/sports2020.df", "aliases": [] },
+        { "name": "bizon", "connect": "-db bizon -S 19900 -H host.docker.internal", "schemaFile": "src/schema/bizon.df", "aliases": [] }  
+    ],
     "buildDirectory": "./bin",
     "test": "./tests/ablunit.json",
     "numThreads": 8

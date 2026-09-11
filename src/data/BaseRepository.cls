@@ -199,6 +199,10 @@ class data.BaseRepository abstract implements interfaces.IRepository:
         /* Prepare new dataset with cloned structure */
         dshandle = this-object:PrepareDatasetHandle(true).
         
+        /* Validate query parameter field names before executing query */
+        if pFilter:FieldList > "" then
+            pFilter:ValidateFields(dshandle:get-buffer-handle(1)).
+        
         /* Fetch filtered data */
         this-object:AttachAndFetch(pFilter:id1, pFilter, dshandle).
         

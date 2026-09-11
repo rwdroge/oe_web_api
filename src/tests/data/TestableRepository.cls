@@ -24,7 +24,7 @@ class tests.data.TestableRepository inherits BaseRepository:
     define private dataset dsTestEntity for ttTestEntity.
     
     constructor public TestableRepository():
-        super("ttTestEntity", "TestId", "TestTable", dataset dsTestEntity:handle).
+        super("ttTestEntity", "TestId", "TestTable", "", dataset dsTestEntity).
     end constructor.
     
 end class.

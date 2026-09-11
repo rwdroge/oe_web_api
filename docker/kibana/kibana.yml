@@ -1,0 +1,23 @@
+# Kibana Configuration
+# https://www.elastic.co/guide/en/kibana/current/settings.html
+
+# Server settings
+server.name: kibana
+server.host: "0.0.0.0"
+server.port: 5601
+
+# Elasticsearch connection
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+elasticsearch.username: "kibana_system"
+elasticsearch.password: "rubendroge"
+
+# Security settings
+xpack.encryptedSavedObjects.encryptionKey: "thisIsARandomEncryptionKeyForTestingPurposesOnly1234567890"
+xpack.reporting.encryptionKey: "thisIsARandomReportingEncryptionKeyForTesting1234567890"
+xpack.security.encryptionKey: "thisIsARandomSecurityEncryptionKeyForTesting1234567890"
+
+# Logging
+logging.root.level: info
+
+# Telemetry
+telemetry.enabled: false

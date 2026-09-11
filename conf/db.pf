@@ -1,2 +1,9 @@
-
--db sports2020 -S 10000 -H sports2020-db
+-n 70
+-Mn 25
+-Mpb 4
+-Ma 10
+-Mi 3
+-S 10000
+-minport 4550
+-maxport 4750
+-ServerType BOTH

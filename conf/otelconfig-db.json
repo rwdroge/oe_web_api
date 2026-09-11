@@ -16,7 +16,7 @@
             "otlp": {
                 "grpc": [
                     {
-                        "endpoint": "http://localhost:4317",
+                        "endpoint": "http://otel-collector:4317",
                         "compression": "gzip",
                         "timeout": 10000,
                         "headers": {},
@@ -31,7 +31,7 @@
                 ],
                 "http": [
                     {
-                        "endpoint": "http://localhost:4318/v1/traces",
+                        "endpoint": "http://otel-collector:4318/v1/traces",
                         "compression": "gzip",
                         "timeout": 10000,
                         "headers": {},

@@ -25,6 +25,7 @@ class generics.FilterParams:
     define public property id2          as character    no-undo get. set.
     define public property rowid        as character    no-undo get. set.
     define public property filtered     as logical      initial false no-undo get. set.
+    define public property InvalidFields as character   no-undo get. set.
         
     define temp-table ttQueryParams
     field fieldname   as character 
@@ -156,7 +157,7 @@ class generics.FilterParams:
                 this-object:rowid = pcValue.
             otherwise
             do:
-                /* Add custom parameter inline to reduce method calls */
+                /* Store field for later validation - don't validate here since we don't have buffer handle yet */
                 this-object:FieldList = left-trim(this-object:FieldList + "," + pcName, ",").
                 this-object:ValueList = left-trim(this-object:ValueList + "," + pcValue, ",").
                 
@@ -173,6 +174,45 @@ class generics.FilterParams:
                     pcWhere = pcName + "=" + QUOTER(pcValue).
             end.
         end case.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Validate query parameter field names against temp-table buffer
+     Parameters:
+       input phBuffer - Handle to temp-table buffer
+     Notes: Throws error if invalid fields are found
+    ------------------------------------------------------------------------------*/
+    method public void ValidateFields(input phBuffer as handle):
+        var character cFieldList = "".
+        var character cInvalidFields = "".
+        var integer i = 0.
+        
+        /* Skip validation if no custom fields to check */
+        if this-object:FieldList = "" or this-object:FieldList = ? then
+            return.
+            
+        /* Build list of all valid fields in the temp-table */
+        if valid-handle(phBuffer) then
+        do:
+            do i = 1 to phBuffer:num-fields:
+                cFieldList = right-trim(phBuffer:buffer-field(i):name + "," + cFieldList, ",").
+            end.
+            
+            /* Check each requested field against the valid field list */
+            do i = 1 to num-entries(this-object:FieldList, ","):
+                if lookup(entry(i, this-object:FieldList), cFieldList) = 0 then
+                    cInvalidFields = left-trim(cInvalidFields + "," + entry(i, this-object:FieldList), ",").
+            end.
+            
+            /* Throw error if invalid fields found */
+            if cInvalidFields > "" then
+            do:
+                this-object:InvalidFields = cInvalidFields.
+                undo, throw new Progress.Lang.AppError(
+                    "Invalid query parameter(s): " + cInvalidFields + 
+                    ". Valid fields for entity '" + this-object:entityName + "' can be found in the metadata endpoint.").
+            end.
+        end.
     end method.  
     
 DESTRUCTOR PUBLIC FilterParams( ):

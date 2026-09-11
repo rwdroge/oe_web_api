@@ -1,0 +1,18 @@
+# OECC Agent OpenTelemetry Configuration for PAS for OpenEdge
+# This file configures the OECC agent to collect performance metrics from
+# PAS for OpenEdge instances and export them to the OpenTelemetry Collector
+
+exporter:
+  # OpenTelemetry exporter configuration
+  name: "otlp"
+  endpoint: "http://otel-collector:4317"
+  protocol: "grpc"
+  timeout: 10
+  connectionretry: 20
+
+# PAS for OpenEdge instances to monitor
+pasInstances:
+  - pasdir: "/app/pas/as"
+    passchedule: 60
+    pasduration: SECONDS
+    metricsregex:

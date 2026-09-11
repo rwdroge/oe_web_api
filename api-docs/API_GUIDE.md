@@ -28,7 +28,7 @@ The API supports two types of operations, specified by the `apitype` path parame
 ### Path Parameters
 
 - `apitype`: Type of API request (`data` or `meta`)
-- `entityname`: Name of the entity (`items`, `customers`, `orders`, `suppliers`)
+- `entityname`: Name of the entity (`item`, `customer`, `order`, `supplier`)
 - `id`: Entity identifier
 
 ### Query Parameters
