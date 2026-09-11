@@ -57,6 +57,8 @@ class services.BaseService abstract implements interfaces.IService:
         /* Check if entity was found */
         if valid-handle(hDataSet) and hDataSet:get-buffer-handle(1):available then do:
             joResult:Read(hDataSet:get-buffer-handle(1):table-handle).
+            /* Normalize the response to remove ProDataSet wrapper */
+            joResult = this-object:NormalizeSingleEntityResponse(joResult).
         end.
         else do:
             /* Return empty object if not found */
@@ -70,10 +72,7 @@ class services.BaseService abstract implements interfaces.IService:
         return joResult.
 
         finally:
-            /* Clean up dataset */
-            if valid-handle(hDataSet) then do:
-                delete object hDataSet no-error.
-            end.
+            this-object:CleanupDataSetAndJson(hDataSet, ?).
         end finally.
     end method.
     
@@ -87,8 +86,10 @@ class services.BaseService abstract implements interfaces.IService:
         /* Get entities from repository */
         /* Initialize result */
         var handle hDataSet = ?.
-        
         var JsonObject joResult = new JsonObject().
+        var JsonArray jaEmpty = new JsonArray().
+        var character cErrorDetails = "".
+        var integer i = 0.
         
         /* Get dataset from repository */
         hDataSet = this-object:Repository:FindByFilter(pFilter).
@@ -97,11 +98,17 @@ class services.BaseService abstract implements interfaces.IService:
         if valid-handle(hDataSet) then do:
             /* Convert to JSON */
             joResult:Read(hDataSet).
+            /* Normalize the response to remove ProDataSet wrapper */
+            joResult = this-object:NormalizeMultipleEntityResponse(joResult).
         end.
         else do:
-            /* Return empty object if not found */
+            /* Return empty array if not found */
+            
+            joResult:Add("data", jaEmpty).
             joResult:Add("count", 0).
             joResult:Add("entityName", this-object:EntityName).
+            /* Return normalized empty response */
+            joResult = this-object:NormalizeMultipleEntityResponse(joResult).
         end.
          
         return joResult.
@@ -109,18 +116,77 @@ class services.BaseService abstract implements interfaces.IService:
         catch e as Progress.Lang.Error:
             /* Handle service errors */
             joResult = new JsonObject().
-            joResult:Add("error", "Error retrieving entity metadata").
-            joResult:Add("entity", entityName).
-            joResult:Add("details", e:GetMessage(1)).
+            cErrorDetails = "".
+            
+            /* Collect all error messages */
+            do i = 1 to e:NumMessages:
+                cErrorDetails = cErrorDetails + (if i > 1 then " | " else "") + e:GetMessage(i).
+            end.
+            
+            /* If no messages from GetMessage, try other sources */
+            if cErrorDetails = "" then do:
+                /* Check if it's an AppError with ReturnValue */
+                if type-of(e, Progress.Lang.AppError) then do:
+                    cErrorDetails = cast(e, Progress.Lang.AppError):ReturnValue.
+                    if cErrorDetails = "" or cErrorDetails = ? then
+                        cErrorDetails = "AppError with no message details".
+                end.
+                else
+                    cErrorDetails = "Error with no message details (NumMessages=" + string(e:NumMessages) + ")".
+            end.
+            
+            joResult:Add("error", "Error retrieving entity data").
+            joResult:Add("entity", this-object:EntityName).
+            joResult:Add("details", cErrorDetails).
+            joResult:Add("errorType", e:GetClass():TypeName).
+            joResult:Add("numMessages", e:NumMessages).
             return joResult.
         end.
         
         finally:
-            /* Clean up dataset - make sure to detach data source before deleting */
-            if valid-handle(hDataSet) then do:
-                /* The repository should have already detached the data source */
-                delete object hDataSet no-error.
-            end.
+            this-object:CleanupDataSetAndJson(hDataSet, ?).
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Validate entity before creation (override in child classes)
+     Parameters:
+       input poEntity - JSON object containing entity data
+     Returns: JsonObject with validation results (has "valid" property)
+     Notes: Override this method in child classes for entity-specific validation
+    ------------------------------------------------------------------------------*/
+    method public JsonObject ValidateEntityForCreate(input poEntity as JsonObject):
+        var JsonObject joResult = new JsonObject().
+        
+        /* Base implementation always returns valid */
+        joResult:Add("valid", true).
+        
+        return joResult.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Create entity with validation (template method pattern)
+     Parameters:
+       input poEntity - JSON object containing entity data
+     Returns: JsonObject containing created entity or validation errors
+     Notes: Calls ValidateEntityForCreate before creation
+    ------------------------------------------------------------------------------*/
+    method public JsonObject CreateWithValidation(input poEntity as JsonObject):
+        var JsonObject joValidation.
+        
+        /* Perform entity-specific validation */
+        joValidation = this-object:ValidateEntityForCreate(poEntity).
+        
+        /* Check validation result */
+        if not joValidation:GetLogical("valid") then
+            return joValidation.
+            
+        /* Call base create implementation */
+        return this-object:Create(poEntity).
+        
+        finally:
+            if valid-object(joValidation) then
+                delete object joValidation no-error.
         end finally.
     end method.
     
@@ -136,34 +202,50 @@ class services.BaseService abstract implements interfaces.IService:
         var character cFieldList = this-object:GetFieldList(poEntity).
         var JsonObject joError = new JsonObject().
         var JsonObject joResult = new JsonObject().
-        var handle hDataSet = this-object:Repository:Save(poEntity).
-
-        if not this-object:ValidateFields(cFieldList, output cInvalidFields) then do:
-            joError:Add("error", "Invalid fields in request").
-            joError:Add("entityName", this-object:EntityName).
-            joError:Add("invalidFields", cInvalidFields).
-        end.
+        var handle hDataSet = ?.
+        var JsonObject joProDataSetFormat = ?.
         
-        /* Begin transaction */
-        do transaction:
-            /* Check if entity was created */
-            if valid-handle(hDataSet) and hDataSet:get-buffer-handle(1):available then do:
-                joResult:Read(hDataSet:get-buffer-handle(1):table-handle).
+        
+            /* Validate entity fields */
+            if not this-object:ValidateFields(cFieldList, output cInvalidFields) then do:
+                joError:Add("error", "Invalid fields in request").
+                joError:Add("entityName", this-object:EntityName).
+                joError:Add("invalidFields", cInvalidFields).
+                return joError.
             end.
-            else do:
-                /* Return error if not created */
-                joResult:Add("error", "Failed to create entity").
-                joResult:Add("entityName", this-object:EntityName).
+            
+            /* Convert normalized JSON to ProDataSet format for repository */
+            joProDataSetFormat = this-object:ConvertToProDataSetFormat(poEntity).
+            
+            /* Begin transaction */
+            do transaction:
+                /* Save entity via repository */
+                hDataSet = this-object:Repository:Save(joProDataSetFormat).
+                
+                /* Check if entity was created */
+                if valid-handle(hDataSet) and hDataSet:get-buffer-handle(1):available then do:
+                    joResult:Read(hDataSet:get-buffer-handle(1):table-handle).
+                    /* Normalize the response to remove ProDataSet wrapper */
+                    joResult = this-object:NormalizeSingleEntityResponse(joResult).
+                end.
+                else do:
+                    /* Return error if not created */
+                    joResult:Add("error", "Failed to create entity").
+                    joResult:Add("entityName", this-object:EntityName).
+                end.
             end.
-
             
             return joResult.
+        
+        catch e as Progress.Lang.Error:
+            /* Handle service errors */
+            joError:Add("error", "Error creating entity").
+            joError:Add("entityName", this-object:EntityName).
+            joError:Add("details", e:GetMessage(1)).
+            return joError.
         end.
         finally:
-            /* Clean up dataset */
-            if valid-handle(hDataSet) then do:
-                delete object hDataSet no-error.
-            end.
+            this-object:CleanupDataSetAndJson(hDataSet, joProDataSetFormat).
         end finally.
     end method.
     
@@ -174,12 +256,15 @@ class services.BaseService abstract implements interfaces.IService:
        input poEntity - JSON object containing updated entity data
      Returns: JsonObject containing updated entity
     ------------------------------------------------------------------------------*/
-    method public JsonObject Update(input pcId as character, input poEntity as JsonObject):
+    method public JsonObject UpdateEntity(input pcId as character, input poEntity as JsonObject):
         /* Validate entity data */
         var character cInvalidFields.
         var character cFieldList = this-object:GetFieldList(poEntity).
         var JsonObject joError = new JsonObject().
-        var handle hDataSet = this-object:Repository:Update(pcId, poEntity).
+        
+        /* Convert normalized JSON to ProDataSet format for repository */
+        var JsonObject joProDataSetFormat = this-object:ConvertToProDataSetFormat(poEntity).
+        var handle hDataSet = this-object:Repository:UpdateEntity(pcId, joProDataSetFormat).
         var JsonObject joResult = new JsonObject().
         
         if not this-object:ValidateFields(cFieldList, output cInvalidFields) then do:
@@ -195,6 +280,8 @@ class services.BaseService abstract implements interfaces.IService:
             /* Check if entity was updated */
             if valid-handle(hDataSet) and hDataSet:get-buffer-handle(1):available then do:
                 joResult:Read(hDataSet:get-buffer-handle(1):table-handle).
+                /* Normalize the response to remove ProDataSet wrapper */
+                joResult = this-object:NormalizeSingleEntityResponse(joResult).
             end.
             else do:
                 /* Return error if not updated */
@@ -205,13 +292,8 @@ class services.BaseService abstract implements interfaces.IService:
             return joResult.
         end.
         finally:
-            /* Clean up dataset */
-            if valid-handle(hDataSet) then do:
-                delete object hDataSet no-error.
-            end.
+            this-object:CleanupDataSetAndJson(hDataSet, joProDataSetFormat).
         end finally.
-            
-
     end method.
     
     /*------------------------------------------------------------------------------
@@ -237,12 +319,29 @@ class services.BaseService abstract implements interfaces.IService:
     ------------------------------------------------------------------------------*/
     method public JsonObject GetMetadata():
         /* Get metadata from repository */
-        var longchar lcMetadata = this-object:Repository:GetMetadata().
+        var longchar lcMetadata.
+        var JsonObject joMetadata = new JsonObject().
         
         /* Convert to JSON using ObjectModelParser */
         var ObjectModelParser parser = new ObjectModelParser().
-        var JsonObject joMetadata = cast(parser:Parse(lcMetadata), JsonObject).
         
+        lcMetadata = this-object:Repository:GetMetadata().
+        
+        /* Ensure we have valid metadata before parsing */
+        if lcMetadata > "" then do:
+            /* Parse the metadata into a JSON object with error handling */
+            do on error undo, throw:
+                joMetadata = cast(parser:Parse(lcMetadata), JsonObject).
+                if not valid-object(joMetadata) then
+                    joMetadata = new JsonObject().
+            end.
+            
+        end.
+        else do:
+            joMetadata = new JsonObject().
+            joMetadata:Add("warning", "No metadata available").
+        end.
+       
         return joMetadata.
         
         finally:
@@ -302,10 +401,676 @@ class services.BaseService abstract implements interfaces.IService:
     end method.
     
     /*------------------------------------------------------------------------------
+     Purpose: Get the name of the entity managed by this service
+     Returns: character containing the entity name
+    ------------------------------------------------------------------------------*/
+    method public character GetEntityName():
+        return this-object:EntityName.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Invoke a repository method dynamically, handling both concrete and mock repositories
+     Parameters:
+       input pcMethodName - Name of the method to invoke
+       input pcParam - Character parameter to pass to the method
+     Returns: handle to dataset returned by the method
+     Notes: Helper method to reduce code duplication for dynamic invocation pattern
+    ------------------------------------------------------------------------------*/
+    method protected handle InvokeRepositoryMethod(input pcMethodName as character, input pcParam as character):
+        var handle hDataSet.
+        
+        /* Use dynamic invocation to support both concrete and mock repositories */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, pcParam).
+        
+        return hDataSet.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Invoke a repository method dynamically with integer parameter
+     Parameters:
+       input pcMethodName - Name of the method to invoke
+       input piParam - Integer parameter to pass to the method
+     Returns: handle to dataset returned by the method
+     Notes: Overload for integer parameters
+    ------------------------------------------------------------------------------*/
+    method protected handle InvokeRepositoryMethod(input pcMethodName as character, input piParam as integer):
+        var handle hDataSet.
+        
+        /* Use dynamic invocation to support both concrete and mock repositories */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, piParam).
+        
+        return hDataSet.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Invoke a repository method dynamically with two date parameters
+     Parameters:
+       input pcMethodName - Name of the method to invoke
+       input pdParam1 - First date parameter
+       input pdParam2 - Second date parameter
+     Returns: handle to dataset returned by the method
+     Notes: Overload for date range parameters
+    ------------------------------------------------------------------------------*/
+    method protected handle InvokeRepositoryMethod(input pcMethodName as character, input pdParam1 as date, input pdParam2 as date):
+        var handle hDataSet.
+        
+        /* Use dynamic invocation to support both concrete and mock repositories */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, pdParam1, pdParam2).
+        
+        return hDataSet.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Invoke a repository method dynamically with two date parameters (named variant)
+     Parameters:
+       input pcMethodName - Name of the method to invoke
+       input pdStartDate - Start date parameter
+       input pdEndDate - End date parameter
+     Returns: handle to dataset returned by the method
+     Notes: Alternative method name to avoid overload resolution issues
+    ------------------------------------------------------------------------------*/
+    method protected handle InvokeRepositoryMethodWithDateRange(input pcMethodName as character, input pdStartDate as date, input pdEndDate as date):
+        var handle hDataSet.
+        
+        /* Use dynamic invocation to support both concrete and mock repositories */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, pdStartDate, pdEndDate).
+        
+        return hDataSet.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Get fields for a specific entity
+     Parameters:
+       input pcEntity - Entity name
+     Returns: JsonArray containing entity fields
+    ------------------------------------------------------------------------------*/
+    method public JsonArray GetEntityFields(input pcEntity as character):
+        /* Get metadata from repository */
+        var JsonObject joMetadata = this-object:GetMetadata().
+        var JsonArray jaFields = new JsonArray().
+        var character[] aFieldNames = ?.
+        var integer i.
+        var JsonObject joField = ?.
+        var JsonObject joFieldInfo = ?.
+        
+        /* Check if entity matches and extract fields */
+        if pcEntity = this-object:EntityName and valid-object(joMetadata) then do:
+            /* Extract field information from metadata */
+            aFieldNames = joMetadata:GetNames().
+            
+            do i = 1 to extent(aFieldNames):
+                joField = new JsonObject().
+                joField:Add("name", aFieldNames[i]).
+                
+                /* Add field type if available in metadata */
+                if joMetadata:Has(aFieldNames[i]) and type-of(joMetadata:GetJsonObject(aFieldNames[i]), JsonObject) then do:
+                    joFieldInfo = cast(joMetadata:GetJsonObject(aFieldNames[i]), JsonObject).
+                    if joFieldInfo:Has("type") then
+                        joField:Add("type", joFieldInfo:GetCharacter("type")).
+                    if joFieldInfo:Has("label") then
+                        joField:Add("label", joFieldInfo:GetCharacter("label")).
+                end.
+                
+                jaFields:Add(joField).
+            end.
+        end.
+        
+        return jaFields.
+        
+        finally:
+            delete object joMetadata no-error.
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Clean up resources
     ------------------------------------------------------------------------------*/
     destructor public BaseService():
         /* No resources to clean up */
     end destructor.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Create a JSON model of an entity's structure
+     Parameters:
+       input phTempTable - Handle to the temp-table
+       output plcModel - Longchar containing the JSON model
+     Notes: Builds a JSON object describing the entity's fields and data types
+    ------------------------------------------------------------------------------*/
+    method public void createEntityModel(
+        input phTempTable as handle,
+        output plcModel as longchar):
+        
+        var integer i = 0.
+        var jsonobject joModel = new jsonobject().
+        var character cDataType = "".
+        
+        /* Build JSON model from temp-table fields */
+        do i = 1 to phTempTable:num-fields:
+            /* Convert ABL data types to JSON-friendly types */
+            case phTempTable:buffer-field(i):data-type:
+                when "character" then cDataType = "string".
+                when "decimal" then cDataType = "number".
+                when "logical" then cDataType = "boolean".
+                otherwise
+                    cDataType = phTempTable:buffer-field(i):data-type.
+            end case.
+            
+            /* Skip internal fields */
+            if (phTempTable:buffer-field(i):name <> "seq" and 
+                phTempTable:buffer-field(i):name <> "id") then
+                joModel:add(phTempTable:buffer-field(i):name, cDataType).
+        end.
+        
+        plcModel = joModel:getJsonText().
+        
+        finally:
+            delete object joModel no-error.
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Build validation result JSON from errors array
+     Parameters:
+       input paErrors - JsonArray containing validation errors
+       input plValid - Logical indicating if validation passed
+     Returns: JsonObject with validation results
+     Notes: Helper method to eliminate duplication in validation methods
+    ------------------------------------------------------------------------------*/
+    method public JsonObject BuildValidationResult(input paErrors as JsonArray, input plValid as logical):
+        var JsonObject joResult = new JsonObject().
+        
+        joResult:Add("valid", plValid).
+        if not plValid then
+            joResult:Add("errors", paErrors).
+            
+        return joResult.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Find dataset name in response object
+     Parameters:
+       input poResponse - JsonObject containing response
+       output pcDatasetName - Name of the dataset property found
+     Returns: logical indicating if dataset was found
+     Notes: Helper method to eliminate duplication in normalization methods
+    ------------------------------------------------------------------------------*/
+    method private logical FindDatasetName(input poResponse as JsonObject, output pcDatasetName as character):
+        var character[] aNames = poResponse:GetNames().
+        var integer i = 0.
+        
+        pcDatasetName = "".
+        
+        do i = 1 to extent(aNames):
+            if aNames[i] begins "ds" then do:
+                pcDatasetName = aNames[i].
+                return true.
+            end.
+        end.
+        
+        return false.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Clean up dataset and JSON object resources
+     Parameters:
+       input phDataSet - Handle to dataset to clean up
+       input poJsonObject - JsonObject to clean up
+     Notes: Helper method to eliminate cleanup duplication across methods
+    ------------------------------------------------------------------------------*/
+    method private void CleanupDataSetAndJson(input phDataSet as handle, input poJsonObject as JsonObject):
+        if valid-handle(phDataSet) then
+            delete object phDataSet no-error.
+            
+        if valid-object(poJsonObject) then
+            delete object poJsonObject no-error.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Convert normalized JSON to ProDataSet format for backend processing
+     Parameters:
+       input poNormalizedJson - JsonObject containing normalized entity data
+     Returns: JsonObject containing ProDataSet format for repository layer
+     Notes: Wraps normalized entity data in ds<Entity> format expected by repository
+    ------------------------------------------------------------------------------*/
+    method protected JsonObject ConvertToProDataSetFormat(input poNormalizedJson as JsonObject):
+        var JsonObject joProDataSet = new JsonObject().
+        var JsonObject joDataset = new JsonObject().
+        var JsonArray jaTable = new JsonArray().
+        var character cDatasetName = "ds" + this-object:EntityName.
+        
+        /* Add the normalized JSON as the first (and only) record in the table array */
+        jaTable:Add(poNormalizedJson).
+        
+        /* Create the table structure with entity name */
+        joDataset:Add("tt" + this-object:EntityName, jaTable).
+        
+        /* Create the dataset wrapper */
+        joProDataSet:Add(cDatasetName, joDataset).
+        
+        return joProDataSet.
+        
+        finally:
+            if valid-object(joDataset) then
+                delete object joDataset no-error.
+            if valid-object(jaTable) then
+                delete object jaTable no-error.
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Normalize single entity response by removing ProDataSet wrapper
+     Parameters:
+       input poResponse - JsonObject containing ProDataSet format response
+     Returns: JsonObject containing normalized single entity data
+     Notes: Extracts the actual entity data from ds<Entity> wrapper
+    ------------------------------------------------------------------------------*/
+    method protected JsonObject NormalizeSingleEntityResponse(input poResponse as JsonObject):
+        var JsonObject joNormalized = new JsonObject().
+        var character cDatasetName = "".
+        var JsonObject joDataset = ?.
+        var JsonArray jaTable = ?.
+        var JsonObject joFirstRecord = ?.
+        var character[] aTableNames.
+        var character[] aRecordNames.
+        var integer i = 0.
+
+        /* Find the dataset property using helper method */
+        this-object:FindDatasetName(poResponse, output cDatasetName).
+        
+        /* If we found a dataset property */
+        if cDatasetName > "" then do:
+            joDataset = poResponse:GetJsonObject(cDatasetName).
+            
+            /* Get the table name (should be the entity name) */
+            aTableNames = joDataset:GetNames().
+            if extent(aTableNames) > 0 then do:
+                jaTable = joDataset:GetJsonArray(aTableNames[1]).
+                
+                /* If we have records, return the first one */
+                if jaTable:Length > 0 then do:
+                    joFirstRecord = jaTable:GetJsonObject(1).
+                    /* Copy all properties from the record to our normalized response */
+                    aRecordNames = joFirstRecord:GetNames().
+                    do i = 1 to extent(aRecordNames):
+                        case joFirstRecord:GetType(aRecordNames[i]):
+                            when JsonDataType:string then
+                                joNormalized:Add(aRecordNames[i], joFirstRecord:GetCharacter(aRecordNames[i])).
+                            when JsonDataType:number then
+                                joNormalized:Add(aRecordNames[i], joFirstRecord:GetDecimal(aRecordNames[i])).
+                            when JsonDataType:boolean then
+                                joNormalized:Add(aRecordNames[i], joFirstRecord:GetLogical(aRecordNames[i])).
+                            when JsonDataType:null then
+                                joNormalized:Add(aRecordNames[i], "?").
+                            otherwise
+                                joNormalized:Add(aRecordNames[i], joFirstRecord:GetJsonText(aRecordNames[i])).
+                        end case.
+                    end.
+                end.
+            end.
+        end.
+        else do:
+            /* If no dataset found, return original response */
+            joNormalized = poResponse.
+        end.
+        
+        return joNormalized.
+        
+        finally:
+            if valid-object(joDataset) and joDataset <> poResponse then
+                delete object joDataset no-error.
+            if valid-object(jaTable) then
+                delete object jaTable no-error.
+            if valid-object(joFirstRecord) and joFirstRecord <> joNormalized then
+                delete object joFirstRecord no-error.
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Normalize multiple entity response by removing ProDataSet wrapper
+     Parameters:
+       input poResponse - JsonObject containing ProDataSet format response
+     Returns: JsonObject containing normalized array of entities
+     Notes: Extracts the actual entity array from ds<Entity> wrapper
+    ------------------------------------------------------------------------------*/
+    method protected JsonObject NormalizeMultipleEntityResponse(input poResponse as JsonObject):
+        var JsonObject joNormalized = new JsonObject().
+        var JsonArray jaNormalized = new JsonArray().
+        var character cDatasetName = "".
+        var JsonObject joDataset = ?.
+        var JsonArray jaTable = ?.
+        var JsonObject joRecord = ?.
+        var JsonObject joNormalizedRecord = ?.
+        var character[] aTableNames.
+        var character[] aRecordNames.
+        var integer i = 0.
+        var integer j = 0.
+
+        /* Find the dataset property using helper method */
+        this-object:FindDatasetName(poResponse, output cDatasetName).
+        
+        /* If we found a dataset property */
+        if cDatasetName > "" then do:
+            joDataset = poResponse:GetJsonObject(cDatasetName).
+            
+            /* Get the table name (should be the entity name) */
+            aTableNames = joDataset:GetNames().
+            if extent(aTableNames) > 0 then do:
+                jaTable = joDataset:GetJsonArray(aTableNames[1]).
+                
+                /* Process each record */
+                do j = 1 to jaTable:Length:
+                    joRecord = jaTable:GetJsonObject(j).
+                    joNormalizedRecord = new JsonObject().
+                    
+                    /* Copy all properties from the record */
+                    aRecordNames = joRecord:GetNames().
+                    do i = 1 to extent(aRecordNames):
+                        case joRecord:GetType(aRecordNames[i]):
+                            when JsonDataType:string then
+                                joNormalizedRecord:Add(aRecordNames[i], joRecord:GetCharacter(aRecordNames[i])).
+                            when JsonDataType:number then
+                                joNormalizedRecord:Add(aRecordNames[i], joRecord:GetDecimal(aRecordNames[i])).
+                            when JsonDataType:boolean then
+                                joNormalizedRecord:Add(aRecordNames[i], joRecord:GetLogical(aRecordNames[i])).
+                            when JsonDataType:null then
+                                joNormalizedRecord:Add(aRecordNames[i], "?").
+                            otherwise
+                                joNormalizedRecord:Add(aRecordNames[i], joRecord:GetJsonText(aRecordNames[i])).
+                        end case.
+                    end.
+                    
+                    jaNormalized:Add(joNormalizedRecord).
+                end.
+            end.
+        end.
+        else do:
+            /* If no dataset found, check if it's already an array or has data property */
+            if poResponse:Has("data") and poResponse:GetType("data") = JsonDataType:array then do:
+                jaNormalized = poResponse:GetJsonArray("data").
+            end.
+        end.
+        
+        /* For multiple entities, always return as array */
+        if jaNormalized:Length = 1 then do:
+            /* Single result - return the object directly */
+            joNormalized = jaNormalized:GetJsonObject(1).
+        end.
+        else do:
+            /* Multiple results or empty - return as array */
+            joNormalized = new JsonObject().
+            joNormalized:Add("data", jaNormalized).
+            joNormalized:Add("count", jaNormalized:Length).
+        end.
+        
+        return joNormalized.
+        
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Convert dataset to JSON array with metadata
+     Parameters:
+       input phDataSet - Handle to dataset
+       input poMetadata - JsonObject to add metadata fields to
+       input pcArrayName - Name for the array property (e.g., "orders", "customers")
+     Returns: JsonObject containing array and count
+     Notes: Eliminates duplicate dataset-to-JSON conversion logic
+    ------------------------------------------------------------------------------*/
+    method public JsonObject ConvertDataSetToJsonArray(
+        input phDataSet as handle,
+        input poMetadata as JsonObject,
+        input pcArrayName as character):
+        
+        var JsonObject joResult = new JsonObject().
+        var JsonArray jaRecords = new JsonArray().
+        var JsonObject joRecord.
+        var handle hBuffer.
+        var handle hQuery.
+        var character[] aNames.
+        var integer i.
+        
+        /* Check if dataset is valid */
+        if valid-handle(phDataSet) then do:
+            hBuffer = phDataSet:get-buffer-handle(1).
+            
+            /* Create query handle for buffer iteration */
+            create query hQuery.
+            hQuery:add-buffer(hBuffer).
+            hQuery:query-prepare("for each " + hBuffer:name).
+            hQuery:query-open().
+            
+            /* Process all records */
+            hQuery:get-first() no-error.
+            do while not hQuery:query-off-end:
+                if hBuffer:available then do:
+                    joRecord = new JsonObject().
+                    joRecord:Read(hBuffer).
+                    jaRecords:Add(joRecord).
+                end.
+                hQuery:get-next() no-error.
+            end.
+            
+            /* Clean up query handle */
+            hQuery:query-close().
+            delete object hQuery.
+        end.
+        
+        /* Add metadata fields if provided */
+        if valid-object(poMetadata) then do:
+            assign aNames = poMetadata:GetNames().
+            do i = 1 to extent(aNames):
+                case poMetadata:GetType(aNames[i]):
+                    when JsonDataType:string then
+                        joResult:Add(aNames[i], poMetadata:GetCharacter(aNames[i])).
+                    when JsonDataType:number then
+                        joResult:Add(aNames[i], poMetadata:GetDecimal(aNames[i])).
+                    when JsonDataType:boolean then
+                        joResult:Add(aNames[i], poMetadata:GetLogical(aNames[i])).
+                    otherwise
+                        joResult:Add(aNames[i], poMetadata:GetJsonText(aNames[i])).
+                end case.
+            end.
+        end.
+        
+        /* Add array and count */
+        joResult:Add(pcArrayName, jaRecords).
+        joResult:Add("count", jaRecords:Length).
+        
+        return joResult.
+        
+        finally:
+            if valid-object(jaRecords) then
+                delete object jaRecords no-error.
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Clean up dataset and JSON resources
+     Parameters:
+       input phDataSet - Handle to dataset to clean up
+       input poJsonObjects - Array of JSON objects to clean up
+     Notes: Eliminates duplicate cleanup code in finally blocks
+    ------------------------------------------------------------------------------*/
+    method protected void CleanupResources(
+        input phDataSet as handle,
+        input poJsonObjects as JsonObject extent):
+        var integer i.
+        /* Clean up dataset */
+        if valid-handle(phDataSet) then do:
+            delete object phDataSet no-error.
+        end.
+        
+        /* Clean up JSON objects */
+        
+        do i = 1 to extent(poJsonObjects):
+            if valid-object(poJsonObjects[i]) then
+                delete object poJsonObjects[i] no-error.
+        end.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Clean up dataset and single JSON object (common pattern)
+     Parameters:
+       input phDataSet - Handle to dataset to clean up
+       input poJsonObject - JSON object to clean up
+     Notes: Overload for single JSON object cleanup
+    ------------------------------------------------------------------------------*/
+    method protected void CleanupResources(
+        input phDataSet as handle,
+        input poJsonObject as JsonObject):
+        
+        if valid-handle(phDataSet) then
+            delete object phDataSet no-error.
+            
+        if valid-object(poJsonObject) then
+            delete object poJsonObject no-error.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Clean up two JSON objects (common pattern in service methods)
+     Parameters:
+       input poJsonObject1 - First JSON object to clean up
+       input poJsonObject2 - Second JSON object to clean up
+     Notes: Overload for two JSON objects
+    ------------------------------------------------------------------------------*/
+    method protected void CleanupResources(
+        input poJsonObject1 as JsonObject,
+        input poJsonObject2 as JsonObject):
+        
+        if valid-object(poJsonObject1) then
+            delete object poJsonObject1 no-error.
+            
+        if valid-object(poJsonObject2) then
+            delete object poJsonObject2 no-error.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Execute repository method and convert result to JSON with metadata
+     Parameters:
+       input pcMethodName - Repository method name to invoke
+       input pcParam - Parameter to pass to method
+       input poMetadata - Metadata to include in response
+       input pcArrayName - Name for the result array
+     Returns: JsonObject containing results with metadata
+     Notes: Eliminates duplicate pattern in all GetBy* methods across services
+    ------------------------------------------------------------------------------*/
+    method public JsonObject ExecuteRepositoryQueryWithMetadata(
+        input pcMethodName as character,
+        input pcParam as character,
+        input poMetadata as JsonObject,
+        input pcArrayName as character):
+        
+        var handle hDataSet.
+        var JsonObject joResult.
+        
+        /* Invoke repository method */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, pcParam).
+        
+        /* Convert dataset to JSON with metadata */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, poMetadata, pcArrayName).
+        
+        return joResult.
+        
+        finally:
+            this-object:CleanupResources(hDataSet, poMetadata).
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Execute repository method with integer param and convert to JSON
+     Parameters:
+       input pcMethodName - Repository method name to invoke
+       input piParam - Integer parameter to pass to method
+       input poMetadata - Metadata to include in response
+       input pcArrayName - Name for the result array
+     Returns: JsonObject containing results with metadata
+     Notes: Overload for integer parameters
+    ------------------------------------------------------------------------------*/
+    method public JsonObject ExecuteRepositoryQueryWithMetadata(
+        input pcMethodName as character,
+        input piParam as integer,
+        input poMetadata as JsonObject,
+        input pcArrayName as character):
+        
+        var handle hDataSet.
+        var JsonObject joResult.
+        
+        /* Invoke repository method */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, piParam).
+        
+        /* Convert dataset to JSON with metadata */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, poMetadata, pcArrayName).
+        
+        return joResult.
+        
+        finally:
+            this-object:CleanupResources(hDataSet, poMetadata).
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Execute repository method with single date param and convert to JSON
+     Parameters:
+       input pcMethodName - Repository method name to invoke
+       input pdParam - Date parameter to pass to method
+       input poMetadata - Metadata to include in response
+       input pcArrayName - Name for the result array
+     Returns: JsonObject containing results with metadata
+     Notes: Overload for single date parameter
+    ------------------------------------------------------------------------------*/
+    method public JsonObject ExecuteRepositoryQueryWithMetadata(
+        input pcMethodName as character,
+        input pdParam as date,
+        input poMetadata as JsonObject,
+        input pcArrayName as character):
+        
+        var handle hDataSet.
+        var JsonObject joResult.
+        
+        /* Invoke repository method */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, pdParam).
+        
+        /* Convert dataset to JSON with metadata */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, poMetadata, pcArrayName).
+        
+        return joResult.
+        
+        finally:
+            this-object:CleanupResources(hDataSet, poMetadata).
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Execute repository method with date range and convert to JSON
+     Parameters:
+       input pcMethodName - Repository method name to invoke
+       input pdStartDate - Start date parameter
+       input pdEndDate - End date parameter
+       input poMetadata - Metadata to include in response
+       input pcArrayName - Name for the result array
+     Returns: JsonObject containing results with metadata
+     Notes: Overload for date range parameters
+    ------------------------------------------------------------------------------*/
+    method public JsonObject ExecuteRepositoryQueryWithMetadata(
+        input pcMethodName as character,
+        input pdStartDate as date,
+        input pdEndDate as date,
+        input poMetadata as JsonObject,
+        input pcArrayName as character):
+        
+        var handle hDataSet.
+        var JsonObject joResult.
+        
+        /* Invoke repository method */
+        hDataSet = dynamic-invoke(this-object:Repository, pcMethodName, pdStartDate, pdEndDate).
+        
+        /* Convert dataset to JSON with metadata */
+        joResult = this-object:ConvertDataSetToJsonArray(hDataSet, poMetadata, pcArrayName).
+        
+        return joResult.
+        
+        finally:
+            this-object:CleanupResources(hDataSet, poMetadata).
+        end finally.
+    end method.
     
 end class.

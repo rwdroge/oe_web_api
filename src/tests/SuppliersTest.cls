@@ -36,7 +36,7 @@ class tests.SuppliersTest:
         /* Create fresh instances for each test */
         suppliersEntity = new suppliers().
         testJsonObject = new JsonObject().
-        testFilter = new FilterParams("supplier", "", "", "", "", output table-handle hQueryParams).
+        testFilter = new FilterParams("supplier", "", "", output table-handle hQueryParams).
         
         /* Reset dataset handle for each test */
         hDataSet = ?.
@@ -162,7 +162,7 @@ class tests.SuppliersTest:
         
         /* Test Update method */
         do on error undo, throw:
-            suppliersEntity:Update(testFilter, testJsonObject, output dataset-handle hDataSet).
+            suppliersEntity:UpdateRecord(testFilter, testJsonObject, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),
@@ -231,7 +231,7 @@ class tests.SuppliersTest:
         
         /* Test Update method which calls UpdateSuppliers internally */
         do on error undo, throw:
-            suppliersEntity:Update(testFilter, testJsonObject, output dataset-handle hDataSet).
+            suppliersEntity:UpdateRecord(testFilter, testJsonObject, output dataset-handle hDataSet).
             
             /* Verify dataset handle is valid */
             Assert:IsTrue(valid-handle(hDataSet),

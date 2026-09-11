@@ -11,7 +11,7 @@ import argparse
 from typing import Dict, Any, Optional, List, Union
 
 # Base URL for the API
-BASE_URL = "http://localhost:8080/api/v1"
+BASE_URL = "http://localhost/web/api/v1"
 
 # Headers for JSON content
 JSON_HEADERS = {"Content-Type": "application/json", "Accept": "application/json"}

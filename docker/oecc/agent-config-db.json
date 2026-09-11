@@ -1,0 +1,17 @@
+{
+  "_comment": "OECC Agent Configuration for Database Container",
+  "installationsInfo": {
+    "installations": [
+      {
+        "path": "/usr/dlc"
+      }
+    ]
+  },
+  "serverInfo": {
+    "host": "oecc-server",
+    "managementPort": "8001"
+  },
+  "agentConfig": {
+    "nohostverify": true
+  }
+}

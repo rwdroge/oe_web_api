@@ -1,33 +1,77 @@
 /*------------------------------------------------------------------------
    File        : GenericService
-   Purpose     : Generic REST service handler for CRUD operations
+   Purpose     : Generic REST service handler for CRUD operations using Service Layer
    Syntax      : class GenericService inherits WebHandler
    Description : Provides a generic web service interface for handling HTTP
                  requests to perform CRUD operations on entities.
-                 Supports data operations, metadata retrieval, and error handling.
-   Author(s)   : rdroge
-   Created     : Jan 10, 2019 8:45:21 AM 2019
+                 Uses Service Layer for business logic.
+   Author(s)   : rdroge, Cascade AI
+   Created     : 2025-06-24
    Notes       : - Full CRUD support (GET, POST, PUT, DELETE)
-                 - Supports single and joined entity operations
-                 - Handles both data and metadata requests
-                 - Implements field validation and error handling
+                 - Uses Service Layer pattern
                  - Standardized error responses with details
                  - Resource cleanup and transaction management
  ----------------------------------------------------------------------*/
 
 using Progress.Json.ObjectModel.*.
-using generics.FilterParams.*.
+using generics.FilterParams.
+using generics.FilterConstructorParams.
+using generics.ErrorResponseParams.
+using generics.CrudErrorParams.
+using generics.ResponseContext.
 using Progress.Lang.*.
 using OpenEdge.Net.*.
 using OpenEdge.Net.HTTP.*.
 using OpenEdge.Web.*.
-using interfaces.CRUD.*.
-using interfaces.RO.*.
-using generics.GenericEntity.*.
+using interfaces.IService.
+using webhandlers.ServiceFactory.
+
 block-level on error undo, throw.
 
-class GenericService inherits WebHandler: 
 
+class GenericService inherits WebHandler: 
+    define temp-table ttQueryParams
+            field fieldname   as character 
+            field fieldvalue  as character 
+            index fieldname is primary unique fieldname ascending.
+    /* Service factory for creating service instances */
+    define private variable serviceFactory as ServiceFactory no-undo.
+
+    constructor public GenericService():
+        super().
+        /* Initialize service factory */
+        serviceFactory = webhandlers.ServiceFactory:GetInstance().
+    end constructor.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Validate request body exists
+     Parameters:
+       input poRequestBody - Request body to validate
+       input pcEntityName - Entity name for error message
+       input poContext - Response context
+       input pcId - Optional ID for error message
+     Returns: logical - true if valid, false if invalid (response already sent)
+     Notes: Helper to eliminate duplication in Handle* methods
+    ------------------------------------------------------------------------------*/
+    method private logical ValidateRequestBody(
+        input poRequestBody as JsonObject,
+        input pcEntityName as character,
+        input poContext as ResponseContext,
+        input pcId as character):
+        
+        if not valid-object(poRequestBody) then do:
+            poContext:Response:StatusCode = 400.
+            poContext:JsonResponse = new JsonObject().
+            poContext:JsonResponse:Add("error", "Missing request body").
+            poContext:JsonResponse:Add("entity", pcEntityName).
+            if pcId > "" then
+                poContext:JsonResponse:Add("id", pcId).
+            poContext:Writer:write(poContext:JsonResponse:GetJsonText()).
+            return false.
+        end.
+        
+        return true.
+    end method.
 
     /*------------------------------------------------------------------------------
      Purpose: Handles HTTP GET requests for entity data or metadata
@@ -38,15 +82,9 @@ class GenericService inherits WebHandler:
        - Supports two API types: 'data' and 'meta'
        - For data: retrieves entity records with optional filtering
        - For meta: returns entity metadata/model information
-       - Handles both single entity and joined entity requests
+       - Uses Service Layer for business logic
     ------------------------------------------------------------------------------*/
     method override protected integer HandleGet(input poRequest as OpenEdge.Web.IWebRequest):
-        /* Control variables */
-        var logical lOk = true.
-
-        var integer ii, iii.
-        var character listItem.
-        
         /* Request parameters */
         var character entityName = poRequest:GetPathParameter("entityname").
         var character entityName2 = poRequest:GetPathParameter("entityname2").
@@ -55,174 +93,61 @@ class GenericService inherits WebHandler:
         var character apiType = poRequest:GetPathParameter("apitype").
         var character queryString = poRequest:GetContextValue("QUERY_STRING").
         
-        /* Response and data objects */
-        var WebResponse response = new WebResponse().
-        var WebResponseWriter writer = new WebResponseWriter(response).
-        var longchar body, lcModel.
-        var handle hDataSet, hTempTable, hQueryParams, hQuery.
+        /* Response context */
+        var ResponseContext ctx = new ResponseContext().
         
-        /* Business objects */
-        var generics.FilterParams filter = new generics.FilterParams(entityName, entityName2, queryString, id1, id2, output table-handle hQueryParams).
-        var interfaces.CRUD dynClass.
-        var interfaces.RO dynClass2.
+        /* Filter parameters */
+        var generics.FilterConstructorParams filterParams = new generics.FilterConstructorParams().
+        var FilterParams filter.
         
-        /* Validation */
-        var character oFieldlist, oValuelist.
+        /* Service instance */
+        var IService entityService = ?.
         
-        /* JSON objects */
-        var JsonObject joError, joResult.
-        var JsonArray jaError, jaResult.
+        /* Set filter properties */
+        assign
+            filterParams:Entity = entityName
+            filterParams:Entity2 = entityName2
+            filterParams:QueryString = queryString
+            filterParams:Id1 = id1
+            filterParams:Id2 = id2.
         
-        if apiType = "data" then
-        do:
-            
-            dynClass = dynamic-new string("entities." + entityName) () no-error.
-            
-            if entityName2 > "" then
-                dynClass2 = dynamic-new string("entities.joined." + entityName + entityName2) ().                
-            
-            if dynClass = ? or ( entityName2 > "" and dynClass2 = ?) then 
-            do:
-                lOk = false.
-                response:StatusCode = 422.
-                joError = new JsonObject().
-                joError:Add("Error", "Following entities or combination of these entities do not exist for this api").
-                joError:Add("Entity", right-trim(left-trim(entityName + "," + entityName2, ","), ",")).
-                body = joError:GetJsonText().
-            end.
-            else if filter:where > "" then
-            do:
-                if dynClass2 <> ? then 
-                do:
-                    dynClass2:CheckFieldList(filter:FieldList, output oFieldList, output lOk).
-                    if not lOk then 
-                    do:
-                        response:StatusCode = 422.
-                        joError = new JsonObject().
-                        joError:Add("Error", "Following field(s) in query do not exist for this entity").
-                        joError:Add("Fields", oFieldList).
-                        body = joError:GetJsonText().
-                    end.
-                end.
-                else 
-                do:
-                    dynClass:CheckFieldList(filter:FieldList, output oFieldList, output lOk).
-                    
-                    if not lOk then
-                    do:
-                        response:StatusCode = 422.
-                        joError = new JsonObject().
-                        joError:Add("Error", "Following field(s) in query do not exist for this entity").
-                        joError:Add("Fields", oFieldList).
-                        body = joError:GetJsonText().
-                    end.
-                    dynClass:CheckValueList(input table-handle hQueryParams, output oValueList, output lOk) no-error. 
-                    if not lOk then
-                    do:
-                        
-                        
-                        response:StatusCode = 422.
-                        if num-entries(oValueList, ",") > 1 then do:
-                            jaError = new JsonArray().
-                        end.
-                        do iii = 1 to num-entries(right-trim(oValueList, ","), "," ):
-                            listItem = entry(iii, oValueList, ",").
-                            joError = new JsonObject().
-                            joError:Add("Error", "Following field in query has an incorrect value according to the datatype for field").
-                            joError:Add("Field", entry(1, listItem, "/")).
-                            joError:Add("Value", entry(2, listItem, "/")).
-                            joError:Add("Expected Datatype", entry(3, listItem, "/") ).
-                            jaError:Add(-1 + iii, joError).
-                            
-                        end.
-                        body = body + jaError:GetJsonText().
-                    end.
-                end.
-            end.
-            
-            if lOk and dynClass2 <> ? then
-            do:
-                response:StatusCode = 200.
-                
-                dynClass2:Read(filter, output dataset-handle hDataSet).
-               
-                hTempTable = hDataSet:get-buffer-handle(1):table-handle.
-                joResult = new JsonObject().
-                joResult:Read(hTempTable).
-                
-                do ii=2 to hDataSet:num-buffers:
-                    hTempTable = hDataSet:get-buffer-handle(ii):table-handle.
-                    jaResult = new JsonArray().
-                    jaResult:read(hTempTable).
-                    joResult:add(entityName2, jaResult ).
-                                           
-                end.
-                body = joResult:GetJsonText(). 
-            end.
-            else if lOk then
-            do:
-                response:StatusCode = 200.
-                dynClass:Read(filter, output dataset-handle hDataSet).
-                hTempTable = hDataSet:get-buffer-handle(1):table-handle.
-                joResult = new JsonObject().
-                joResult:read(hTempTable).
-                body = joResult:GetJsonText().
-            end.
+        /* Create filter with parameters */
+        filter = new generics.FilterParams(filterParams, output table ttQueryParams).
+        
+        /* Process request based on API type */
+        if apiType = "data" then do:
+            ctx:JsonResponse = this-object:ProcessDataRequest(entityName, filter).
+            ctx:Response:StatusCode = 200.
         end.
-        else if apiType = "meta" then
-        do:
-            dynClass = dynamic-new string("entities." + entityName) () no-error.
-            if dynClass = ? then
-            do:
-                response:StatusCode = 422.
-                joError = new JsonObject().
-                joError:Add("error", "Entity does not exist").
-                joError:Add("entity", entityName).
-                body = joError:GetJsonText().
-            end.
-            else do:
-                dynClass:CreateEntityModel(output lcModel) no-error.
-                if ERROR-STATUS:ERROR then
-                do:
-                    response:StatusCode = 500.
-                    joError = new JsonObject().
-                    joError:Add("error", "Error retrieving entity metadata").
-                    joError:Add("entity", entityName).
-                    joError:Add("details", ERROR-STATUS:GET-MESSAGE(1)).
-                    body = joError:GetJsonText().
-                end.
-                else do:
-                    response:StatusCode = 200.
-                    body = lcModel.
-                end.
-            end.
+        else if apiType = "meta" then do:
+            ctx:JsonResponse = this-object:ProcessMetaRequest(entityName).
+            ctx:Response:StatusCode = 200.
+        end.    
+        else do:
+            /* Handle invalid API type */
+            ctx:Response:StatusCode = 400.
+            ctx:JsonResponse = new JsonObject().
+            ctx:JsonResponse:Add("error", "Invalid API type").
+            ctx:JsonResponse:Add("apiType", apiType).
         end.
-                
-        /* Set response */
-        response:ContentType = "application/json".
-        writer:write(body).
-        writer:flush().
-        writer:close().
-        return response:StatusCode.
         
+        /* Set response entity and write using proper WebHandler pattern */
+        ctx:Response:Entity = ctx:JsonResponse.
+        ctx:Writer:Open().
+        ctx:Writer:Close().
         
+        return 0.
+        catch e as Progress.Lang.Error:
+            return this-object:HandleException(e, ctx:Response, entityName).
+        end.
+
         finally:
-            delete object joResult      no-error.
-            delete object jaResult      no-error.
-            delete object joError       no-error.
-            delete object jaError       no-error.
-            delete object dynClass      no-error.
-            delete object dynClass2     no-error.
-            delete object hDataSet      no-error.
-            delete object hTempTable    no-error.
-            delete object filter        no-error.
-            delete object response      no-error.
-            delete object writer        no-error.
-            delete object hQueryParams  no-error.
-        end.
-        
-        
-        
+            delete object filter no-error.
+            delete object ctx:JsonResponse no-error.
+            delete object ctx:Response no-error.
+            delete object ctx:Writer no-error.
+            delete object ctx no-error.
+        end finally.
     end method.
     
     /*------------------------------------------------------------------------------
@@ -232,165 +157,61 @@ class GenericService inherits WebHandler:
      Returns: integer - HTTP status code
      Notes:
        - Validates entity existence and request data
-       - Performs create/update operations based on request
+       - Performs create operations using Service Layer
        - Returns appropriate status codes and error messages
     ------------------------------------------------------------------------------*/
     method override protected integer HandlePost(input poRequest as OpenEdge.Web.IWebRequest):
         /* Request parameters */
         var character entityName = poRequest:GetPathParameter("entityname").
         var character id = poRequest:GetPathParameter("id").
-        var character apiType = poRequest:GetPathParameter("apitype").
-        var character queryString = poRequest:GetContextValue("QUERY_STRING").
-        var character cFieldList.
         var JsonObject requestBody = cast(poRequest:Entity, JsonObject).
         
-        /* Response objects */
-        var WebResponse response = new WebResponse().
-        var WebResponseWriter writer = new WebResponseWriter(response).
-        var JsonObject joError, joResult.
+        /* Response context */
+        var ResponseContext ctx = new ResponseContext().
         
-        /* Business objects */
-        var interfaces.CRUD dynClass.
-        var handle hDataSet, hQueryParams.
-        var logical lOk.
-        var character oFieldList.
-        var integer ii=0.
-        var char[] aFieldList.
-        var generics.FilterParams filter = new generics.FilterParams(entityName, ?, ?, id, ?, output table-handle hQueryParams).
-        
-        /* Initialize response */
-        response:ContentType = "application/json".
+        /* Service instance */
+        var IService entityService = ?.
         
         /* Validate request body */
-        if not valid-object(requestBody) then
-        do:
-            response:StatusCode = 400.
-            joError = new JsonObject().
-            joError:Add("error", "Missing request body").
-            joError:Add("entity", entityName).
-            writer:write(joError:GetJsonText()).
-            return response:StatusCode.
+        if not valid-object(requestBody) then do:
+            ctx:Response:StatusCode = 400.
+            ctx:JsonResponse = new JsonObject().
+            ctx:JsonResponse:Add("error", "Missing request body").
+            ctx:JsonResponse:Add("entity", entityName).
+            ctx:Response:Entity = ctx:JsonResponse.
+            ctx:Writer:Open().
+            ctx:Writer:Close().
+            return 0.
         end.
         
-        /* Initialize entity class */
-        dynClass = dynamic-new string("entities." + entityName) () no-error.
+        /* Get service for entity */
+        entityService = serviceFactory:GetService(entityName).
         
-        if dynClass = ? then
-        do:
-            response:StatusCode = 422.
-            joError = new JsonObject().
-            joError:Add("error", "Entity does not exist").
-            joError:Add("entity", entityName).
-            writer:write(joError:GetJsonText()).
-            return response:StatusCode.
-        end.
-        aFieldList = requestBody:GetNames().
+        /* Process create request */
+        ctx:JsonResponse = entityService:Create(requestBody).
+            
+        /* Check for error in response */
+        if ctx:JsonResponse:Has("error") then
+            ctx:Response:StatusCode = 422.
+        else
+            ctx:Response:StatusCode = 201.
         
-        /* Validate fields */
-        do ii = 1 to EXTENT(aFieldList):
-            cFieldList = cFieldList + aFieldList[ii] + ','.
-        end.
-
-        dynClass:CheckFieldList(cFieldList, output oFieldList, output lOk) no-error.
-        if not lOk then
-        do:
-            response:StatusCode = 422.
-            joError = new JsonObject().
-            joError:Add("error", "Invalid fields in request").
-            joError:Add("entity", entityName).
-            joError:Add("invalid_fields", oFieldList).
-            writer:write(joError:GetJsonText()).
-            return response:StatusCode.
-        end.
+        /* Set entity and write using proper pattern */
+        ctx:Response:Entity = ctx:JsonResponse.
+        ctx:Writer:Open().
+        ctx:Writer:Close().
         
-        /* Process create/update request */
-        if id > "" then
-        do:
-            /* Update existing entity */
-            dynClass:Update(filter, requestBody, output dataset-handle hDataSet) no-error.
-            if ERROR-STATUS:ERROR then
-            do:
-                response:StatusCode = 500.
-                joError = new JsonObject().
-                joError:Add("error", "Error updating entity").
-                joError:Add("entity", entityName).
-                joError:Add("id", id).
-                joError:Add("details", ERROR-STATUS:GET-MESSAGE(1)).
-                writer:write(joError:GetJsonText()).
-            end.
-            else do:
-                response:StatusCode = 200.
-                joResult = new JsonObject().
-                joResult:Add("message", "Entity updated successfully").
-                joResult:Add("entity", entityName).
-                joResult:Add("id", id).
-                writer:write(joResult:GetJsonText()).
-            end.
+        return 0.
+        catch e as Progress.Lang.Error:
+            return this-object:HandleException(e, ctx:Response, entityName).
         end.
-        else do:
-            /* Create new entity */
-            dynClass:Create(requestBody, output dataset-handle hDataSet) no-error.
-            if ERROR-STATUS:ERROR then
-            do:
-                response:StatusCode = 500.
-                joError = new JsonObject().
-                joError:Add("error", "Error creating entity").
-                joError:Add("entity", entityName).
-                joError:Add("details", ERROR-STATUS:GET-MESSAGE(1)).
-                writer:write(joError:GetJsonText()).
-            end.
-            else do:
-                response:StatusCode = 201.
-                joResult = new JsonObject().
-                joResult:Add("message", "Entity created successfully").
-                joResult:Add("entity", entityName).
-                writer:write(joResult:GetJsonText()).
-            end.
-        end.
-        
-        writer:flush().
-        writer:close().
         
         finally:
-            delete object response no-error.
-            delete object writer no-error.
-            delete object joError no-error.
-            delete object joResult no-error.
-            delete object dynClass no-error.
-            delete object hDataSet no-error.
-        end.
-        
-    end method.
-    
-    /*------------------------------------------------------------------------------
-     Purpose: Creates a standardized error response
-     Parameters:
-       input piStatusCode as integer   - HTTP status code
-       input pcError as character      - Error message
-       input pcEntity as character     - Entity name
-       input pcDetails as character    - Optional error details
-       input pcId as character         - Optional entity ID
-     Returns: JsonObject - Error response object
-    ------------------------------------------------------------------------------*/
-    method private JsonObject CreateErrorResponse(
-        input piStatusCode as integer,
-        input pcError as character,
-        input pcEntity as character,
-        input pcDetails as character,
-        input pcId as character):
-        
-        var JsonObject joError = new JsonObject().
-        joError:Add("error", pcError).
-        joError:Add("entity", pcEntity).
-        
-        if pcDetails > "" then
-            joError:Add("details", pcDetails).
-            
-        if pcId > "" then
-            joError:Add("id", pcId).
-            
-        return joError.
-        
+            delete object ctx:JsonResponse no-error.
+            delete object ctx:Response no-error.
+            delete object ctx:Writer no-error.
+            delete object ctx no-error.
+        end finally.
     end method.
     
     /*------------------------------------------------------------------------------
@@ -400,7 +221,7 @@ class GenericService inherits WebHandler:
      Returns: integer - HTTP status code
      Notes:
        - Validates entity existence and request data
-       - Updates existing entity
+       - Performs update operations using Service Layer
        - Returns appropriate status codes and error messages
     ------------------------------------------------------------------------------*/
     method override protected integer HandlePut(input poRequest as OpenEdge.Web.IWebRequest):
@@ -409,108 +230,74 @@ class GenericService inherits WebHandler:
         var character id = poRequest:GetPathParameter("id").
         var JsonObject requestBody = cast(poRequest:Entity, JsonObject).
         
-        /* Response objects */
-        var WebResponse response = new WebResponse().
-        var WebResponseWriter writer = new WebResponseWriter(response).
-        var JsonObject joError, joResult.
+        /* Response context */
+        var ResponseContext ctx = new ResponseContext().
         
-        /* Business objects */
-        var interfaces.CRUD dynClass.
-        var handle hDataSet, hQueryParams.
-        var logical lOk.
-        var integer ii = 0.
-        var character cFieldList, oFieldList.
-        var char[] aFieldList.
-        var generics.FilterParams filter = new generics.FilterParams(entityName, ?, ?, id, ?, output table-handle hQueryParams).
+        /* Service instance */
+        var IService entityService = ?.
         
-        /* Initialize response */
-        response:ContentType = "application/json".
-        
-        /* Validate request */
-        if not valid-object(requestBody) then
-        do:
-            response:StatusCode = 400.
-            joError = CreateErrorResponse(400, "Missing request body", entityName, "", "").
-            writer:write(joError:GetJsonText()).
-            return response:StatusCode.
+        /* Validate request parameters */
+        if id = "" then do:
+            ctx:Response:StatusCode = 400.
+            ctx:JsonResponse = new JsonObject().
+            ctx:JsonResponse:Add("error", "Missing ID parameter").
+            ctx:JsonResponse:Add("entity", entityName).
+            ctx:Response:Entity = ctx:JsonResponse.
+            ctx:Writer:Open().
+            ctx:Writer:Close().
+            return 0.
         end.
         
-        if id = "" then
-        do:
-            response:StatusCode = 400.
-            joError = CreateErrorResponse(400, "Missing entity ID", entityName, "", "").
-            writer:write(joError:GetJsonText()).
-            return response:StatusCode.
+        /* Validate request body */
+        if not valid-object(requestBody) then do:
+            ctx:Response:StatusCode = 400.
+            ctx:JsonResponse = new JsonObject().
+            ctx:JsonResponse:Add("error", "Missing request body").
+            ctx:JsonResponse:Add("entity", entityName).
+            ctx:JsonResponse:Add("id", id).
+            ctx:Response:Entity = ctx:JsonResponse.
+            ctx:Writer:Open().
+            ctx:Writer:Close().
+            return 0.
         end.
         
-        /* Initialize entity class */
-        dynClass = dynamic-new string("entities." + entityName) () no-error.
+        /* Get service for entity */
+        entityService = serviceFactory:GetService(entityName).
         
-        if dynClass = ? then
-        do:
-            response:StatusCode = 422.
-            joError = CreateErrorResponse(422, "Entity does not exist", entityName, "", id).
-            writer:write(joError:GetJsonText()).
-            return response:StatusCode.
+        /* Process update request */
+        ctx:JsonResponse = entityService:UpdateEntity(id, requestBody).
+            
+        /* Check for error in response */
+        if ctx:JsonResponse:Has("error") then
+            ctx:Response:StatusCode = 422.
+        else
+            ctx:Response:StatusCode = 200.
+        
+        /* Set entity and write using proper pattern */
+        ctx:Response:Entity = ctx:JsonResponse.
+        ctx:Writer:Open().
+        ctx:Writer:Close().
+        
+        return 0.
+        catch e as Progress.Lang.Error:
+            return this-object:HandleException(e, ctx:Response, entityName).
         end.
-        
-        aFieldList = requestBody:GetNames().
-        
-        /* Validate fields */
-        do ii = 1 to EXTENT(aFieldList):
-            cFieldList = cFieldList + aFieldList[ii] + ','.
-        end.
-        
-        /* Validate fields */
-        dynClass:CheckFieldList(cFieldList, output oFieldList, output lOk) no-error.
-        if not lOk then
-        do:
-            response:StatusCode = 422.
-            joError = CreateErrorResponse(422, "Invalid fields in request", entityName, oFieldList, id).
-            writer:write(joError:GetJsonText()).
-            return response:StatusCode.
-        end.
-        
-        /* Update entity */
-        dynClass:Update(filter, requestBody, output dataset-handle hDataSet) no-error.
-        if ERROR-STATUS:ERROR then
-        do:
-            response:StatusCode = 500.
-            joError = CreateErrorResponse(500, "Error updating entity", entityName, ERROR-STATUS:GET-MESSAGE(1), id).
-            writer:write(joError:GetJsonText()).
-        end.
-        else do:
-            response:StatusCode = 200.
-            joResult = new JsonObject().
-            joResult:Add("message", "Entity updated successfully").
-            joResult:Add("entity", entityName).
-            joResult:Add("id", id).
-            writer:write(joResult:GetJsonText()).
-        end.
-        
-        writer:flush().
-        writer:close().
-        
-        
         finally:
-            delete object response no-error.
-            delete object writer no-error.
-            delete object joError no-error.
-            delete object joResult no-error.
-            delete object dynClass no-error.
-            delete object hDataSet no-error.
-        end.
-        
+            delete object ctx:JsonResponse no-error.
+            delete object ctx:Response no-error.
+            delete object ctx:Writer no-error.
+            delete object ctx no-error.
+        end finally.
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Handles HTTP DELETE requests for entity deletion
+     Purpose: Handles HTTP DELETE requests for entity deletions
      Parameters:
        input poRequest as OpenEdge.Web.IWebRequest - The incoming web request
      Returns: integer - HTTP status code
      Notes:
        - Validates entity existence
-       - Deletes specified entity
+       - Performs delete operations using Service Layer
        - Returns appropriate status codes and error messages
     ------------------------------------------------------------------------------*/
     method override protected integer HandleDelete(input poRequest as OpenEdge.Web.IWebRequest):
@@ -518,125 +305,421 @@ class GenericService inherits WebHandler:
         var character entityName = poRequest:GetPathParameter("entityname").
         var character id = poRequest:GetPathParameter("id").
         
-        
         /* Response objects */
         var WebResponse response = new WebResponse().
         var WebResponseWriter writer = new WebResponseWriter(response).
-        var JsonObject joError.
-        var JsonObject joResult.
-        var handle hDataSet, hQueryParams.
-        var generics.FilterParams filter = new generics.FilterParams(entityName, ?, ?, id, ?, output table-handle hQueryParams).
+        var JsonObject joResponse = new JsonObject().
         
-        /* Business objects */
-        var interfaces.CRUD dynClass.
+        /* Service instance */
+        var IService entityService = ?.
+        var logical lSuccess.
         
         /* Initialize response */
         response:ContentType = "application/json".
         
-        /* Validate request */
-        if id = "" then
-        do:
+        /* Validate request parameters */
+        if id = "" then do:
             response:StatusCode = 400.
-            joError = CreateErrorResponse(400, "Missing entity ID", entityName, "", "").
-            writer:write(joError:GetJsonText()).
-            return response:StatusCode.
+            joResponse:Add("error", "Missing ID parameter").
+            joResponse:Add("entity", entityName).
+            response:Entity = joResponse.
+            writer:Open().
+            writer:Close().
+            return 0.
         end.
         
-        /* Initialize entity class */
-        dynClass = dynamic-new string("entities." + entityName) () no-error.
+        /* Get service for entity */
+        entityService = serviceFactory:GetService(entityName).
         
-        if dynClass = ? then
-        do:
-            response:StatusCode = 422.
-            joError = CreateErrorResponse(422, "Entity does not exist", entityName, "", id).
-            writer:write(joError:GetJsonText()).
-            return response:StatusCode.
-        end.
-        
-        /* Delete entity */
-        dynClass:Delete(filter, output dataset-handle hDataSet) no-error.
-        if ERROR-STATUS:ERROR then
-        do:
-            response:StatusCode = 500.
-            joError = CreateErrorResponse(500, "Error deleting entity", entityName, ERROR-STATUS:GET-MESSAGE(1), id).
-            writer:write(joError:GetJsonText()).
+        /* Process delete request */
+        lSuccess = entityService:Delete(id).
+            
+        /* Set response based on result */
+        if lSuccess then do:
+            response:StatusCode = 200.
+            joResponse:Add("message", "Entity deleted successfully").
+            joResponse:Add("entity", entityName).
+            joResponse:Add("id", id).
         end.
         else do:
-            response:StatusCode = 204.
-            joResult = new JsonObject().
-            joResult:Add("message", "Entity deleted successfully").
-            joResult:Add("entity", entityName).
-            joResult:Add("id", id).
-            writer:write(joResult:GetJsonText()).
+            response:StatusCode = 404.
+            joResponse:Add("error", "Entity not found").
+            joResponse:Add("entity", entityName).
+            joResponse:Add("id", id).
         end.
         
-        writer:flush().
-        writer:close().
+        /* Set entity and write using proper pattern */
+        response:Entity = joResponse.
+        writer:Open().
+        writer:Close().
+        
+        return 0.
+        catch e as Progress.Lang.Error:
+            return this-object:HandleException(e, response, entityName).
+        end.
         
         finally:
+            delete object joResponse no-error.
             delete object response no-error.
             delete object writer no-error.
-            delete object joError no-error.
-            delete object joResult no-error.
-            delete object dynClass no-error.
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Processes data API requests (GET with filtering)
+     Parameters:
+       input entityName - Entity name
+       input filter - FilterParams object
+     Returns: JsonObject - Response data
+     Notes: Handles both single record (by ID) and filtered list requests
+    ------------------------------------------------------------------------------*/
+    method private JsonObject ProcessDataRequest(
+        input entityName as character,
+        input filter as FilterParams):
+        
+        var IService entityService = serviceFactory:GetService(entityName).
+        var JsonObject joResponse.
+        
+        /* Process request based on ID presence */
+        if filter:id1 > "" then
+            joResponse = entityService:GetById(filter:id1).
+        else
+            joResponse = entityService:GetByFilter(filter).
+        
+        return joResponse.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Processes metadata API requests
+     Parameters:
+       input entityName - Entity name
+     Returns: JsonObject - Entity metadata
+    ------------------------------------------------------------------------------*/
+    method private JsonObject ProcessMetaRequest(input entityName as character):
+        
+        var IService entityService = ServiceFactory:GetService(entityName).
+        var JsonObject joResponse = entityService:GetMetadata().
+        
+        return joResponse.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Creates a standardized error response
+     Parameters:
+       input poErrorParams as ErrorResponseParams - Error response parameters
+     Returns: JsonObject - Error response object
+    ------------------------------------------------------------------------------*/
+    method private JsonObject CreateErrorResponse(input poErrorParams as ErrorResponseParams):
+        
+        var JsonObject joError = new JsonObject().
+        joError:Add("error", poErrorParams:ErrorMessage).
+        
+        if poErrorParams:HasEntityContext() then
+            joError:Add("entity", poErrorParams:EntityName).
+            
+        if poErrorParams:HasDetails() then
+            joError:Add("details", poErrorParams:Details).
+            
+        if poErrorParams:HasId() then
+            joError:Add("id", poErrorParams:Id).
+            
+        return joError.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Handles exceptions following proper WebHandler pattern
+     Parameters:
+       input poError - The error/exception being processed
+       input pResponse - The current response
+       input pcEntityName - Optional entity name for context
+     Returns: integer - Always returns 0 (framework handles response)
+     Notes: Follows RequestEchoHandler pattern for proper error handling
+    ------------------------------------------------------------------------------*/
+    method protected integer HandleException(
+        input poError as Progress.Lang.Error,
+        input pResponse as WebResponse,
+        input pcEntityName as character):
+        
+        var JsonObject joError = new JsonObject().
+        var WebResponseWriter writer = new WebResponseWriter(pResponse).
+        var character cErrorDetails = "".
+        var integer i = 0.
+        
+        /* Set error status and content type */
+        assign pResponse:StatusCode = 500
+               pResponse:ContentType = "application/json".
+        
+        /* Collect all error messages */
+        do i = 1 to poError:NumMessages:
+            cErrorDetails = cErrorDetails + (if i > 1 then " | " else "") + poError:GetMessage(i).
         end.
         
+        /* If no messages, provide generic error */
+        if cErrorDetails = "" then
+            cErrorDetails = "An error occurred processing the request".
+        
+        /* Build error response */
+        joError:Add("error", "Error processing request").
+        if pcEntityName > "" then
+            joError:Add("entity", pcEntityName).
+        joError:Add("details", cErrorDetails).
+        joError:Add("errorType", poError:GetClass():TypeName).
+        
+        /* Set entity and write using proper pattern */
+        pResponse:Entity = joError.
+        writer:Open().
+        writer:Close().
+        
+        return 0.
+        
+        finally:
+            delete object writer no-error.
+        end finally.
     end method.
-
-    method override protected integer HandleNotAllowedMethod( input poRequest as OpenEdge.Web.IWebRequest ):
-        var WebResponse response = new WebResponse().
-        var WebResponseWriter writer = new WebResponseWriter(response).
-        var JsonObject joError. 
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Writes JSON response and finalizes the HTTP response
+     Parameters:
+       input response - WebResponse object
+       input writer - WebResponseWriter object
+       input joResponse - JsonObject to write
+     Notes: Handles writing, flushing, and closing the response writer
+    ------------------------------------------------------------------------------*/
+    method private void WriteJsonResponse(
+        input response as WebResponse,
+        input writer as WebResponseWriter,
+        input joResponse as JsonObject):
         
-        response:StatusCode = 405. /* Method Not Allowed */
-        response:ContentType = 'application/json'.
+        response:ContentType = "application/json".
+        writer:write(joResponse:GetJsonText()).
+        writer:flush().
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Handles error responses for CRUD operations
+     Parameters:
+       input response - WebResponse object
+       input writer - WebResponseWriter object
+       input errorParams - CrudErrorParams containing error details
+     Notes: Creates error JSON, sets 500 status, and writes response
+    ------------------------------------------------------------------------------*/
+    method private void HandleCrudError(
+        input response as WebResponse,
+        input writer as WebResponseWriter,
+        input errorParams as CrudErrorParams):
         
-        joError = new JsonObject().
-        joError:Add('error', 'Method not allowed').
-        joError:Add('status', response:StatusCode).
+        var JsonObject joError = new JsonObject().
+        
+        response:StatusCode = 500.
+        joError:Add("error", errorParams:ErrorMessage).
+        
+        if errorParams:EntityName > "" then
+            joError:Add("entity", errorParams:EntityName).
+            
+        if errorParams:Id > "" then
+            joError:Add("id", errorParams:Id).
+            
+        if errorParams:ErrorDetails > "" then
+            joError:Add("details", errorParams:ErrorDetails).
+            
         writer:write(joError:GetJsonText()).
         
-        writer:flush().
-        writer:close().
-        
-        finally:
-            delete object response no-error.
-            delete object writer no-error.
-            delete object joError no-error.
-        end.
-        
+        delete object joError no-error.
     end method.
-
+    
     /*------------------------------------------------------------------------------
-     Purpose: Handles requests for HTTP methods that are not implemented
+     Purpose: Cleans up response-related objects
+     Parameters:
+       input joResponse - JsonObject to delete
+       input response - WebResponse to delete
+       input writer - WebResponseWriter to delete
+     Notes: Safely deletes objects with no-error
+    ------------------------------------------------------------------------------*/
+    method private void CleanupResponseObjects(
+        input joResponse as JsonObject,
+        input response as WebResponse,
+        input writer as WebResponseWriter):
+        
+        delete object joResponse no-error.
+        delete object response no-error.
+        delete object writer no-error.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Handles error in catch block with consistent pattern
+     Parameters:
+       input response - WebResponse object
+       input writer - WebResponseWriter object
+       input errorParams - CrudErrorParams object (already created)
+     Returns: integer - Always returns 500
+     Notes: Calls HandleCrudError, cleans up errorParams, returns 500
+    ------------------------------------------------------------------------------*/
+    method private integer ProcessCatchError(
+        input response as WebResponse,
+        input writer as WebResponseWriter,
+        input errorParams as CrudErrorParams):
+        
+        this-object:HandleCrudError(response, writer, errorParams).
+        delete object errorParams no-error.
+        return 500.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Creates error params for CRUD operations with entity name
+     Parameters:
+       input errorMessage - Error message
+       input entityName - Entity name
+       input errorDetails - Error details from exception
+     Returns: CrudErrorParams - Configured error params object
+    ------------------------------------------------------------------------------*/
+    method private CrudErrorParams CreateCrudErrorParams(
+        input errorMessage as character,
+        input entityName as character,
+        input errorDetails as character):
+        
+        var CrudErrorParams params = new CrudErrorParams(errorMessage).
+        assign
+            params:EntityName = entityName
+            params:ErrorDetails = errorDetails.
+        return params.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Creates error params for CRUD operations with entity name and ID
+     Parameters:
+       input errorMessage - Error message
+       input entityName - Entity name
+       input id - Entity ID
+       input errorDetails - Error details from exception
+     Returns: CrudErrorParams - Configured error params object
+    ------------------------------------------------------------------------------*/
+    method private CrudErrorParams CreateCrudErrorParamsWithId(
+        input errorMessage as character,
+        input entityName as character,
+        input id as character,
+        input errorDetails as character):
+        
+        var CrudErrorParams params = new CrudErrorParams(errorMessage).
+        assign
+            params:EntityName = entityName
+            params:Id = id
+            params:ErrorDetails = errorDetails.
+        return params.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Public wrapper for HandleGet - for testing purposes only
      Parameters:
        input poRequest as OpenEdge.Web.IWebRequest - The incoming web request
-     Returns: integer - HTTP status code 501 (Not Implemented)
-     Notes:
-       - Called when a request is made with an unsupported HTTP method
-       - Returns 501 Not Implemented status code
+     Returns: integer - HTTP status code
+     Notes: This method exists solely to enable unit testing of HandleGet logic
     ------------------------------------------------------------------------------*/
-    method override protected integer HandleNotImplemented( input poRequest as OpenEdge.Web.IWebRequest ):
+    method public integer TestHandleGet(input poRequest as OpenEdge.Web.IWebRequest):
+        return this-object:HandleGet(poRequest).
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Public wrapper for HandlePost - for testing purposes only
+     Parameters:
+       input poRequest as OpenEdge.Web.IWebRequest - The incoming web request
+     Returns: integer - HTTP status code
+     Notes: This method exists solely to enable unit testing of HandlePost logic
+    ------------------------------------------------------------------------------*/
+    method public integer TestHandlePost(input poRequest as OpenEdge.Web.IWebRequest):
+        return this-object:HandlePost(poRequest).
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Public wrapper for HandlePut - for testing purposes only
+     Parameters:
+       input poRequest as OpenEdge.Web.IWebRequest - The incoming web request
+     Returns: integer - HTTP status code
+     Notes: This method exists solely to enable unit testing of HandlePut logic
+    ------------------------------------------------------------------------------*/
+    method public integer TestHandlePut(input poRequest as OpenEdge.Web.IWebRequest):
+        return this-object:HandlePut(poRequest).
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Public wrapper for HandleDelete - for testing purposes only
+     Parameters:
+       input poRequest as OpenEdge.Web.IWebRequest - The incoming web request
+     Returns: integer - HTTP status code
+     Notes: This method exists solely to enable unit testing of HandleDelete logic
+    ------------------------------------------------------------------------------*/
+    method public integer TestHandleDelete(input poRequest as OpenEdge.Web.IWebRequest):
+        return this-object:HandleDelete(poRequest).
+    end method.
+
+    destructor public GenericService():
+        /* No resources to clean up */
+    end destructor.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Handler for unsupported methods
+     Parameters:
+       input poRequest as OpenEdge.Web.IWebRequest - The incoming web request
+     Returns: integer - HTTP status code
+     Notes: Required implementation of abstract method from WebHandler
+    ------------------------------------------------------------------------------*/
+    method override protected integer HandleNotAllowedMethod(input poRequest as OpenEdge.Web.IWebRequest):
+        /* Declare all variables at the beginning of the method */
+        var ErrorResponseParams errorParams = new ErrorResponseParams(405, "Method not allowed").
+        var JsonObject joError.
         var WebResponse response = new WebResponse().
         var WebResponseWriter writer = new WebResponseWriter(response).
-        var JsonObject joError. 
         
-        response:StatusCode = 501. /* Method Not Allowed */
-        response:ContentType = 'application/json'.
+        /* Set error parameters */
+        errorParams:SetEntityContext(poRequest:GetPathParameter("entityname"), "").
+        errorParams:Details = "The HTTP method used is not supported for this resource".
+        joError = createErrorResponse(errorParams).
         
-        joError = new JsonObject().
-        joError:Add('error', 'The requested method is not implemented').
-        joError:Add('status', response:StatusCode).
-        writer:write(joError:GetJsonText()).
+        response:StatusCode = 405. /* Method Not Allowed */
+        response:ContentType = "application/json".
+        response:Entity = joError.
+        writer:Open().
+        writer:Close().
         
-        writer:flush().
-        writer:close().
+        return 0. 
         
         finally:
+            delete object joError no-error.
             delete object response no-error.
             delete object writer no-error.
-            delete object joError no-error.
-        end.
+            delete object errorParams no-error.
+        end finally.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Handler for unknown methods. The request being serviced and an 
+              optional status code is returned. A zero or null value means 
+              this method will deal with all errors.                                                               
+     Notes:   Required implementation of abstract method from WebHandler                                                                     
+    ------------------------------------------------------------------------------*/
+    method override protected integer HandleNotImplemented(input poRequest as OpenEdge.Web.IWebRequest):
+        /* Response objects */
+        var WebResponse response = new WebResponse().
+        var WebResponseWriter writer = new WebResponseWriter(response).
+        var JsonObject joResponse = new JsonObject().
+        
+        /* Set error response */
+        response:StatusCode = 501.
+        response:ContentType = "application/json".
+        joResponse:Add("error", "Method not implemented").
+        joResponse:Add("method", poRequest:Method).
+        joResponse:Add("path", poRequest:PathInfo).
+        
+        response:Entity = joResponse.
+        writer:Open().
+        writer:Close().
+        
+        return 0.
+        
+        finally:
+            delete object joResponse no-error.
+            delete object response no-error.
+            delete object writer no-error.
+        end finally.
     end method.
 
 end class.

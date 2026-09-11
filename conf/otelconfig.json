@@ -1,24 +1,73 @@
 {
-"OpenTelemetryConfiguration": {
-    "exporters": {
-        "otlp": {
-            "grpc": [
-                {
-                    "endpoint": "http://jaeger:4317",
-                    "span_processor": "batch",
-                    "batch_processor_options": {
-                    "max_queue_size": 500
-                }                
+    "OpenTelemetryConfiguration": {
+        "service": {
+            "name": "oe-web-api-pasoe",
+            "version": "1.0.0",
+            "namespace": "production"
+        },
+        "resource_attributes": {
+            "deployment.environment": "production",
+            "service.instance.id": "pasoe-instance-1",
+            "host.name": "localhost"
+        },
+        "exporters": {
+            "otlp": {
+                "grpc": [
+                    {
+                        "endpoint": "http://otel-collector:4317",
+                        "compression": "gzip",
+                        "timeout": 10000,
+                        "headers": {},
+                        "span_processor": "batch",
+                        "batch_processor_options": {
+                            "max_queue_size": 2048,
+                            "schedule_delay": 5000,
+                            "max_export_batch_size": 512,
+                            "export_timeout": 30000
+                        }
+                    }
+                ],
+                "http": [
+                    {
+                        "endpoint": "http://otel-collector:4318/v1/traces",
+                        "compression": "gzip",
+                        "timeout": 10000,
+                        "headers": {},
+                        "span_processor": "batch",
+                        "batch_processor_options": {
+                            "max_queue_size": 2048,
+                            "schedule_delay": 5000,
+                            "max_export_batch_size": 512,
+                            "export_timeout": 30000
+                        }
+                    }
+                ]
+            },
+            "console": {
+                "enabled": false
             }
-        ]
-    }
-    }
-},
-"OpenEdgeTelemetryConfiguration": {
-    "trace_classes": "*",
-    "trace_procedures": "*",
-    "trace_requires_parent": false,
-    "trace_abl_transactions": true,
-    "trace_request_start": true
+        },
+        "propagators": [
+            "tracecontext",
+            "baggage"
+        ],
+        "sampler": {
+            "type": "parentbased_always_on",
+            "probability": 1.0
+        }
+    },
+    "OpenEdgeTelemetryConfiguration": {
+        "enabled": true,
+        "trace_classes": "*",
+        "trace_procedures": "*",
+        "trace_requires_parent": false,
+        "trace_abl_transactions": true,
+        "trace_request_start": true,
+        "trace_request_end": true,
+        "trace_database_operations": true,
+        "trace_external_calls": true,
+        "metrics_enabled": true,
+        "metrics_export_interval": 60000,
+        "log_level": "INFO"
     }
 }

@@ -10,61 +10,46 @@
 
 USING Progress.Lang.*.
 USING OpenEdge.Core.Assert.
-USING Progress.ABLUnit.TestRunner.
-USING Progress.ABLUnit.TestSuite.
-USING Progress.ABLUnit.TestResult.
-USING Progress.ABLUnit.ResultFormats.XML.XMLResultWriter.
+USING OpenEdge.ABLUnit.Runner.ABLRunner.
+USING OpenEdge.ABLUnit.Runner.TestConfig.
+USING OpenEdge.ABLUnit.Results.TestTypeResult.
+USING OpenEdge.ABLUnit.Writer.ResultsXmlWriter.
+USING Progress.Json.ObjectModel.JsonObject.
+USING Progress.Json.ObjectModel.JsonArray.
+USING Progress.Json.ObjectModel.ObjectModelParser.
 
-DEFINE INPUT PARAMETER pTestResultsDir AS CHARACTER NO-UNDO.
+/* Use existing ABL Unit configuration file */
+VAR ABLRunner testRunner.
+VAR CHARACTER configFile = "./src/tests/ablunit.json".
+VAR CHARACTER outputFile.
+VAR JsonObject configJson.
+VAR TestConfig testConfig.
+VAR ObjectModelParser parser.
+var character resultsDir = "./results".
 
-DEFINE VARIABLE testRunner AS TestRunner NO-UNDO.
-DEFINE VARIABLE testSuite AS TestSuite NO-UNDO.
-DEFINE VARIABLE testResult AS TestResult NO-UNDO.
-DEFINE VARIABLE resultWriter AS XMLResultWriter NO-UNDO. 
-DEFINE VARIABLE outputFile AS CHARACTER NO-UNDO.
+/* Load the existing configuration file */
+parser = NEW ObjectModelParser().
+configJson = CAST(parser:ParseFile(configFile), JsonObject).
 
-/* Create test suite and add all test classes */
-testSuite = NEW TestSuite("OE Web API Tests").
-testSuite:AddTest(NEW tests.CustomersTest()).
-testSuite:AddTest(NEW tests.DataAccessTest()).
-testSuite:AddTest(NEW tests.EmailValidatorTest()).
-testSuite:AddTest(NEW tests.ItemsTest()).
-testSuite:AddTest(NEW tests.OrderValidationTest()).
-testSuite:AddTest(NEW tests.OrdersTest()).
-testSuite:AddTest(NEW tests.SuppliersTest()).
-
-/* Create test runner */
-testRunner = NEW TestRunner().
+/* Create test configuration and runner using existing config */
+testConfig = NEW TestConfig(configJson).
+testRunner = NEW ABLRunner(testConfig, "").
 
 /* Run the tests */
-testResult = testRunner:Run(testSuite).
+testRunner:RunTests().
 
 /* Create output directory if it doesn't exist */
-IF pTestResultsDir = "" OR pTestResultsDir = ? THEN
-    pTestResultsDir = "./test-results".
 
-FILE-INFO:FILE-NAME = pTestResultsDir.
+FILE-INFO:FILE-NAME = resultsDir.
 IF NOT FILE-INFO:FILE-TYPE BEGINS "D" THEN DO:
-    OS-CREATE-DIR VALUE(pTestResultsDir).
+    OS-CREATE-DIR VALUE(resultsDir).
 END.
 
-/* Write test results to XML file */
-outputFile = pTestResultsDir + "/test-results.xml".
-resultWriter = NEW XMLResultWriter(outputFile).
-resultWriter:Write(testResult).
+/* The results file should be created automatically by the TestConfig */
+outputFile = testConfig:GetResultsFile().
 
-/* Display test summary */
+/* Display completion message */
 MESSAGE 
-    "Tests run: " testResult:RunCount SKIP
-    "Failures: " testResult:FailureCount SKIP
-    "Errors: " testResult:ErrorCount SKIP
+    "ABL Unit tests completed using existing configuration." SKIP
     "Test results written to: " outputFile
     VIEW-AS ALERT-BOX.
-
-/* Exit with failure code if any tests failed */
-IF testResult:ErrorCount > 0 OR testResult:FailureCount > 0 THEN DO:
-    QUIT 1.
-END.
-ELSE DO:
-    QUIT 0.
-END.

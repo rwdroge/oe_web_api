@@ -1,0 +1,36 @@
+PSC
+filename=benefits
+records=0000000015
+ldbname=sports2020
+timestamp=2024/12/25-10:05:00
+numformat=44,46
+dateformat=mdy-1950
+map=NO-MAP
+cpstream=UTF-8
+
+.
+0000002048
+
+d Benefits 0 0
+t 2000 "EmpNum" "HealthCare" "LifeInsurance" "Pension401K" "StockPurchase" "MedicalSpending" "DependentCare"
+10 "Premium" 100000 8000 5000 2500 3000
+11 "Standard" 75000 6000 4000 2000 2500
+12 "Standard" 50000 5000 3000 1500 2000
+13 "Standard" 75000 6000 4500 2000 2500
+14 "Standard" 50000 5500 3500 1800 2200
+15 "Premium" 100000 8000 6000 3000 3500
+16 "Premium" 100000 7500 5500 2800 3200
+17 "Standard" 75000 6500 4500 2200 2800
+18 "Premium" 100000 8000 6000 3000 3500
+19 "Premium" 100000 8500 6500 3200 3800
+20 "Premium" 100000 7000 5000 2500 3000
+21 "Basic" 50000 4000 2500 1200 1500
+22 "Standard" 75000 5500 4000 2000 2500
+23 "Standard" 50000 5000 3500 1800 2200
+24 "Standard" 75000 6000 4500 2200 2600
+
+.
+PSC
+cpstream=UTF-8
+.
+0000060748

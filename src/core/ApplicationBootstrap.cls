@@ -57,9 +57,25 @@ class core.ApplicationBootstrap:
     method private void RegisterDependencies():
         /* Register repositories */
         Container:Register("interfaces.IRepository:item", "data.ItemRepository", false).
+        Container:Register("interfaces.IRepository:customer", "data.CustomerRepository", false).
+        Container:Register("interfaces.IRepository:order", "data.OrderRepository", false).
+        Container:Register("interfaces.IRepository:supplier", "data.SupplierRepository", false).
+        Container:Register("interfaces.IRepository:client", "data.ClientRepository", false).
+        Container:Register("interfaces.IRepository:document", "data.DocumentRepository", false).
+        Container:Register("interfaces.IRepository:dossierhistory", "data.DossierHistoryRepository", false).
+        Container:Register("interfaces.IRepository:dossieritem", "data.DossierItemRepository", false).
+        Container:Register("interfaces.IRepository:paymentorder", "data.PaymentOrderRepository", false).
         
         /* Register services */
         Container:Register("interfaces.IService:item", "services.ItemService", true).
+        Container:Register("interfaces.IService:customer", "services.CustomerService", true).
+        Container:Register("interfaces.IService:order", "services.OrderService", true).
+        Container:Register("interfaces.IService:supplier", "services.SupplierService", true).
+        Container:Register("interfaces.IService:client", "arag.services.ClientService", true).
+        Container:Register("interfaces.IService:document", "arag.services.DocumentService", true).
+        Container:Register("interfaces.IService:dossierhistory", "arag.services.DossierHistoryService", true).
+        Container:Register("interfaces.IService:dossieritem", "arag.services.DossierItemService", true).
+        Container:Register("interfaces.IService:paymentorder", "arag.services.PaymentOrderService", true).
         
         /* Register other dependencies as needed */
     end method.

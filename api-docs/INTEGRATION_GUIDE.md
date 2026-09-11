@@ -1,6 +1,6 @@
-# GenericServiceRefactored API Integration Guide
+# GenericService API Integration Guide
 
-This guide provides detailed information on how to integrate the GenericServiceRefactored API with various systems and frameworks.
+This guide provides detailed information on how to integrate the GenericService API with various systems and frameworks.
 
 ## Table of Contents
 
@@ -14,7 +14,7 @@ This guide provides detailed information on how to integrate the GenericServiceR
 
 ## Overview
 
-The GenericServiceRefactored API provides a RESTful interface for performing CRUD operations on various entities. It follows a consistent pattern for all endpoints, making it straightforward to integrate with any system that can make HTTP requests.
+The GenericService API provides a RESTful interface for performing CRUD operations on various entities. It follows a consistent pattern for all endpoints, making it straightforward to integrate with any system that can make HTTP requests.
 
 Base URL: `/api/v1`
 
@@ -448,4 +448,4 @@ const styles = StyleSheet.create({
 export default ItemsScreen;
 ```
 
-This integration guide provides a comprehensive overview of how to integrate with the GenericServiceRefactored API using various technologies and patterns. For specific integration questions or issues, please contact the development team.
+This integration guide provides a comprehensive overview of how to integrate with the GenericService API using various technologies and patterns. For specific integration questions or issues, please contact the development team.

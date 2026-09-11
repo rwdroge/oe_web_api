@@ -1,0 +1,8 @@
+-m3
+-Mpb 5
+-Ma 5
+-Mi 5
+-S 10001
+-minport 4751
+-maxport 5000
+-ServerType SQL

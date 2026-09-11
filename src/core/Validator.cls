@@ -11,6 +11,8 @@
 using Progress.Lang.*.
 using Progress.Json.ObjectModel.*.
 using errors.ApiError.
+using generics.ValidationRangeParams.
+using generics.ValidationPatternParams.
 
 block-level on error undo, throw.
 
@@ -35,6 +37,44 @@ class core.Validator:
     constructor public Validator():
         super().
     end constructor.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Validate if a field is required and exists
+     Parameters:
+       input poJson - JSON object to validate
+       input pcField - Field name to check
+     Returns: JsonObject with validation result
+     Notes: Returns a JsonObject with valid flag and message if invalid
+    ------------------------------------------------------------------------------*/
+    method public JsonObject IsRequired(
+        input poJson as JsonObject,
+        input pcField as character):
+        
+        define variable joResult as JsonObject no-undo.
+        
+        /* Create result object */
+        joResult = new JsonObject().
+        
+        /* Check if field exists and is not empty */
+        if not poJson:Has(pcField) or poJson:IsNull(pcField) then do:
+            joResult:Add("valid", false).
+            joResult:Add("message", "Field is required").
+            return joResult.
+        end.
+        
+        /* For string fields, check if empty */
+        if poJson:GetType(pcField) = JsonDataType:STRING then do:
+            if poJson:GetCharacter(pcField) = "" then do:
+                joResult:Add("valid", false).
+                joResult:Add("message", "Field cannot be empty").
+                return joResult.
+            end.
+        end.
+        
+        /* Field is valid */
+        joResult:Add("valid", true).
+        return joResult.
+    end method.
     
     /*------------------------------------------------------------------------------
      Purpose: Validate required fields
@@ -164,69 +204,63 @@ class core.Validator:
     /*------------------------------------------------------------------------------
      Purpose: Validate field range
      Parameters:
-       input poJson - JSON object to validate
-       input pcField - Field name
-       input pdMin - Minimum value
-       input pdMax - Maximum value
+       input params - ValidationRangeParams containing validation parameters
      Notes: Adds validation error if field value is outside range
     ------------------------------------------------------------------------------*/
-    method public void ValidateRange(
-        input poJson as JsonObject,
-        input pcField as character,
-        input pdMin as decimal,
-        input pdMax as decimal):
+    method public void ValidateRange(input params as ValidationRangeParams):
         
         define variable dValue as decimal no-undo.
         
+        /* Validate parameters */
+        if not params:IsValid() then
+            return.
+        
         /* Skip if field doesn't exist or is null */
-        if not poJson:Has(pcField) or poJson:IsNull(pcField) then
+        if not params:JsonObject:Has(params:FieldName) or params:JsonObject:IsNull(params:FieldName) then
             return.
             
         /* Check if field is a number */
-        if poJson:GetType(pcField) <> JsonDataType:NUMBER then
+        if params:JsonObject:GetType(params:FieldName) <> JsonDataType:NUMBER then
             return.
             
         /* Get field value */
-        dValue = poJson:GetDecimal(pcField).
+        dValue = params:JsonObject:GetDecimal(params:FieldName).
         
         /* Check range */
-        if dValue < pdMin or dValue > pdMax then
-            this-object:AddError(pcField, 
-                "Field value must be between " + string(pdMin) + 
-                " and " + string(pdMax)).
+        if dValue < params:MinValue or dValue > params:MaxValue then
+            this-object:AddError(params:FieldName, 
+                "Field value must be between " + string(params:MinValue) + 
+                " and " + string(params:MaxValue)).
     end method.
     
     /*------------------------------------------------------------------------------
      Purpose: Validate field pattern
      Parameters:
-       input poJson - JSON object to validate
-       input pcField - Field name
-       input pcPattern - Regular expression pattern
-       input pcMessage - Error message
+       input params - ValidationPatternParams containing validation parameters
      Notes: Adds validation error if field value doesn't match pattern
     ------------------------------------------------------------------------------*/
-    method public void ValidatePattern(
-        input poJson as JsonObject,
-        input pcField as character,
-        input pcPattern as character,
-        input pcMessage as character):
+    method public void ValidatePattern(input params as ValidationPatternParams):
         
         define variable cValue as character no-undo.
         
+        /* Validate parameters */
+        if not params:IsValid() then
+            return.
+        
         /* Skip if field doesn't exist or is null */
-        if not poJson:Has(pcField) or poJson:IsNull(pcField) then
+        if not params:JsonObject:Has(params:FieldName) or params:JsonObject:IsNull(params:FieldName) then
             return.
             
         /* Check if field is a string */
-        if poJson:GetType(pcField) <> JsonDataType:STRING then
+        if params:JsonObject:GetType(params:FieldName) <> JsonDataType:STRING then
             return.
             
         /* Get field value */
-        cValue = poJson:GetCharacter(pcField).
+        cValue = params:JsonObject:GetCharacter(params:FieldName).
         
         /* Check pattern */
-        if not cValue matches pcPattern then
-            this-object:AddError(pcField, pcMessage).
+        if not cValue matches params:Pattern then
+            this-object:AddError(params:FieldName, params:ErrorMessage).
     end method.
     
     /*------------------------------------------------------------------------------
@@ -308,6 +342,191 @@ class core.Validator:
     end method.
     
     /*------------------------------------------------------------------------------
+     Purpose: Validate if a field is a logical value
+     Parameters:
+       input poJson - JSON object to validate
+       input pcField - Field name to check
+     Returns: JsonObject with validation result
+     Notes: Returns a JsonObject with valid flag and message if invalid
+    ------------------------------------------------------------------------------*/
+    method public JsonObject IsLogical(
+        input poJson as JsonObject,
+        input pcField as character):
+        
+        define variable joResult as JsonObject no-undo.
+        
+        /* Create result object */
+        joResult = new JsonObject().
+        
+        /* Check if field exists */
+        if not poJson:Has(pcField) or poJson:IsNull(pcField) then do:
+            joResult:Add("valid", true).
+            return joResult.
+        end.
+        
+        /* Check if field is a boolean */
+        if poJson:GetType(pcField) <> JsonDataType:BOOLEAN then do:
+            joResult:Add("valid", false).
+            joResult:Add("message", "Field must be a boolean value").
+            return joResult.
+        end.
+        
+        /* Field is valid */
+        joResult:Add("valid", true).
+        return joResult.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Validate if a field does not exceed maximum length
+     Parameters:
+       input poJson - JSON object to validate
+       input pcField - Field name to check
+       input piMaxLength - Maximum allowed length
+     Returns: JsonObject with validation result
+     Notes: Returns a JsonObject with valid flag and message if invalid
+    ------------------------------------------------------------------------------*/
+    /*------------------------------------------------------------------------------
+     Purpose: Validate if a field meets minimum length requirement
+     Parameters:
+       input poJson - JSON object to validate
+       input pcField - Field name to check
+       input piMinLength - Minimum allowed length
+     Returns: JsonObject with validation result
+     Notes: Returns a JsonObject with valid flag and message if invalid
+    ------------------------------------------------------------------------------*/
+    method public JsonObject MinLength(
+        input poJson as JsonObject,
+        input pcField as character,
+        input piMinLength as integer):
+        
+        define variable joResult as JsonObject no-undo.
+        define variable cValue as character no-undo.
+        
+        /* Create result object */
+        joResult = new JsonObject().
+        
+        /* Check if field exists */
+        if not poJson:Has(pcField) or poJson:IsNull(pcField) then do:
+            joResult:Add("valid", true).
+            return joResult.
+        end.
+        
+        /* Check if field is a string */
+        if poJson:GetType(pcField) <> JsonDataType:STRING then do:
+            joResult:Add("valid", false).
+            joResult:Add("message", "Field must be a string value").
+            return joResult.
+        end.
+        
+        /* Get field value */
+        cValue = poJson:GetCharacter(pcField).
+        
+        /* Check minimum length */
+        if length(cValue) < piMinLength then do:
+            joResult:Add("valid", false).
+            joResult:Add("message", "Field length must be at least " + string(piMinLength) + " characters").
+            return joResult.
+        end.
+        
+        /* Field is valid */
+        joResult:Add("valid", true).
+        return joResult.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Validate if a field is a date value
+     Parameters:
+       input poJson - JSON object to validate
+       input pcField - Field name to check
+     Returns: JsonObject with validation result
+     Notes: Returns a JsonObject with valid flag and message if invalid
+    ------------------------------------------------------------------------------*/
+    method public JsonObject IsDate(
+        input poJson as JsonObject,
+        input pcField as character):
+        
+        define variable joResult as JsonObject no-undo.
+        define variable cValue as character no-undo.
+        define variable dValue as date no-undo.
+        
+        /* Create result object */
+        joResult = new JsonObject().
+        
+        /* Check if field exists */
+        if not poJson:Has(pcField) or poJson:IsNull(pcField) then do:
+            joResult:Add("valid", true).
+            return joResult.
+        end.
+        
+        /* Check if field can be converted to a date */
+        if poJson:GetType(pcField) = JsonDataType:STRING then do:
+            cValue = poJson:GetCharacter(pcField).
+            dValue = date(cValue) no-error.
+            if dValue = ? then do:
+                joResult:Add("valid", false).
+                joResult:Add("message", "Field must be a valid date").
+                return joResult.
+            end.
+        end.
+        else do:
+            joResult:Add("valid", false).
+            joResult:Add("message", "Field must be a date string").
+            return joResult.
+        end.
+        
+        /* Field is valid */
+        joResult:Add("valid", true).
+        return joResult.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Validate if a field does not exceed maximum length
+     Parameters:
+       input poJson - JSON object to validate
+       input pcField - Field name to check
+       input piMaxLength - Maximum allowed length
+     Returns: JsonObject with validation result
+     Notes: Returns a JsonObject with valid flag and message if invalid
+    ------------------------------------------------------------------------------*/
+    method public JsonObject MaxLength(
+        input poJson as JsonObject,
+        input pcField as character,
+        input piMaxLength as integer):
+        
+        define variable joResult as JsonObject no-undo.
+        define variable cValue as character no-undo.
+        
+        /* Create result object */
+        joResult = new JsonObject().
+        
+        /* Check if field exists */
+        if not poJson:Has(pcField) or poJson:IsNull(pcField) then do:
+            joResult:Add("valid", true).
+            return joResult.
+        end.
+        
+        /* Check if field is a string */
+        if poJson:GetType(pcField) <> JsonDataType:STRING then do:
+            joResult:Add("valid", true).
+            return joResult.
+        end.
+        
+        /* Get field value */
+        cValue = poJson:GetCharacter(pcField).
+        
+        /* Check length */
+        if length(cValue) > piMaxLength then do:
+            joResult:Add("valid", false).
+            joResult:Add("message", "Field length exceeds maximum of " + string(piMaxLength)).
+            return joResult.
+        end.
+        
+        /* Field is valid */
+        joResult:Add("valid", true).
+        return joResult.
+    end method.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Clean up resources
     ------------------------------------------------------------------------------*/
     destructor public Validator():
@@ -316,5 +535,40 @@ class core.Validator:
             delete ValidationErrors.
         end.
     end destructor.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Validate if a field is a numeric value
+     Parameters:
+       input poJson - JSON object to validate
+       input pcField - Field name to check
+     Returns: JsonObject with validation result
+     Notes: Returns a JsonObject with valid flag and message if invalid
+    ------------------------------------------------------------------------------*/
+    method public JsonObject IsNumeric(
+        input poJson as JsonObject,
+        input pcField as character):
+        
+        define variable joResult as JsonObject no-undo.
+        
+        /* Create result object */
+        joResult = new JsonObject().
+        
+        /* Check if field exists */
+        if not poJson:Has(pcField) or poJson:IsNull(pcField) then do:
+            joResult:Add("valid", true).
+            return joResult.
+        end.
+        
+        /* Check if field is a number */
+        if poJson:GetType(pcField) <> JsonDataType:NUMBER then do:
+            joResult:Add("valid", false).
+            joResult:Add("message", "Field must be a numeric value").
+            return joResult.
+        end.
+        
+        /* Field is valid */
+        joResult:Add("valid", true).
+        return joResult.
+    end method.
     
 end class.

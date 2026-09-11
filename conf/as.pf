@@ -1,2 +1,5 @@
 
 -db sports2020 -S 10000 -H sports2020-db
+-cpstream UTF-8
+-cpinternal UTF-8
+-profileMemory /app/pas/as/openedge/memProfConf
