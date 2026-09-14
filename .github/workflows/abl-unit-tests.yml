@@ -69,11 +69,11 @@ jobs:
       - name: Run tests in container
         uses: addnab/docker-run-action@v3
         with:
-          image: ghcr.io/rwdroge/oe_compiler:latest
+          image: oe_compiler:latest
           options: --user root -v ${{ github.workspace }}:/workspace -v ${{ github.workspace }}/license/progress.cfg:/usr/dlc/progress.cfg
-          registry: ghcr.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io/rwdroge
+          username: rwdroge
+          password: ${{ secrets.GH_TOKEN }}
           run: |
             cd /workspace
             export DLC=/usr/dlc
