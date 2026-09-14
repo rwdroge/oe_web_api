@@ -1,8 +1,8 @@
-# GenericServiceRefactored API Guide
+# GenericService API Guide
 
 ## Overview
 
-The GenericServiceRefactored API provides a RESTful interface for performing CRUD (Create, Read, Update, Delete) operations on various entities in the system. The API follows a service layer pattern, separating business logic from data access concerns.
+The GenericService API provides a RESTful interface for performing CRUD (Create, Read, Update, Delete) operations on various entities in the system. The API follows a service layer pattern, separating business logic from data access concerns.
 
 ## Base URL
 
@@ -28,7 +28,7 @@ The API supports two types of operations, specified by the `apitype` path parame
 ### Path Parameters
 
 - `apitype`: Type of API request (`data` or `meta`)
-- `entityname`: Name of the entity (`items`, `customers`, `orders`, `suppliers`)
+- `entityname`: Name of the entity (`item`, `customer`, `order`, `supplier`)
 - `id`: Entity identifier
 
 ### Query Parameters

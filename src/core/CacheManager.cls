@@ -146,6 +146,33 @@ class core.CacheManager:
     end method.
     
     /*------------------------------------------------------------------------------
+     Purpose: Check if key exists in cache
+     Parameters:
+       input pcKey - Cache key
+     Returns: Logical indicating if key exists and is not expired
+     Notes: Returns true if key exists and is not expired
+    ------------------------------------------------------------------------------*/
+    method public logical Contains(input pcKey as character):
+        /* Find cache entry */
+        find CacheEntries where CacheEntries.CacheKey = pcKey no-error.
+        if available CacheEntries then do:
+            /* Check if expired */
+            if CacheEntries.ExpiryTime < now then do:
+                /* Delete expired entry */
+                delete object CacheEntries.CacheValue no-error.
+                delete CacheEntries.
+                
+                iLogger:Debug("Cache entry expired: " + pcKey).
+                return false.
+            end.
+            
+            return true.
+        end.
+        
+        return false.
+    end method.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Clear all cache entries
      Notes: Removes all cache entries
     ------------------------------------------------------------------------------*/

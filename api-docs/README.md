@@ -1,6 +1,6 @@
-# GenericServiceRefactored API Documentation
+# GenericService API Documentation
 
-This directory contains comprehensive documentation for the GenericServiceRefactored API.
+This directory contains comprehensive documentation for the GenericService API.
 
 ## Documentation Files
 
@@ -30,7 +30,7 @@ This directory contains comprehensive documentation for the GenericServiceRefact
    - Refer to the `API_GUIDE.md` file which contains examples and explanations
 
 3. For testing the API:
-   - Import the `GenericServiceRefactored_API.postman_collection.json` file into Postman
+   - Import the `GenericService_API.postman_collection.json` file into Postman
    - Use the cURL commands provided in `curl_examples.md`
    - Run the Python test script with `python api_test.py --run-examples`
 
@@ -39,7 +39,7 @@ This directory contains comprehensive documentation for the GenericServiceRefact
 
 ## API Overview
 
-The GenericServiceRefactored API provides a RESTful interface for performing CRUD operations on various entities:
+The GenericService API provides a RESTful interface for performing CRUD operations on various entities:
 
 - **Items**: Products or inventory items
 - **Customers**: Customer information

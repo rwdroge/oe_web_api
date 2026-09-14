@@ -82,6 +82,7 @@ class core.DependencyContainer:
     method public Progress.Lang.Object Resolve(input pcInterfaceName as character):
         define variable oInstance as Progress.Lang.Object no-undo.
         
+        
         /* Find dependency registration */
         find Dependencies where Dependencies.InterfaceName = pcInterfaceName no-error.
         if not available Dependencies then
@@ -91,6 +92,7 @@ class core.DependencyContainer:
         /* Return existing instance if singleton */
         if Dependencies.Singleton and valid-object(Dependencies.Instance) then
             return Dependencies.Instance.
+            
             
         /* Create new instance */
         oInstance = dynamic-new string(Dependencies.ImplementationName) () no-error.
@@ -103,6 +105,31 @@ class core.DependencyContainer:
             Dependencies.Instance = oInstance.
             
         return oInstance.
+    end method.
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Register an existing object instance as a singleton
+     Parameters:
+       input pcInterfaceName - Name of the interface
+       input poInstance - Object instance to register
+     Notes: Registers an existing object instance as a singleton
+    ------------------------------------------------------------------------------*/
+    method public void RegisterSingleton(
+        input pcInterfaceName as character,
+        input poInstance as Progress.Lang.Object):
+        
+        /* Check if dependency already exists */
+        find Dependencies where Dependencies.InterfaceName = pcInterfaceName no-error.
+        if available Dependencies then
+            delete Dependencies.
+            
+        /* Register new dependency with existing instance */
+        create Dependencies.
+        assign
+            Dependencies.InterfaceName = pcInterfaceName
+            Dependencies.ImplementationName = poInstance:GetClass():TypeName
+            Dependencies.Singleton = true
+            Dependencies.Instance = poInstance.
     end method.
     
     /*------------------------------------------------------------------------------
@@ -141,6 +168,7 @@ class core.DependencyContainer:
             
         return oInstance.
     end method.
+    
     
     /*------------------------------------------------------------------------------
      Purpose: Reset container and clear all registrations

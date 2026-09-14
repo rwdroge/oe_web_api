@@ -1,0 +1,339 @@
+version: '3.8'
+
+# Docker Compose configuration for OpenEdge Web API
+# - 2 PASOE instances with load balancing
+# - OpenEdge Database
+# - Traefik as reverse proxy/load balancer
+# - OpenTelemetry stack for observability
+# - Fluent Bit for log transformation
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+  observability:
+    driver: bridge
+
+volumes:
+  db-data:
+    driver: local
+  otel-logs:
+    driver: local
+  fluent-bit-logs:
+    driver: local
+  traefik-certs:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  elasticsearch-data:
+    driver: local
+
+services:
+  # =============================================================================
+  # Traefik - Load Balancer and Reverse Proxy
+  # =============================================================================
+  traefik:
+    image: traefik:v3.6.6
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.entryPoint=metrics"
+      - "--entrypoints.metrics.address=:8082"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefik dashboard
+      - "8082:8082"  # Metrics endpoint
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker/traefik:/etc/traefik/dynamic
+      - traefik-certs:/certs
+    networks:
+      - frontend
+      - observability
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+    restart: unless-stopped
+    depends_on:
+      - otel-collector
+
+  # =============================================================================
+  # OpenEdge Database
+  # =============================================================================
+  oedb:
+    build:
+      context: .
+      dockerfile: docker/database/Dockerfile
+    container_name: oedb
+    hostname: oedb
+    user: openedge
+    environment:
+      - DBNAME=sports2020
+      - DEL_LK_FILE=true
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=sports2020-database
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production,service.instance.id=sports2020-db
+    volumes:
+      - ./conf/otelconfig-db.json:/app/conf/otelconfig.json
+      - ./logs/db:/app/logs
+      - ./docker/oecc/otagentoedb.yaml:/usr/oecc/agent/config/otagent.yaml
+      - ./license/progress.cfg:/usr/dlc/progress.cfg
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "4550-4750:4550-4750"
+      - "4751-5000:4751-5000"
+    networks:
+      - backend
+      - observability
+    healthcheck:
+      test: ["CMD-SHELL", "ps -ef | grep -q '[_]mprosrv.*sports2020' && exit 0 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+
+  # =============================================================================
+  # PASOE Instance 1
+  # =============================================================================
+  pasoe1:
+    build:
+      context: .
+      dockerfile: docker/pasoe/Dockerfile
+    container_name: pasoe1
+    hostname: pasoe1
+    user: openedge
+    environment:
+      - PASWEBHANDLERS=/app/src/webhandlers/ROOT.handlers
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=oe-web-api-pasoe
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production,service.instance.id=pasoe-instance-1
+    volumes:
+      - ./conf/otelconfig.json:/app/conf/otelconfig.json
+      - ./docker/oecc/otagentpasoe.yaml:/usr/oecc/agent/config/otagent.yaml
+      - ./license/progress.cfg:/usr/dlc/progress.cfg
+    networks:
+      - frontend
+      - backend
+      - observability
+    ports:
+      - "8899:8899"  # HealthCheck endpoint
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pasoe.rule=Host(`api.localhost`) || PathPrefix(`/web`)"
+      - "traefik.http.routers.pasoe.entrypoints=web"
+      - "traefik.http.services.pasoe.loadbalancer.server.port=8810"
+      - "traefik.http.services.pasoe.loadbalancer.healthcheck.path=/"
+      - "traefik.http.services.pasoe.loadbalancer.healthcheck.port=8899"
+      - "traefik.http.services.pasoe.loadbalancer.healthcheck.interval=10s"
+      - "traefik.docker.network=oe_web_api_frontend"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8899"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
+    depends_on:
+      oedb:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+
+  # =============================================================================
+  # PASOE Instance 2
+  # =============================================================================
+  pasoe2:
+    build:
+      context: .
+      dockerfile: docker/pasoe/Dockerfile
+    container_name: pasoe2
+    hostname: pasoe2
+    user: openedge
+    environment:
+      - PASWEBHANDLERS=/app/src/webhandlers/ROOT.handlers
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=oe-web-api-pasoe
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production,service.instance.id=pasoe-instance-2
+    volumes:
+      - ./conf/otelconfig.json:/app/conf/otelconfig.json
+      - ./docker/oecc/otagentpasoe.yaml:/usr/oecc/agent/config/otagent.yaml
+      - ./license/progress.cfg:/usr/dlc/progress.cfg
+    networks:
+      - frontend
+      - backend
+      - observability
+    ports:
+      - "8900:8899"  # HealthCheck endpoint (different port to avoid conflict with pasoe1)
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pasoe.rule=Host(`api.localhost`) || PathPrefix(`/web`)"
+      - "traefik.http.routers.pasoe.entrypoints=web"
+      - "traefik.http.services.pasoe.loadbalancer.server.port=8810"
+      - "traefik.http.services.pasoe.loadbalancer.healthcheck.path=/"
+      - "traefik.http.services.pasoe.loadbalancer.healthcheck.port=8899"
+      - "traefik.http.services.pasoe.loadbalancer.healthcheck.interval=10s"
+      - "traefik.docker.network=oe_web_api_frontend"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8899"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
+    depends_on:
+      oedb:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+
+  # =============================================================================
+  # OpenTelemetry Collector
+  # =============================================================================
+  otel-collector:
+    build:
+      context: ./docker/otel
+      dockerfile: Dockerfile
+    container_name: otel-collector
+    volumes:
+      - otel-logs:/var/log/otel
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "13133:13133" # Health check
+      - "55679:55679" # zPages
+    networks:
+      - observability
+    restart: unless-stopped
+
+  # =============================================================================
+  # Fluent Bit - Log Aggregation and Transformation
+  # =============================================================================
+  fluent-bit:
+    build:
+      context: ./docker/fluent-bit
+      dockerfile: Dockerfile
+    container_name: fluent-bit
+    volumes:
+      - ./logs/pasoe1:/var/log/pasoe1
+      - ./logs/pasoe2:/var/log/pasoe2
+      - ./logs/db:/var/log/db
+      - fluent-bit-logs:/var/log/fluent-bit
+    networks:
+      - observability
+    restart: unless-stopped
+    depends_on:
+      - otel-collector
+
+  # =============================================================================
+  # Jaeger for Trace Visualization
+  # =============================================================================
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=memory
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "14250:14250" # Jaeger gRPC
+    networks:
+      - observability
+    restart: unless-stopped
+
+  # =============================================================================
+  # Prometheus for Metrics Storage
+  # =============================================================================
+  prometheus:
+    build:
+      context: ./docker/prometheus
+      dockerfile: Dockerfile
+    container_name: prometheus
+    volumes:
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - observability
+    restart: unless-stopped
+
+  # =============================================================================
+  # Grafana for Visualization
+  # =============================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - observability
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+      - jaeger
+
+      # =============================================================================
+# Elasticsearch - Telemetry Data Storage
+# =============================================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.3
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.enrollment.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - observability
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health -u elastic:rubendroge || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+# =============================================================================
+# Kibana - Elasticsearch Visualization
+# =============================================================================
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.2.3
+    container_name: kibana
+    volumes:
+      - ./docker/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+    ports:
+      - "5601:5601"
+    networks:
+      - observability
+    restart: unless-stopped
+    depends_on:
+      elasticsearch:
+        condition: service_healthy

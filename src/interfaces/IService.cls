@@ -45,7 +45,7 @@ interface interfaces.IService:
        input poEntity - JSON object containing updated entity data
      Returns: JsonObject containing updated entity
     ------------------------------------------------------------------------------*/
-    method public JsonObject Update(input pcId as character, input poEntity as JsonObject).
+    method public JsonObject UpdateEntity(input pcId as character, input poEntity as JsonObject).
     
     /*------------------------------------------------------------------------------
      Purpose: Delete an entity by ID
@@ -68,5 +68,30 @@ interface interfaces.IService:
      Returns: logical indicating if all fields are valid
     ------------------------------------------------------------------------------*/
     method public logical ValidateFields(input pcFieldList as character, output pcInvalidFields as character).
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Get the name of the entity managed by this service
+     Returns: character containing the entity name
+    ------------------------------------------------------------------------------*/
+    method public character GetEntityName().
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Get fields for a specific entity
+     Parameters:
+       input pcEntity - Entity name
+     Returns: JsonArray containing entity fields
+    ------------------------------------------------------------------------------*/
+    method public JsonArray GetEntityFields(input pcEntity as character).
+    
+    /*------------------------------------------------------------------------------
+     Purpose: Create a JSON model of an entity's structure
+     Parameters:
+       input phTempTable - Handle to the temp-table
+       output plcModel - Longchar containing the JSON model
+     Notes: Builds a JSON object describing the entity's fields and data types
+    ------------------------------------------------------------------------------*/
+    method public void createEntityModel(
+        input phTempTable as handle,
+        output plcModel as longchar).
 
 end interface.

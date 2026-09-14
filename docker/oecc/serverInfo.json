@@ -1,0 +1,5 @@
+{
+  "_comment": "Standalone mode - no OECC server connection. Agent operates independently for OpenTelemetry monitoring.",
+  "host": "localhost",
+  "managementPort": "8001"
+}

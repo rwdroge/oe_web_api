@@ -17,6 +17,6 @@ jobs:
         with:
           customer: progressdemo
           system: oewebapi
-          publishonly: true
+          publishonly: false
         env:
           SIGRID_CI_TOKEN: "${{ secrets.SIGRID_CI_TOKEN }}"

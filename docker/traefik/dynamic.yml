@@ -1,0 +1,43 @@
+http:
+  routers:
+    pasoe-api:
+      rule: "Host(`api.localhost`) || PathPrefix(`/web`)"
+      service: pasoe-service
+      entryPoints:
+        - web
+      middlewares:
+        - pasoe-headers
+        - pasoe-ratelimit
+
+  services:
+    pasoe-service:
+      loadBalancer:
+        sticky:
+          cookie:
+            name: pasoe_session
+            secure: false
+            httpOnly: true
+        healthCheck:
+          path: /
+          port: 8899
+          interval: 10s
+          timeout: 3s
+        servers:
+          - url: "http://pasoe1:8810"
+          - url: "http://pasoe2:8810"
+
+  middlewares:
+    pasoe-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "http"
+        customResponseHeaders:
+          X-Frame-Options: "SAMEORIGIN"
+          X-Content-Type-Options: "nosniff"
+          X-XSS-Protection: "1; mode=block"
+    
+    pasoe-ratelimit:
+      rateLimit:
+        average: 100
+        burst: 200
+        period: 1s

@@ -11,6 +11,10 @@
 *.out
 .devcontainer/windsurf/*
 .devcontainer/logs/*
+src/mcp
+src/tests/mcp
 
 
 
+.gradle/buildOutputCleanup/
+docker/binaries/

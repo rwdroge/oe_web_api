@@ -1,0 +1,708 @@
+{
+	"info": {
+		"_postman_id": "7e3d6a9e-5f8d-4a2c-9b5d-8c4f1a2e3b4d",
+		"name": "GenericService API",
+		"description": "A collection for testing the GenericService API endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Items",
+			"item": [
+				{
+					"name": "Get All Items",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/items?limit=10&offset=0&sort_by=itemname",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"items"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "sort_by",
+									"value": "itemname"
+								}
+							]
+						},
+						"description": "Retrieves all items with optional filtering"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Item by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/items/101",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"items",
+								"101"
+							]
+						},
+						"description": "Retrieves a specific item by its ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Item",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"itemname\": \"Smartphone\",\n  \"price\": {\n    \"value\": 699.99\n  },\n  \"category\": \"Electronics\",\n  \"instock\": true,\n  \"quantity\": 100\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/data/items",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"items"
+							]
+						},
+						"description": "Creates a new item"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Item",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"price\": {\n    \"value\": 649.99\n  },\n  \"quantity\": 75\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/data/items/102",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"items",
+								"102"
+							]
+						},
+						"description": "Updates an existing item"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Item",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/items/102",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"items",
+								"102"
+							]
+						},
+						"description": "Deletes an item"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Items by Category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/items/category/Electronics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"items",
+								"category",
+								"Electronics"
+							]
+						},
+						"description": "Retrieves all items in a specific category"
+					},
+					"response": []
+				},
+				{
+					"name": "Apply Discount to Item",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"discountPercent\": 15.5\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/data/items/101/discount",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"items",
+								"101",
+								"discount"
+							]
+						},
+						"description": "Applies a discount to an item's price"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Item Metadata",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/meta/items",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"meta",
+								"items"
+							]
+						},
+						"description": "Retrieves metadata for the items entity"
+					},
+					"response": []
+				}
+			],
+			"description": "Operations related to the items entity"
+		},
+		{
+			"name": "Customers",
+			"item": [
+				{
+					"name": "Get All Customers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/customers?limit=10&offset=0&sort_by=name",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"customers"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "sort_by",
+									"value": "name"
+								}
+							]
+						},
+						"description": "Retrieves all customers with optional filtering"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/customers/1001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"customers",
+								"1001"
+							]
+						},
+						"description": "Retrieves a specific customer by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Customer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"address\": \"123 Main St\",\n  \"city\": \"Springfield\",\n  \"state\": \"IL\",\n  \"country\": \"USA\",\n  \"phone\": \"555-123-4567\",\n  \"email\": \"john.doe@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/data/customers",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"customers"
+							]
+						},
+						"description": "Creates a new customer"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Customer",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"555-987-6543\",\n  \"email\": \"john.updated@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/data/customers/1001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"customers",
+								"1001"
+							]
+						},
+						"description": "Updates an existing customer"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Customer",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/customers/1001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"customers",
+								"1001"
+							]
+						},
+						"description": "Deletes a customer"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer Metadata",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/meta/customers",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"meta",
+								"customers"
+							]
+						},
+						"description": "Retrieves metadata for the customers entity"
+					},
+					"response": []
+				}
+			],
+			"description": "Operations related to the customers entity"
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Get All Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/orders?limit=10&offset=0&sort_by=orderdate",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"orders"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "sort_by",
+									"value": "orderdate"
+								}
+							]
+						},
+						"description": "Retrieves all orders with optional filtering"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/orders/5001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"orders",
+								"5001"
+							]
+						},
+						"description": "Retrieves a specific order by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"custnum\": 1001,\n  \"orderdate\": \"2025-06-24\",\n  \"status\": \"new\",\n  \"items\": [\n    {\n      \"itemnum\": 101,\n      \"quantity\": 2,\n      \"price\": 999.99\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/data/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"orders"
+							]
+						},
+						"description": "Creates a new order"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"processing\",\n  \"shipdate\": \"2025-06-28\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/data/orders/5001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"orders",
+								"5001"
+							]
+						},
+						"description": "Updates an existing order"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Order",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/orders/5001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"orders",
+								"5001"
+							]
+						},
+						"description": "Deletes an order"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order Metadata",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/meta/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"meta",
+								"orders"
+							]
+						},
+						"description": "Retrieves metadata for the orders entity"
+					},
+					"response": []
+				}
+			],
+			"description": "Operations related to the orders entity"
+		},
+		{
+			"name": "Suppliers",
+			"item": [
+				{
+					"name": "Get All Suppliers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/suppliers?limit=10&offset=0&sort_by=name",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"suppliers"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "sort_by",
+									"value": "name"
+								}
+							]
+						},
+						"description": "Retrieves all suppliers with optional filtering"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Supplier by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/suppliers/201",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"suppliers",
+								"201"
+							]
+						},
+						"description": "Retrieves a specific supplier by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Supplier",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"ABC Supplies\",\n  \"address\": \"456 Business Ave\",\n  \"city\": \"Chicago\",\n  \"state\": \"IL\",\n  \"country\": \"USA\",\n  \"phone\": \"555-987-6543\",\n  \"email\": \"contact@abcsupplies.com\",\n  \"active\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/data/suppliers",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"suppliers"
+							]
+						},
+						"description": "Creates a new supplier"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Supplier",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"555-111-2222\",\n  \"email\": \"updated@abcsupplies.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/data/suppliers/201",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"suppliers",
+								"201"
+							]
+						},
+						"description": "Updates an existing supplier"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Supplier",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/data/suppliers/201",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"data",
+								"suppliers",
+								"201"
+							]
+						},
+						"description": "Deletes a supplier"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Supplier Metadata",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/meta/suppliers",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"meta",
+								"suppliers"
+							]
+						},
+						"description": "Retrieves metadata for the suppliers entity"
+					},
+					"response": []
+				}
+			],
+			"description": "Operations related to the suppliers entity"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080/api/v1",
+			"type": "string"
+		}
+	]
+}

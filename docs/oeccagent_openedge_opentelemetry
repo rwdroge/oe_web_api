@@ -1,0 +1,994 @@
+Use the OpenEdge Command Center 
+
+Generated on: 7 January 2026 
+
+
+1 
+Monitor OpenEdge resources using the 
+OpenEdge Command Center agent 
+
+The OpenEdge Command Center agents can collect performance metrics of the following OpenEdge 
+resources: 
+
+• OpenEdge database 
+• PAS for OpenEdge 
+
+
+The OpenEdge Command Center agent supports 12.2 and later versions of these OpenEdge resources. 
+
+Administrators can use these metrics to understand performance issues and accordingly tune the OpenEdge 
+resources for optimal performance. The performance metrics are collected using the OpenTelemetry (OTel) 
+standards. For more information about OpenTelemetry, see the OpenTelemetry 
+documentation. 
+
+Since OTel is a vendor-agnostic and open-source technology, you can use any market-leading Application 
+Performance Monitoring (APM) vendor solutions, such as Elastic APM, Dynatrace, NewRelic, and so on, to 
+view the performance metrics. 
+
+Deployment architecture for monitoring OpenEdge 
+resources 
+
+The components required to monitor OpenEdge resources are as follows: 
+
+• OpenEdge Command Center agent 
+• OTel Collector 
+
+
+
+here
+
+• APM tool 
+
+
+The following diagram depicts the deployment architecture for monitoring OpenEdge resources using the 
+OpenEdge Command Center agent: 
+
+
+OpenEdge Command Center agent—The OpenEdge Command Center agent is co-located with the 
+OpenEdge resource you want to monitor. The agent monitors the OpenEdge resource, captures the required 
+performance metrics, and then uses OpenTelemetry Protocol (OTLP) to transfer metrics data to OTel 
+Collector. 
+
+OTel Collector—The OTel Collector is an application that processes telemetry data and sends it out to 
+various destinations. To monitor the OpenEdge resources, the OTel Collector processes the performance 
+metrics data collected by the OpenEdge Command Center agent and then exports it to the APM tool. 
+
+Application Performance Monitoring (APM) tool—APM tool is software that enables the observation and 
+analysis of application performance. The tools may have data visualization capabilities that help 
+administrators analyze performance and identify the bottlenecks. You can use market-leading APM tools that 
+support the OTel standards, such as Elastic APM, Dynatrace, NewRelic, and so on, to view the performance 
+metrics of OpenEdge resources. The APM tool uses the data exported by the OTel Collector. 
+
+Contents 
+
+• Set up OpenTelemetry Collector
+• OpenTelemetry metrics for OpenEdge database
+• Enable OpenEdge Command Center agent to collect performance metrics of OpenEdge database
+• Sample performance metrics data for OpenEdge database
+• OpenTelemetry metrics for PAS for OpenEdge
+• Enable OpenEdge Command Center agent to collect performance metrics of PAS for OpenEdge
+
+
+
+here
+
+• Sample performance metrics data for PAS for OpenEdge
+• Performance impact and resilience of collecting performance metrics
+
+
+
+Set up OpenTelemetry Collector 
+
+Set up OpenTelemetry (OTel) Collector to collect, process, and export performance metrics data of 
+OpenEdge resources from the OpenEdge Command Center agent to various destinations, such Application 
+Performance Monitoring (APM) tool. 
+
+To set up OTel Collector, perform the following steps: 
+
+1. Download and install the appropriate version of OTel Collector for your platform. The minimum supported 
+version is 0.31 and the last certified version is 0.129.1. For more information about installing OTel 
+Collector, see OpenTelemetry Collector documentation
+. 
+Note: You can install OTel Collector on any system, but Progress recommends installing it on a different 
+system from the one hosting the OpenEdge Command Center agent for optimal performance. You can 
+also configure multiple agents to share performance metrics data with the same OTel Collector. 
+2. Open the config.yaml file of the OTel Collector installation directory in an editor. 
+The config.yaml file contains the following sections: 
+• receivers—Provide details about how OTel Collector can get data from the OpenEdge Command 
+Center agent. 
+• processors—Provide details about what OTel Collector does with the received data. 
+• exporters—Provide details about where OTel Collector sends data for the Application Performance 
+Monitoring (APM) tools. 
+
+
+
+3. In the receivers node, ensure that the value of the endpoint property is the same as specified for the 
+exporter.endpoint property in the otagentoedb.yaml or otagentpasoe.yaml files. 
+4. Edit the config.yaml file and provide information for the following properties in the exporters node: 
+• Set debug: verbosity to detailed. 
+• Set file: path to ./export.json. This is the JSON file where OTel Collector saves metrics data 
+for the APM tool. 
+• Set otlp/elastic: endpoint to the location of the APM tool. For example, you may set the value 
+to localhost:8200. 
+
+
+
+5. Edit other properties listed in the config.yaml file per your requirements. To know more about these 
+properties, see the OpenTelemetry Collector documentation
+. 
+6. Save the changes made to the config.yaml file. 
+Here is a sample config.yaml file: 
+receivers: 
+otlp: 
+protocols: 
+grpc: 
+http: 
+otlp/withendpoint: 
+protocols: 
+grpc: 
+
+
+
+here
+
+ endpoint: localhost:4317 
+exporters: 
+debug: 
+verbosity: detailed 
+file: 
+path: ./export.json 
+otlp/elastic: 
+endpoint: localhost:8200 
+insecure: true 
+processors: 
+batch: 
+service: 
+pipelines: 
+traces: 
+receivers: [otlp, otlp/withendpoint] 
+exporters: [debug, otlp/elastic] 
+metrics: 
+receivers: [otlp, otlp/withendpoint] 
+exporters: [debug, file, otlp/elastic] 
+7. Start OTel Collector after updating the config.yaml file by completing the following steps: 
+1. Open a Command window and browse to the OTel Collector installation folder. 
+2. Start OTel Collector by specifying the config.yaml file you updated. Use the following command: 
+<OTel Collector executable> --config config.yaml 
+For example on the Windows platform, use the following command: 
+otelcontribcol-0.129.1-windows_amd64.exe --config config.yaml 
+
+
+
+
+
+
+OpenTelemetry metrics for OpenEdge database 
+
+The OpenEdge Command Center agent can monitor an OpenEdge database and collect the following 
+performance metrics. 
+
+The OpenEdge database metrics follow the naming convention progress_oedb_<metric name>. The 
+prefix progress_oedb indicates that the metric is specific to the OpenEdge database. 
+
+Metric Name Description 
+summary_commits_total The number of transactions all users have committed. 
+summary_undos_total The total number of transactions rolled back. 
+record_updates_total The total number of records updated. 
+
+
+here
+
+record_reads_total The total number of records read. 
+record_creates_total The total number of records created. 
+record_deletes_total The total number of records deleted. 
+summary_dbwrites_total The total number of database blocks written to disk. 
+summary_dbreads_total The total number of database blocks read. 
+summary_biwrites_total The total number of Before-Image (BI) blocks written to disk. 
+summary_bireads_total The total number of BI blocks read. 
+summary_aiwrites_total The total number of After-Image (AI) blocks written to disk. 
+summary_reclocks_total The total number of record locks used. 
+summary_recwaits_total The total number of times users have waited to access a locked record. 
+summary_chkpts_total The total number of checkpoints that have been performed. 
+summary_flushed_total The total number of database buffers that have been flushed to disk because 
+they were not written by the time the checkpoint ended. 
+reclock_waits_percent 
+
+The percentage of record accesses that resulted in a record lock wait, which 
+occurs when the database engine must wait to access a locked record. 
+bibuf_waits_percent 
+
+The percentage of BI buffer waits, which occur when the database engine 
+must wait to access a BI buffer. 
+aibuf_waits_percent 
+
+The percentage of AI buffer waits, which occur when the database engine 
+must wait to access an AI buffer. 
+apw_writes_percent 
+
+The percentage of database blocks written to disk by the Asynchronous Page 
+Writer (APW). 
+biw_writes_percent 
+
+The percentage of BI blocks written to disk by the Before-Image Writer (BIW). 
+aiw_writes_percent 
+
+The percentage of AI blocks written to disk by the After-Image Writer (AIW). 
+buffer_hits_percent 
+
+The percentage of buffer hits for both the primary and alternate buffer pools. A 
+buffer hit occurs when the database engine locates a record in the buffer pool 
+and does not have to read the record from the disk. 
+primary_hits_percent 
+
+The percentage of buffer hits for the primary buffer pool. 
+
+
+here
+
+alternate_hits_percent 
+
+The percentage of buffer hits for the alternate buffer pool. 
+instance_running_status The operational status of an OpenEdge database. It uses numerical value 1 or 
+-1 to represent the status. 
+• 1 indicates that the database is running. 
+• -1 indicates that the database is stopped. 
+
+
+
+
+
+Enable OpenEdge Command Center agent to collect 
+performance metrics of OpenEdge database 
+
+You can enable the OpenEdge Command Center agent to collect performance metrics of an OpenEdge 
+database by specifying details in the otagentoedb.yaml file. The file is present in the conf folder of the 
+OpenEdge Command Center agent installation. 
+
+Follow these steps to enable the agent to collect performance metrics for an OpenEdge database: 
+
+1. Open the otagentoedb.yaml file in an editor. 
+2. In the exporter node of the otagentoedb.yaml file, provide values for the following properties of the 
+OpenEdge Command Center agent connection to the OTel Collector: 
+• name—A name for the OpenTelemetry exporter. Ensure that the value is set to otlp. 
+• endpoint—The target URL to which the exporter sends the performance metrics data. The OTel 
+Collector receives the metrics data at this endpoint. Make sure to use the same endpoint when you 
+configure the OTel Collector. 
+• protocol—The transport protocol used to export the metrics data. Use grpc as the value for this 
+property. 
+• timeout—The maximum time the OTLP exporter waits for each batch export. 
+• connectionretry—The number of times the OpenEdge Command Center agent tries to connect to 
+the OTel Collector in case of a connection failure. To know more about the impact of connection failure 
+and how the connection is restored, see Performance impact and resilience of collecting performance metrics
+. 
+
+
+
+3. In the oedbInstances node, provide values for the following properties of the OpenEdge databases to 
+be monitored: 
+• dbname—The name of the database to be monitored. 
+• host—The IP address of the database host. 
+• port—The port on which the database is running. 
+• user—The username of the database user. 
+Note: You must provide username of either a DBA user or a user with the SELECT permissions on 
+the following virtual system tables (VSTs): 
+
+
+
+
+
+
+here
+
+• _ActSummary 
+• _ActRecord 
+• _ActPWs 
+• _ActBILog 
+• _ActAILog 
+• _ActBuffer 
+
+
+
+• password—The password of the database user. 
+Note: The password can be in cleartext or encoded using the genpassword utility, which is a 
+password encryption utility provided with the OpenEdge database. 
+• metricsregex—A regular expression (regex) to ensure that only the specified database 
+performance metrics whose names match the pattern you have configured are collected. When left 
+blank, the agent captures all the defined metrics. 
+Note: You can use only the * quantifier to create a regular expression. 
+• otherdbconnparams—Any other optional SQL JDBC connection parameters to be used for 
+connecting to the database, separated by a semicolon (;). 
+• dbschedule—The time interval at which the agent must capture the metrics data. This property 
+works in conjunction with the dbduration property. OpenTelemetry limits the frequency for posting 
+data to a maximum of two times per minute or once every 30 seconds. Progress recommends to send 
+metrics data once per minute. 
+• dbduration—The unit of time interval at which the agent must capture the metrics data. The 
+possible values can be seconds, minutes, hours, or days. This property works in conjunction with the 
+dbschedule property. 
+
+
+Note: You can provide details of multiple OpenEdge databases on your machine under the 
+oedbInstances node and collect their metrics data using a single OpenEdge Command Center agent. 
+4. Save the changes made to the otagentoedb.yaml file. 
+
+
+Here is a sample otagentoedb.yaml file with details of two OpenEdge database instances: 
+
+exporter: 
+name: "otlp" 
+endpoint: "http://10.248.0.150:4317" 
+protocol: "grpc" 
+timeout: 10 
+connectionretry: 20 
+oedbInstances: 
+- dbname: sports 
+host: localhost 
+port: 2022 
+user: ss1 
+password: ss1 
+here
+
+ metricsregex: 
+otherdbconnparams: 
+dbschedule: 30 
+dbduration: SECONDS 
+- dbname: testdb2 
+host: localhost 
+port: 3111 
+user: admin 
+password: xxx 
+metricsregex: 
+otherdbconnparams: 
+dbschedule: 30 
+dbduration: SECONDS 
+After updating the otagentoedb.yaml file, restart the OpenEdge Command Center agent. 
+
+
+Sample performance metrics data for OpenEdge 
+database 
+
+When you configure OpenTelemetry (OTel) Collector to save the performance metrics data for an OpenEdge 
+database in a JSON file and start the OTel Collector, the generated data is stored in the JSON file. You can 
+choose to analyze this data directly or use an APM tool for detailed analysis. 
+
+The sample performance metrics data in the JSON file for the OpenEdge database is as follows: 
+
+{ 
+"resourceMetrics": [ 
+{ 
+"resource": { 
+"attributes": [ 
+{"key": "agent_guid", "value": {"stringValue": 
+"bdcd2d48-a600-46ce-89fd-9f9adc52a186"}}, 
+{"key": "hostname", "value": {"stringValue": "windowssrv2019"}}, 
+{"key": "port", "value": {"stringValue": "8686"}}, 
+{"key": "resource_name", "value": {"stringValue": "otoedb1"}}, 
+{"key": "service_name", "value": {"stringValue": "otoedb"}}, 
+{"key": "telemetry_sdk_language", "value": {"stringValue": "Java"}}, 
+{"key": "telemetry_sdk_name", "value": {"stringValue": 
+"openTelemetry"}}, 
+{"key": "telemetry_sdk_os", "value": {"stringValue": "Windows"}}, 
+{"key": "telemetry_sdk_version", "value": {"stringValue": "1.15.0"}} 
+] 
+}, 
+"scopeMetrics": [ 
+{ 
+"scope": { 
+"name": "progress_oedb_otoedb1", 
+"version": "1.0.0" 
+}, 
+"metrics": [ 
+here
+
+ "sum": { 
+"dataPoints": [ 
+{ 
+"startTimeUnixNano": "1718708278551640300", 
+"timeUnixNano": "1718708308566911000", 
+"asInt": "0" 
+} 
+], 
+"aggregationTemporality": 2 
+} 
+}, 
+... 
+{ 
+"name": "progress_oedb_record_deletes_total", 
+"description": "The number of records deleted", 
+"unit": "cumulative", 
+] 
+} 
+] 
+} 
+] 
+} 
+Resource-level attributes 
+
+The resource-level attributes are key-value pairs that describe the characteristics of a monitored OpenEdge 
+database including details about the OpenEdge Command Center agent, service name, and host name. 
+These attributes remain constant across all collected metrics for that particular OpenEdge database and 
+provide essential metadata for analysis and filtering metric data. 
+
+The following code snippet shows the resource-level attributes in the JSON file: 
+
+{ 
+"resourceMetrics": [ 
+{ 
+"resource": { 
+"attributes": [ 
+{"key": "agent_guid", "value": {"stringValue": 
+"bdcd2d48-a600-46ce-89fd-9f9adc52a186"}}, 
+{"key": "hostname", "value": {"stringValue": "windowssrv2019"}}, 
+{"key": "port", "value": {"stringValue": "8686"}}, 
+{"key": "resource_name", "value": {"stringValue": "otoedb1"}}, 
+{"key": "service_name", "value": {"stringValue": "otoedb"}}, 
+{"key": "telemetry_sdk_language", "value": {"stringValue": "Java"}}, 
+{"key": "telemetry_sdk_name", "value": {"stringValue": "openTelemetry"}}, 
+{"key": "telemetry_sdk_os", "value": {"stringValue": "Windows"}}, 
+{"key": "telemetry_sdk_version", "value": {"stringValue": "1.15.0"}} 
+] 
+} 
+... 
+
+The following table describes each resources-level attribute: 
+
+
+here
+
+Attribute Description 
+agent_guid Specifies the unique identifier for the OpenEdge Command Center agent. 
+hostname Specifies the name of the host system where the agent is running. 
+port Specifies the port number on which the monitored OpenEdge database is 
+running. 
+resource_name Specifies the name of the OpenEdge database that is monitored. 
+service_name Specifies the name of the telemetry service generating metric data. 
+telemetry_sdk_language Specifies the programming language of the SDK used for metric data 
+collection. 
+telemetry_sdk_name Specifies the name of the telemetry SDK. 
+telemetry_sdk_os Specifies the operating system of the host running the telemetry service. 
+telemetry_sdk_version Specifies the version of the telemetry SDK used. 
+
+
+OpenTelemetry metrics for PAS for OpenEdge 
+
+The OpenEdge Command Center agent can monitor a PAS for OpenEdge instance and collect the following 
+performance metrics. 
+
+The PAS for OpenEdge instance metrics follow the naming convention progress_pasoe_<metric 
+name>. The prefix progress_pasoe indicates that the metric is specific to the PAS for OpenEdge instance. 
+
+Metrics 
+Type 
+Metric Name Description 
+REST 
+transport expression_errors_total 
+
+The total number of expression errors. 
+failed_requests_total 
+
+The total number of failed requests. 
+successful_run_requests_total 
+
+The total number of requests for which 
+response was received successfully. 
+successful_requests_total 
+
+The total number of requests successfully 
+sent to the PAS for OpenEdge server. 
+connect_requests_total 
+
+The total number of connection requests. 
+
+
+here
+
+status_requests_total 
+
+The total number of status type requests. 
+requests_total 
+
+The total number of requests. 
+successful_connect_requests_total 
+
+The total number of successful connection 
+requests. 
+service_unavailable_requests_total 
+
+The total number of requests for which 
+services were not available. 
+run_requests_total 
+
+The total number of run requests. 
+SOAP 
+transport url_notfound_errors_total 
+
+The total number of errors because of 
+incorrectly supplied URLs. 
+active_requests_total 
+
+The total number of requests that are in 
+the ACTIVE state. 
+wsdl_requests_total 
+
+The total number of WSDL requests. 
+successful_requests _total 
+
+The total number of successful SOAP 
+requests to the PAS for OpenEdge 
+instance. 
+method_notallowed_errors_total 
+
+The total number of errors caused because 
+the requested method is not authorized. 
+http_requests_errors_total 
+
+The total number of HTTP requests that 
+resulted in errors. 
+http_requests_total 
+
+The total number of HTTP requests. 
+processor_errors_total 
+
+The total number of SOAP processor 
+errors. 
+APSV 
+transport forbidden_requests_total 
+
+The total number of requests that failed 
+with the 403 error code. 
+
+
+here
+
+disconnect_errors_total 
+
+The total number of disconnection errors. 
+connect_errors_total 
+
+The total number of connection errors. 
+disconnect_requests_total 
+
+The total number of disconnect requests. 
+session_requests_total 
+
+The total number of session requests. 
+session_errors_total 
+
+The total number of session errors. 
+WEB 
+transport head_requests_total 
+
+The total number of HEAD requests. 
+trace_requests_total 
+
+The total number of TRACE requests. 
+options_requests_total 
+
+The total number of OPTIONS requests. 
+patch_requests_total 
+
+The total number of PATCH requests. 
+get_requests_total 
+
+The total number of GET requests. 
+servlet_requests_total 
+
+The total number of SERVLET requests. 
+delete_requests_total 
+
+The total number of DELETE requests. 
+put_requests_total 
+
+The total number of PUT requests. 
+post_requests_total 
+
+The total number of POST requests. 
+
+
+here
+
+successful_servlet_requests_total 
+
+The total number of successful SERVLET 
+requests. 
+head_errors_total 
+
+The total number of HEAD requests that 
+resulted in errors. 
+trace_errors_total 
+
+The total number of TRACE requests that 
+resulted in errors. 
+options_errors_total 
+
+The total number of OPTIONS requests 
+that resulted in errors. 
+patch_errors_total 
+
+The total number of PATCH requests that 
+resulted in errors. 
+get_errors_total 
+
+The total number of GET requests that 
+resulted in errors. 
+delete_errors_total 
+
+The total number of DELETE requests that 
+resulted in errors. 
+put_errors_total 
+
+The total number of PUT requests that 
+resulted in errors. 
+post_errors_total 
+
+The total number of POST requests that 
+resulted in errors. 
+ablruntime_errors_total 
+
+The total number of ABL runtime errors. 
+ablconnect_errors_total 
+
+The total number of ABL connection errors. 
+failed_servlet_requests_total 
+
+The total number of SERVLET requests 
+that resulted in errors. 
+Common all_requests_total The total number of requests to the PAS 
+for OpenEdge instance. 
+applications_total 
+
+The total number of applications deployed 
+on the PAS for OpenEdge instance. 
+
+
+here
+
+agents_total 
+
+The total number of all agents spawned to 
+execute the server requests. 
+available_agents_total 
+
+The total number of agents with the 
+AVAILABLE status. 
+agent_sessions_total 
+
+The total number of sessions including all 
+agents of the PAS for OpenEdge server. 
+client_connections_total 
+
+The total number of client connections to 
+the PAS for OpenEdge instance. 
+client_sessions_total 
+
+The total number of client sessions 
+connected to the PAS for OpenEdge 
+instance. 
+init_sessions_total 
+
+The total number of initial sessions 
+configured for the PAS for OpenEdge 
+instance. 
+idle_sessions_total 
+
+The total number of sessions with the IDLE 
+state. 
+starting_sessions_total 
+
+The total number of starting sessions 
+configured for the PAS for OpenEdge 
+instance. 
+available_sessions_total 
+
+The total number of sessions in the 
+AVAILABLE state. 
+reserved_sessions_total 
+
+The total number of sessions in the 
+RESERVED state. 
+stopped_sessions_total 
+
+The total number of sessions in the 
+STOPPED state. 
+instance_running_status The operational status of a PAS for 
+OpenEdge instance. It uses numerical 
+value 1 or -1 to represent the status. 
+• 1 indicates that the PAS for OpenEdge 
+instance is running. 
+• -1 indicates that the PAS for OpenEdge 
+instance is stopped. 
+
+
+
+
+
+here
+
+Enable OpenEdge Command Center agent to collect 
+performance metrics of PAS for OpenEdge 
+
+You can enable the OpenEdge Command Center agent to collect performance metrics of a PAS for 
+OpenEdge instance by specifying details in the otagentpasoe.yaml file. The file is present in the conf 
+folder of the OpenEdge Command Center agent installation. 
+
+Follow these steps to enable the agent to collect performance metrics of a PAS for OpenEdge instance: 
+
+1. Open the otagentpasoe.yaml file in an editor. 
+2. In the exporter node of the otagentpasoe.yaml file, provide values for the following properties of 
+the OpenEdge Command Center agent connection to the OTel Collector: 
+• name—A name for the OpenTelemetry exporter. Ensure that the value is set to otlp. 
+• endpoint—The target URL to which the exporter sends the performance metrics data. The OTel 
+Collector receives the metrics data at this endpoint. Make sure to use the same endpoint when you 
+configure the OTel Collector. 
+• protocol—The transport protocol used to export the metrics data. Use grpc as the value for this 
+property. 
+• timeout—The maximum time the OTLP exporter waits for each batch export. 
+• connectionretry—The number of times the OpenEdge Command Center agent tries to connect to 
+the OTel Collector in case of a connection failure. To know more about the impact of connection failure 
+and how the connection is restored, see Performance impact and resilience of collecting performance metrics
+. 
+
+
+
+3. Under the pasInstances node of the YAML file, provide values for the following properties of the PAS 
+for OpenEdge instances to be monitored: 
+• pasdir—The location of the PAS for OpenEdge instance. 
+Note: Make sure that a PAS for OpenEdge already exists at the specified location before you provide 
+the value for the pasdir property. 
+• passchedule—The time interval at which the agent must capture the metrics data. This property 
+works in conjunction with the pasduration property. OpenTelemetry limits the frequency for posting 
+data to a maximum of two times per minute or once every 30 seconds. Progress recommends 
+sending metrics data once per minute. 
+• pasduration—The unit of time interval at which the agent must capture the metrics data. The 
+possible values can be seconds, minutes, hours, or days. This property works in conjunction with the 
+passchedule property. 
+• metricsregex—A regular expression (regex) to ensure that only the specified PAS for OpenEdge 
+instance performance metrics whose names match the pattern you have configured are collected. 
+When left blank, the agent captures all the defined metrics. 
+Note: You can use only the * quantifier to create a regular expression. 
+
+
+
+4. Save the changes made to the otagentpasoe.yaml file. 
+
+
+Here is a sample otagentpasoe.yaml file with details of two PAS for OpenEdge instances: 
+
+
+here
+
+exporter: 
+name: "otlp" 
+endpoint: "http://localhost:4317" 
+protocol: "grpc" 
+timeout: 10 
+connectionretry: 20 
+pasInstances: 
+- pasdir: "C:/OpenEdge/WRK/oepas5" 
+passchedule: 30 
+pasduration: SECONDS 
+metricsregex: 
+- pasdir: "C:/OpenEdge/WRK/oepas2" 
+passchedule: 30 
+pasduration: SECONDS 
+metricsregex: 
+After updating the otagentpasoe.yaml file, restart the OpenEdge Command Center agent. 
+
+
+Sample performance metrics data for PAS for 
+OpenEdge 
+
+When you configure OpenTelemetry (OTel) Collector to save the performance metrics data for a PAS for 
+OpenEdge instance in a JSON file and start the OTel Collector, the generated data is stored in the JSON file. 
+You can choose to analyze this data directly or use an APM tool for detailed analysis. 
+
+The sample performance metrics data in the JSON file for the PAS for OpenEdge instance is as follows: 
+
+{ 
+"resourceMetrics": [ 
+{ 
+"resource": { 
+"attributes": [ 
+{"key": "agent_guid", "value": {"stringValue": "ABCD"}}, 
+{"key": "hostname", "value": {"stringValue": "windowssrv2019"}}, 
+{"key": "resource_name", "value": {"stringValue": "RetailMgmt"}}, 
+{"key": "service_name", "value": {"stringValue": "otpasoe"}}, 
+{"key": "telemetry_sdk_language", "value": {"stringValue": "Java"}}, 
+{"key": "telemetry_sdk_name", "value": {"stringValue": 
+"openTelemetry"}}, 
+{"key": "telemetry_sdk_os", "value": {"stringValue": "Windows"}}, 
+{"key": "telemetry_sdk_version", "value": {"stringValue": "1.15.0"}} 
+] 
+}, 
+"scopeMetrics": [ 
+{ 
+"scope": { 
+"name": "progress_oepas_C:/OE_128/wrk/RetailMgmt", 
+"version": "1.0.0" 
+here
+
+ "unit": "cumulative", 
+"sum": { 
+"dataPoints": [ 
+{ 
+"attributes": [ 
+{"key": "ablapp", "value": {"stringValue": 
+"RetailMgmt"}}, 
+{"key": "transport", "value": {"stringValue": "WEB"}}, 
+{"key": "webapp", "value": {"stringValue": "ROOT"}} 
+], 
+}, 
+"metrics": [ { 
+"name": "Progress_pasoe_get_errors_total", 
+"description": "The number of GET requests that resulted in 
+errors.", 
+"startTimeUnixNano": "1718893655587297400", 
+"timeUnixNano": "1718893685609868500", 
+"asInt": "0" 
+}, 
+{ 
+"attributes": [ 
+{"key": "ablapp", "value": {"stringValue": "Customer"}}, 
+{"key": "transport", "value": {"stringValue": "WEB"}}, 
+{"key": "webapp", "value": {"stringValue": "Orders"}} 
+], 
+"startTimeUnixNano": "1718893655587297400", 
+"timeUnixNano": "1718893685609868500", 
+"asInt": "0" 
+} 
+], 
+"aggregationTemporality": 2 
+} 
+}, 
+... 
+] 
+} 
+] 
+} 
+] 
+} 
+Resource-level attributes 
+
+The resource-level attributes are key-value pairs that describe the characteristics of a monitored PAS for 
+OpenEdge instance, including details about the OpenEdge Command Center agent, service name, and host 
+name. These attributes remain constant across all collected metrics for that particular PAS for OpenEdge 
+instance and provide essential metadata for analysis and filtering metric data. 
+
+The following code snippet shows the resource-level attribute in the JSON file: 
+
+{ 
+"resourceMetrics": [ 
+
+
+here
+
+ { 
+"resource": { 
+"attributes": [ 
+{"key": "agent_guid", "value": {"stringValue": "ABCD"}}, 
+{"key": "hostname", "value": {"stringValue": "windowssrv2019"}}, 
+{"key": "resource_name", "value": {"stringValue": "RetailMgmt"}}, 
+{"key": "service_name", "value": {"stringValue": "otpasoe"}}, 
+{"key": "telemetry_sdk_language", "value": {"stringValue": "Java"}}, 
+{"key": "telemetry_sdk_name", "value": {"stringValue": "openTelemetry"}}, 
+{"key": "telemetry_sdk_os", "value": {"stringValue": "Windows"}}, 
+{"key": "telemetry_sdk_version", "value": {"stringValue": "1.15.0"}} 
+] 
+} 
+... 
+
+The following table describes each resources-level attribute: 
+
+Attribute Description 
+agent_guid Specifies the unique identifier for the OpenEdge Command Center agent. 
+hostname Specifies the name of the host system where the agent is running. 
+resource_name Specifies the name of the PAS for OpenEdge instance that is monitored. 
+service_name Specifies the name of the telemetry service generating metric data. 
+telemetry_sdk_language Specifies the programming language of the SDK used for metric data 
+collection. 
+telemetry_sdk_name Specifies the name of the telemetry SDK. 
+telemetry_sdk_os Specifies the operating system of the host running the telemetry service. 
+telemetry_sdk_version Specifies the version of the telemetry SDK used. 
+
+Metric-level attributes 
+
+The metric-level attributes are key-value pairs within the data point of a recorded metric. They provide 
+additional contextual information about the measurement being taken. These attributes are dynamic and 
+allow you to view, filter, and perform granular analysis of metric data. 
+
+The following code snippet shows the metric-level attributes in the JSON file: 
+
+... 
+"metrics": [ { 
+"name": "Progress_pasoe_get_errors_total", 
+"description": "The number of GET requests that resulted in errors.", 
+"unit": "cumulative", 
+"sum": { 
+"dataPoints": [ 
+
+
+here
+
+ "timeUnixNano": "1718893685609868500", 
+"asInt": "0" 
+}, 
+{ 
+"attributes": [ 
+{"key": "ablapp", "value": {"stringValue": "RetailMgmt"}}, 
+{"key": "transport", "value": {"stringValue": "WEB"}}, 
+{"key": "webapp", "value": {"stringValue": "ROOT"}} 
+], 
+"startTimeUnixNano": "1718893655587297400", 
+{ 
+"attributes": [ 
+{"key": "ablapp", "value": {"stringValue": "Customer"}}, 
+{"key": "transport", "value": {"stringValue": "WEB"}}, 
+{"key": "webapp", "value": {"stringValue": "Orders"}} 
+], 
+"startTimeUnixNano": "1718893655587297400", 
+"timeUnixNano": "1718893685609868500", 
+"asInt": "0" 
+} 
+], 
+"aggregationTemporality": 2 
+} 
+}, 
+... 
+
+
+Performance impact and resilience of collecting 
+performance metrics 
+
+The OpenEdge Command Center agent runs on the same machine as the monitored OpenEdge resource 
+and regularly interacts with the resource for collecting the performance metrics data. However, this action 
+has a negligible impact on the performance of the OpenEdge resource. 
+
+Installing OTel Collector on the same machine as the OpenEdge Command Center agent and the monitored 
+OpenEdge resource can impact the performance of the OpenEdge resource. So, it is recommended to install 
+OTel Collector on a different machine. 
+
+You can further reduce the performance impact by increasing the time interval at which the agent scrapes the 
+metrics data. To increase the time interval: 
+
+• When monitoring an OpenEdge database, increase the value of the dbschedule property in the 
+otagentoedb.yaml file. 
+• When monitoring a PAS for OpenEdge instance, increase the value of the paschedule property in the 
+otagentpasoe.yaml file. 
+
+
+Contact Progress Technical Support if you have any queries on the performance impact. 
+
+
+here
+
+When the monitored OpenEdge resources are running, the OpenEdge Command Center agent continues to 
+collect metrics data and sends it to the OTel Collector. The collection of metrics data ceases when the 
+OpenEdge Command Center agent stops. If the monitored OpenEdge resource stops and then restarts, the 
+collection of metrics data resumes if both the OpenEdge Command Center agent and OTel Collector are 
+running. 
+
+If the OTel Collector stops or the connection between the OpenEdge Command Center agent and the OTel 
+Collector is disrupted, the Command Center agent tries to reconnect as per the value configured for the 
+
+connectionretry 
+property in the 
+
+otagentoedb.yaml 
+or 
+
+otagentpasoe.yaml 
+file. 
+
+• If the connection is restored within the configured retry attempts, the Command Center agent sends the 
+performance data to the OTel Collector. 
+• If the connection is not restored within the configured retry attempts, the Command Center agent stops 
+sending the performance data to the OTel Collector and ceases collecting the data from the OpenEdge 
+resource. You must restart both the OpenEdge Command Center agent and the OTel Collector to resume 
+monitoring of the OpenEdge resource. 
+
+
+If the connection between the OpenEdge Command Center agent and the OTel Collector is disrupted due to 
+an incorrectly configured YAML file on the Command Center agent, update the configuration file and restart 
+the Command Center agent. 
+
+
+here

@@ -13,6 +13,7 @@ using services.BaseService.
 using data.ItemRepository.
 using generics.FilterParams.
 using Progress.Json.ObjectModel.*.
+using interfaces.IRepository.
 
 block-level on error undo, throw.
 
@@ -28,6 +29,17 @@ class services.ItemService inherits BaseService:
     end constructor.
     
     /*------------------------------------------------------------------------------
+     Purpose: Constructor for ItemService with dependency injection
+     Parameters:
+       input poRepository - Repository instance (for testing)
+     Notes: Allows injection of mock repository for testing
+    ------------------------------------------------------------------------------*/
+    constructor public ItemService(input poRepository as interfaces.IRepository):
+        /* Call super constructor with provided repository and entity name */
+        super(poRepository, "item").
+    end constructor.
+    
+    /*------------------------------------------------------------------------------
      Purpose: Get items by category
      Parameters:
        input pcCategory - Category name
@@ -35,58 +47,17 @@ class services.ItemService inherits BaseService:
      Notes: Example of service-specific business logic
     ------------------------------------------------------------------------------*/
     method public JsonObject GetItemsByCategory(input pcCategory as character):
-        /* Cast repository to specific type to access specialized methods */
-        var ItemRepository itemRepo = cast(this-object:Repository, ItemRepository).
+        var JsonObject joMetadata = new JsonObject().
         
-        /* Get items by category */
-        var handle hDataSet = itemRepo:FindItemsByCategory(pcCategory).
+        /* Add metadata */
+        joMetadata:Add("category", pcCategory).
         
-        /* Convert to JSON */
-        var JsonObject joResult = new JsonObject().
-        var JsonArray jaItems = new JsonArray().
-        var JsonObject joItem = new JsonObject().
-        var handle hBuffer = hDataSet:get-buffer-handle(1).
-        /* Check if items were found */
-        if valid-handle(hDataSet) then do:
-            hBuffer = hDataSet:get-buffer-handle(1).
-            if hBuffer:available then do:
-                
-                /* Process all records */
-                message "ITemService do I get a valid buffer?".
-                hBuffer:find-first() no-error.
-                do while hBuffer:available:
-                    joItem = new JsonObject().
-                    joItem:Read(hBuffer).
-                    jaItems:Add(joItem).
-                end.
-                
-                joResult:Add("category", pcCategory).
-                joResult:Add("count", jaItems:Length).
-                joResult:Add("items", jaItems).
-            end.
-            else do:
-                /* Return empty result if not found */
-                joResult:Add("category", pcCategory).
-                joResult:Add("count", 0).
-                joResult:Add("items", jaItems).
-            end.
-        end.
-        else do:
-            /* Return empty result if dataset is invalid */
-            joResult:Add("category", pcCategory).
-            joResult:Add("count", 0).
-            joResult:Add("items", jaItems).
-        end.
-        
-        return joResult.
-        
-        finally:
-            /* Clean up dataset resources */
-            if valid-handle(hDataSet) then do:
-                delete object hDataSet no-error.
-            end.
-            delete object jaItems no-error.
-        end finally.
+        /* Use base helper method to execute query and convert to JSON */
+        return this-object:ExecuteRepositoryQueryWithMetadata(
+            "FindItemsByCategory", 
+            pcCategory, 
+            joMetadata, 
+            "items").
     end method.
     
     /*------------------------------------------------------------------------------
@@ -122,7 +93,7 @@ class services.ItemService inherits BaseService:
         joItem:Add("discountApplied", pdDiscountPercent).
         
         /* Save updated item */
-        return this-object:Update(pcId, joItem).
+        return this-object:UpdateEntity(pcId, joItem).
     end method.
     
     /*------------------------------------------------------------------------------
@@ -153,38 +124,20 @@ class services.ItemService inherits BaseService:
             lValid = false.
         end.
         
-        /* Add validation result */
-        joResult:Add("valid", lValid).
-        if not lValid then
-            joResult:Add("errors", jaErrors).
-            
+        /* Build and return validation result */
+        joResult = this-object:BuildValidationResult(jaErrors, lValid).
         return joResult.
-        
-        finally:
-            delete object jaErrors no-error.
-        end finally.
     end method.
     
     /*------------------------------------------------------------------------------
-     Purpose: Override create method to add validation
+     Purpose: Override validation method for item-specific validation
      Parameters:
        input poEntity - JSON object containing entity data
-     Returns: JsonObject containing created entity
+     Returns: JsonObject with validation results
     ------------------------------------------------------------------------------*/
-    method override public JsonObject Create(input poEntity as JsonObject):
-        /* Perform item-specific validation */
-        var JsonObject joValidation = this-object:ValidateItem(poEntity).
-        
-        /* Check validation result */
-        if not joValidation:GetCharacter("valid") = "true" then
-            return joValidation.
-            
-        /* Call base implementation */
-        return super:Create(poEntity).
-        
-        finally:
-            delete object joValidation no-error.
-        end finally.
+    method public override JsonObject ValidateEntityForCreate(input poEntity as JsonObject):
+        /* Delegate to existing validation method */
+        return this-object:ValidateItem(poEntity).
     end method.
     
     /*------------------------------------------------------------------------------

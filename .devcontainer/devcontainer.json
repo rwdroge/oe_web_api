@@ -1,58 +1,44 @@
 {
-	"name": "OpenEdge Dev Containers PoC",
+	"name": "OpenEdge DevContainers - OE WebAPI (Windsurf)",
+	// This is the Windsurf branch - see README for other IDE options
 	"dockerComposeFile": "docker-compose.yaml",
 	"service": "devcontainer",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-	// feature hack for docker-in-docker for Windsurf: fails to mount
+	// feature hack for docker-in-docker for Windsurf: fails to mount: installs 2.12.2 from local install
   	"features": {
 		"ghcr.io/devcontainers/features/git:1": {},
-    	"./feature/docker-in-docker": {}
+		//"ghcr.io/devcontainers/features/docker-in-docker:2.12.4": {}
+		"./feature/docker-in-docker": {}
 	},
 
 	"customizations": {
 		"vscode": {
+			"extensions": [
+				"riversidesoftware.openedge-abl-lsp",
+				"${containerWorkspaceFolder}/.devcontainer/extensions/progress-openedge-mcp-connector-abl-1.0.0.vsix"
+			],
 			"settings": {
+				"extensions.verifySignature": false,
 				"abl.configuration.runtimes.default": "12.8",
 				"abl.configuration.runtimes": [
 					{ "name": "12.8", "path": "/usr/dlc" }
 				],
 				"abl.langServerJavaExecutable": "/opt/java/openjdk/bin/java",
-        "abl.buildMode": 1,
-        "code-runner.executorMap.abl": "_progres -b -pf .devcontainer/devcontainer.pf -p ${file}",
-        "code-runner.languageIdToFileExtensionMap": {
-          "abl": [".p", ".cls"]
-        }
-			},
-			"extensions": [
-				"RiversideSoftware.openedge-abl-lsp@prerelease",
-				"formulahendry.code-runner"
-			]
+				"abl.buildMode": 1,
+				"code-runner.executorMap.abl": "_progres -b -pf .devcontainer/devcontainer.pf -p ${file}",
+				"code-runner.languageIdToFileExtensionMap": {
+					"abl": [".p", ".cls"]
+				}
+			}
 		}
 	},
-	"postStartCommand": "code --install-extension RiversideSoftware.openedge-abl-lsp@prerelease",
 	"mounts": ["source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"],
 	"containerEnv": {
-		"PROPATH": "./src,./bin,${DLC}/tty,${DLC}/tty/OpenEdge.Core.pl,${DLC}/tty/netlib/OpenEdge.Net.pl,./src/OpenEdge.BusinessLogic.pl"
+		"PROPATH": "./src,./bin,${DLC}/tty,${DLC}/tty/OpenEdge.Core.pl,${DLC}/tty/netlib/OpenEdge.Net.pl,${DLC}/tty/OpenEdge.BusinessLogic.pl"
 	},
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [ 3099 ],
-
-	// Use 'portsAttributes' to set default properties for specific forwarded ports. 
-	// More info: https://containers.dev/implementors/json_reference/#port-attributes
-	// "portsAttributes": {
-	// 	"9000": {
-	// 		"label": "Hello Remote World",
-	// 		"onAutoForward": "notify"
-	// 	}
-	// },
-
-	// Use 'postCreateCommand' to run commands after the container is created.
 	"initializeCommand": "echo Initialize....",
-	"postCreateCommand": "proDebugEnable -enable-all",
-	"shutdownAction": "none",
-	"containerUser": "openedge",
-
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	"remoteUser": "openedge"
-	
+	//"remoteUser": "openedge",
+	"postAttachCommand": "sh -lc 'git config --global user.name \"$GIT_NAME\" && git config --global user.email \"$GIT_EMAIL\"'",
+	"waitFor": "postAttachCommand"
 }

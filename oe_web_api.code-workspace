@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"abl.configuration.runtimes": [
+			{
+				"name": "12.8",
+				"path": "/usr/dlc"
+			}
+		],
+		"mcpAuth.username": "rwdroge@gmail.com",
+		"mcpAuth.backendUrl": "https://oemcp4abl.services.progress.com"
+	}
+}

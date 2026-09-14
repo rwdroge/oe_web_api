@@ -41,11 +41,11 @@ interface interfaces.IRepository:
     /*------------------------------------------------------------------------------
      Purpose: Update an existing entity
      Parameters:
-       input pcId - Primary key value
+       input pcId - Entity ID
        input poEntity - JSON object containing updated entity data
      Returns: handle to dataset containing the updated entity
     ------------------------------------------------------------------------------*/
-    method public handle Update(input pcId as character, input poEntity as JsonObject).
+    method public handle UpdateEntity(input pcId as character, input poEntity as JsonObject).
     
     /*------------------------------------------------------------------------------
      Purpose: Delete an entity by primary key

@@ -1,0 +1,8 @@
+{
+  "_comment": "Provide OpenEdge complete installation path details. Add any number of OpenEdge installation entries if required. In Windows, please escape backslashes for path. Example: C:\\Progress\\OpenEdge",
+  "installations": [
+    {
+      "path": "/usr/dlc"
+    }
+  ]
+}

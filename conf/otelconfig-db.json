@@ -1,0 +1,74 @@
+{
+    "OpenTelemetryConfiguration": {
+        "service": {
+            "name": "sports2020-database",
+            "version": "1.0.0",
+            "namespace": "production"
+        },
+        "resource_attributes": {
+            "deployment.environment": "production",
+            "service.instance.id": "sports2020-db",
+            "host.name": "localhost",
+            "db.system": "openedge",
+            "db.name": "sports2020"
+        },
+        "exporters": {
+            "otlp": {
+                "grpc": [
+                    {
+                        "endpoint": "http://otel-collector:4317",
+                        "compression": "gzip",
+                        "timeout": 10000,
+                        "headers": {},
+                        "span_processor": "batch",
+                        "batch_processor_options": {
+                            "max_queue_size": 2048,
+                            "schedule_delay": 5000,
+                            "max_export_batch_size": 512,
+                            "export_timeout": 30000
+                        }
+                    }
+                ],
+                "http": [
+                    {
+                        "endpoint": "http://otel-collector:4318/v1/traces",
+                        "compression": "gzip",
+                        "timeout": 10000,
+                        "headers": {},
+                        "span_processor": "batch",
+                        "batch_processor_options": {
+                            "max_queue_size": 2048,
+                            "schedule_delay": 5000,
+                            "max_export_batch_size": 512,
+                            "export_timeout": 30000
+                        }
+                    }
+                ]
+            },
+            "console": {
+                "enabled": false
+            }
+        },
+        "propagators": [
+            "tracecontext",
+            "baggage"
+        ],
+        "sampler": {
+            "type": "parentbased_always_on",
+            "probability": 1.0
+        }
+    },
+    "OpenEdgeDatabaseTelemetryConfiguration": {
+        "enabled": true,
+        "metrics_enabled": true,
+        "metrics_export_interval": 60000,
+        "trace_sql_queries": true,
+        "trace_transactions": true,
+        "trace_connections": true,
+        "collect_performance_metrics": true,
+        "collect_buffer_pool_metrics": true,
+        "collect_lock_metrics": true,
+        "collect_io_metrics": true,
+        "log_level": "INFO"
+    }
+}
