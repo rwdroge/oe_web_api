@@ -58,12 +58,20 @@ jobs:
         run: |
           echo "dlcHome=/usr/dlc" > gradle.properties
       
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io/rwdroge
+          username: ${{ github.actor }}
+          password: ${{ secrets.GH_TOKEN }} 
+
+
       - name: Run tests in container
         uses: addnab/docker-run-action@v3
         with:
-          image: progressofficial/oe_compiler:12.8.7
+          image: ghcr.io/rwdroge/oe_compiler:latest
           options: --user root -v ${{ github.workspace }}:/workspace -v ${{ github.workspace }}/license/progress.cfg:/usr/dlc/progress.cfg
-          registry: docker.io
+          registry: ghcr.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           run: |
